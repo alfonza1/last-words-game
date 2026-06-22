@@ -1,0 +1,58 @@
+# ── Root ignores (apply to client/ and server/ too — patterns match any subdir) ──
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build output
+dist/
+dist-ssr/
+build/
+target/
+out/
+
+# Caches
+.vite/
+.cache/
+coverage/
+.nyc_output/
+node_modules/.tmp/
+
+# Java / Maven wrapper binary (kept out of VCS)
+.mvn/wrapper/maven-wrapper.jar
+
+# Server data (player progress / leaderboard save file)
+dk-data.json
+data/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment / secrets (don't commit these once you add auth/Stripe/etc.)
+.env
+.env.*
+!.env.example
+*.local
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temp tooling
+.tools/
+*.tmp

@@ -1,0 +1,4 @@
+target
+*.log
+dk-data.json
+.git
