@@ -3,6 +3,7 @@ import type { Difficulty, GameMode, GameState, Settings, Upgrades } from '../typ
 import { GameEngine } from '../game/engine';
 import { drawGame } from '../game/render';
 import { getMap } from '../data/maps';
+import { POWERUP_DEFS } from '../data/powerups';
 import { audio } from '../lib/audio';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { HUD } from './HUD';
@@ -25,10 +26,14 @@ interface Props {
   mode: GameMode;
   difficulty: Difficulty;
   upgrades: Upgrades;
+  powerups: Record<string, number>;
+  upgradesActive: boolean;
   settings: Settings;
   onGameOver: (result: RunResult) => void;
-  onQuit: () => void;
-  onRestart: () => void;
+  onUsePowerup: (key: string) => void;
+  /** Quit/restart pass the partial run so its stats still save. */
+  onQuit: (result: RunResult) => void;
+  onRestart: (result: RunResult) => void;
   onMusicToggle: (on: boolean) => void;
   onMusicVolume: (v: number) => void;
   onSfxVolume: (v: number) => void;
@@ -38,8 +43,11 @@ export function GameScreen({
   mode,
   difficulty,
   upgrades,
+  powerups,
+  upgradesActive,
   settings,
   onGameOver,
+  onUsePowerup,
   onQuit,
   onRestart,
   onMusicToggle,
@@ -52,8 +60,10 @@ export function GameScreen({
   const engineRef = useRef<GameEngine | null>(null);
   const endedRef = useRef(false);
   const prevWordsRef = useRef(0);
+  const prevConsumablesRef = useRef<Record<string, number>>({ grenade: 0, freeze: 0 });
   const [, setTick] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [confirmExit, setConfirmExit] = useState<null | 'quit' | 'restart'>(null);
   const [musicOn, setMusicOn] = useState(settings.music);
   const [musicVol, setMusicVol] = useState(settings.musicVolume);
   const [sfxVol, setSfxVol] = useState(settings.sfxVolume);
@@ -65,15 +75,15 @@ export function GameScreen({
       mode,
       difficulty,
       upgrades,
+      powerups,
       settings,
       width: 960,
       height: 600,
     });
+    prevConsumablesRef.current = { ...engineRef.current.state.powerups.consumables };
   }
   const engine = engineRef.current;
 
-  // Audio lifecycle: start on mount, fully stop on unmount. The context is
-  // created even if music is off so gunshot SFX still play.
   useEffect(() => {
     audio.start({
       music: settings.music,
@@ -85,7 +95,6 @@ export function GameScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Canvas sizing with devicePixelRatio.
   useEffect(() => {
     const wrap = wrapRef.current;
     const canvas = canvasRef.current;
@@ -117,11 +126,11 @@ export function GameScreen({
   const doResume = () => {
     engine.resume();
     setPaused(false);
+    setConfirmExit(null);
     audio.resume();
     inputRef.current?.focus();
   };
 
-  // Keyboard shortcuts.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Tab') e.preventDefault();
@@ -141,41 +150,60 @@ export function GameScreen({
     audio.setEnabled(next);
     onMusicToggle(next);
   };
-
   const toggleMute = () => {
     const next = !muted;
     setMuted(next);
     audio.setMuted(next);
   };
-
   const changeSfxVolume = (v: number) => {
     setSfxVol(v);
     audio.setSfxVolume(v);
     onSfxVolume(v);
   };
-
   const changeVolume = (v: number) => {
     setMusicVol(v);
     audio.setVolume(v);
     onMusicVolume(v);
   };
 
+  // Quit / restart confirm — only warn when upgrades would be wasted.
+  const currentResult = () => toResult(engine.state);
+  const requestQuit = () => (upgradesActive ? setConfirmExit('quit') : onQuit(currentResult()));
+  const requestRestart = () => (upgradesActive ? setConfirmExit('restart') : onRestart(currentResult()));
+
   useGameLoop((dt) => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
     if (!paused) engine.update(dt);
-    drawGame(ctx, engine.state, theme);
+
+    // Hand off to the Game Over screen FIRST, so even a draw hiccup can't trap
+    // the player on a frozen/black canvas.
+    if (engine.state.status === 'gameover' && !endedRef.current) {
+      endedRef.current = true;
+      onGameOver(toResult(engine.state));
+      return;
+    }
+
+    // Draw is best-effort — never let a render error break the loop.
+    try {
+      drawGame(ctx, engine.state, theme);
+    } catch (err) {
+      console.error('[dk] draw error', err);
+    }
     setTick((t) => (t + 1) % 1_000_000);
 
-    // Fire a gunshot whenever a word is completed.
+    // Gunshot whenever a word is completed.
     const words = engine.state.correctWords;
     if (words > prevWordsRef.current) audio.gunshot(settings.weapon);
     prevWordsRef.current = words;
 
-    if (engine.state.status === 'gameover' && !endedRef.current) {
-      endedRef.current = true;
-      onGameOver(toResult(engine.state));
+    // Sync any consumed powerups to the backend (so the charge is spent).
+    const cons = engine.state.powerups.consumables as unknown as Record<string, number>;
+    for (const key of Object.keys(prevConsumablesRef.current)) {
+      const used = (prevConsumablesRef.current[key] ?? 0) - (cons[key] ?? 0);
+      for (let i = 0; i < used; i++) onUsePowerup(key);
     }
+    prevConsumablesRef.current = { ...cons };
   }, true);
 
   const s = engine.state;
@@ -189,9 +217,20 @@ export function GameScreen({
 
       <HUD s={s} muted={muted} onPause={doPause} onToggleMute={toggleMute} />
 
-      {/* Words to type + input, all at the bottom */}
+      {/* Words to type — pinned at the TOP; zombies spawn below this panel.
+          Status events (WAVE CLEARED, etc.) sit UNDER the box so it never hides them. */}
+      {s.status === 'playing' && (
+        <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex flex-col items-center gap-2 px-4">
+          <div className="rounded-2xl border border-white/10 bg-black/55 px-5 py-2.5 backdrop-blur-sm">
+            <TypeBar s={s} opts={engine.matchOptions} input={s.input} />
+          </div>
+          <EventTicker events={s.events} />
+        </div>
+      )}
+
+      {/* Input + powerups, at the bottom. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 p-4">
-        {s.status === 'playing' && <TypeBar s={s} opts={engine.matchOptions} input={s.input} />}
+        <PowerupBar consumables={s.powerups.consumables} />
         <div
           className={`pointer-events-auto flex w-full max-w-xl items-center gap-2 rounded-lg border bg-black/70 px-3 py-2 transition-colors ${
             wrong ? 'border-neon-red shadow-[0_0_12px_rgba(255,56,96,0.6)]' : 'border-neon-green/40 shadow-neon'
@@ -218,59 +257,130 @@ export function GameScreen({
         <div className="flex gap-3 text-[11px] text-white/40">
           <span>SPACE = fire (kills nearest)</span>
           <span>Esc / ⏸ = pause</span>
-          <span>“grenade” · “freeze” · “survive” = powerups</span>
         </div>
       </div>
 
       {/* Pause overlay */}
       {paused && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-black/85">
-          <h2 className="text-4xl font-black tracking-widest text-neon-green">PAUSED</h2>
-          <div className="flex w-full max-w-xs flex-col gap-3">
-            <button className="menu-btn text-center" onClick={doResume}>
-              ▶ Resume
-            </button>
-            <button className="menu-btn text-center" onClick={onRestart}>
-              ↻ Restart Run
-            </button>
-            <button className="menu-btn text-center" onClick={onQuit}>
-              ⏏ Quit to Menu
-            </button>
-            <button className="menu-btn text-center text-sm" onClick={toggleMusic}>
-              {musicOn ? '🔊 Music: On' : '🔇 Music: Off'}
-            </button>
-            <div className="rounded-lg border border-white/10 bg-ink-800/70 px-4 py-3">
-              <div className="mb-1 flex justify-between text-xs text-white/60">
-                <span>Music Volume</span>
-                <span>{Math.round(musicVol * 100)}%</span>
+          {confirmExit ? (
+            <div className="w-full max-w-sm rounded-xl border border-neon-red/40 bg-ink-800/90 p-5 text-center">
+              <h3 className="text-xl font-black tracking-wide text-neon-red">HOLD ON</h3>
+              <p className="mt-2 text-sm text-white/70">
+                Leaving now uses up <span className="font-bold text-neon-amber">one of your upgrade games</span> —
+                your purchased upgrades stay active for one fewer run, and you won’t get it back.
+              </p>
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  className="menu-btn text-center"
+                  onClick={() => (confirmExit === 'quit' ? onQuit(currentResult()) : onRestart(currentResult()))}
+                >
+                  {confirmExit === 'quit' ? '⏏ Quit anyway' : '↻ Restart anyway'}
+                </button>
+                <button className="menu-btn text-center text-sm" onClick={() => setConfirmExit(null)}>
+                  ← Keep playing
+                </button>
               </div>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={musicVol}
-                onChange={(e) => changeVolume(Number(e.target.value))}
-                disabled={!musicOn}
-                className="w-full accent-neon-green disabled:opacity-40"
-              />
-              <div className="mb-1 mt-3 flex justify-between text-xs text-white/60">
-                <span>Gunshot Volume</span>
-                <span>{Math.round(sfxVol * 100)}%</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={sfxVol}
-                onChange={(e) => changeSfxVolume(Number(e.target.value))}
-                className="w-full accent-neon-green"
-              />
             </div>
-          </div>
+          ) : (
+            <>
+              <h2 className="text-4xl font-black tracking-widest text-neon-green">PAUSED</h2>
+              <div className="flex w-full max-w-xs flex-col gap-3">
+                <button className="menu-btn text-center" onClick={doResume}>
+                  ▶ Resume
+                </button>
+                <button className="menu-btn text-center" onClick={requestRestart}>
+                  ↻ Restart Run
+                </button>
+                <button className="menu-btn text-center" onClick={requestQuit}>
+                  ⏏ Quit to Menu
+                </button>
+                <button className="menu-btn text-center text-sm" onClick={toggleMusic}>
+                  {musicOn ? '🔊 Music: On' : '🔇 Music: Off'}
+                </button>
+                <div className="rounded-lg border border-white/10 bg-ink-800/70 px-4 py-3">
+                  <div className="mb-1 flex justify-between text-xs text-white/60">
+                    <span>Music Volume</span>
+                    <span>{Math.round(musicVol * 100)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={musicVol}
+                    onChange={(e) => changeVolume(Number(e.target.value))}
+                    disabled={!musicOn}
+                    className="w-full accent-neon-green disabled:opacity-40"
+                  />
+                  <div className="mb-1 mt-3 flex justify-between text-xs text-white/60">
+                    <span>Gunshot Volume</span>
+                    <span>{Math.round(sfxVol * 100)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={sfxVol}
+                    onChange={(e) => changeSfxVolume(Number(e.target.value))}
+                    className="w-full accent-neon-green"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Status events (WAVE CLEARED, powerup grants, finishers), shown under the word box. */
+function EventTicker({ events }: { events: GameState['events'] }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      {events.slice(-3).map((ev) => (
+        <span
+          key={ev.id}
+          className={
+            ev.kind === 'finisher'
+              ? 'text-2xl font-black tracking-widest text-neon-pink drop-shadow-[0_0_10px_rgba(255,43,214,0.8)]'
+              : ev.kind === 'companion'
+                ? 'rounded bg-black/40 px-2 text-sm font-bold text-neon-green'
+                : 'rounded bg-black/40 px-2 text-xs text-white/70'
+          }
+        >
+          {ev.text}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** Bottom strip showing owned consumable powerups + the word to type. */
+function PowerupBar({ consumables }: { consumables: { grenade: number; freeze: number; medkit: number } }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="uppercase tracking-widest text-white/35">Powerups</span>
+      {POWERUP_DEFS.map((def) => {
+        const count = (consumables as unknown as Record<string, number>)[def.key] ?? 0;
+        const owned = count > 0;
+        return (
+          <span
+            key={def.key}
+            title={def.description}
+            className={`rounded-full border px-2.5 py-1 font-mono ${
+              owned
+                ? 'border-neon-cyan text-neon-cyan shadow-[0_0_8px_rgba(0,240,255,0.4)]'
+                : 'border-white/10 text-white/30'
+            }`}
+          >
+            {def.icon} type “{def.word}” ×{count}
+          </span>
+        );
+      })}
+      <span className="text-white/30">— buy more in the Store</span>
     </div>
   );
 }

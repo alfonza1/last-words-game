@@ -5,3 +5,8 @@ dist-ssr
 .DS_Store
 node_modules/.tmp
 coverage
+
+# Local secrets / config (keep .env.example tracked)
+.env
+.env.*
+!.env.example

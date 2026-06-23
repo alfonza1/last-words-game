@@ -1,12 +1,13 @@
 import type { Difficulty, GameMode, GameStats } from '../types';
 import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
+import { AdBanner } from './AdBanner';
 
 interface Props {
   stats: GameStats;
   difficulty: Difficulty;
   onStart: (mode: GameMode) => void;
-  onNav: (screen: 'upgrades' | 'howto' | 'settings') => void;
+  onNav: (screen: 'upgrades' | 'howto' | 'settings' | 'leaderboard') => void;
   onDifficulty: (d: Difficulty) => void;
 }
 
@@ -14,7 +15,7 @@ const DIFFS: Difficulty[] = ['easy', 'normal', 'nightmare'];
 const DIFF_BLURB: Record<Difficulty, string> = {
   easy: 'Words only — relaxed.',
   normal: 'Words + numbers.',
-  nightmare: 'Words, numbers & symbols — exact case.',
+  nightmare: 'Words, numbers & symbols — exact case. Earn 2× coins. Enter if you dare.',
 };
 
 export function MainMenu({ stats, difficulty, onStart, onNav, onDifficulty }: Props) {
@@ -38,19 +39,18 @@ export function MainMenu({ stats, difficulty, onStart, onNav, onDifficulty }: Pr
                   key={d}
                   onClick={() => onDifficulty(d)}
                   className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
-                    difficulty === d
-                      ? 'bg-neon-green/15 text-neon-green shadow-neon'
-                      : 'text-white/55 hover:text-white/90'
+                    difficulty === d ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
                   {DIFFICULTY_CONFIGS[d].label}
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 text-xs text-white/40">{DIFF_BLURB[difficulty]}</p>
+            {/* Reserve 2 lines so switching difficulty never shifts the buttons. */}
+            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">{DIFF_BLURB[difficulty]}</p>
           </div>
 
-          {/* Modes */}
+          {/* Modes + nav */}
           <div className="space-y-3">
             <button className="menu-btn shadow-neon" onClick={() => onStart('survival')}>
               <span className="mr-3 inline-block w-6 text-center">▶</span>Start Survival
@@ -58,15 +58,20 @@ export function MainMenu({ stats, difficulty, onStart, onNav, onDifficulty }: Pr
             <button className="menu-btn text-base" onClick={() => onStart('bossrush')}>
               <span className="mr-3 inline-block w-6 text-center">💀</span>Boss Rush
             </button>
-            <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
-              <span className="mr-3 inline-block w-6 text-center">🛒</span>Upgrades
-            </button>
-            <button className="menu-btn text-base" onClick={() => onNav('howto')}>
-              <span className="mr-3 inline-block w-6 text-center">❓</span>How to Play
-            </button>
-            <button className="menu-btn text-base" onClick={() => onNav('settings')}>
-              <span className="mr-3 inline-block w-6 text-center">🔧</span>Settings
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
+                <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
+              </button>
+              <button className="menu-btn text-base" onClick={() => onNav('leaderboard')}>
+                <span className="mr-2 inline-block w-5 text-center">🏆</span>Leaderboard
+              </button>
+              <button className="menu-btn text-base" onClick={() => onNav('howto')}>
+                <span className="mr-2 inline-block w-5 text-center">❓</span>How to Play
+              </button>
+              <button className="menu-btn text-base" onClick={() => onNav('settings')}>
+                <span className="mr-2 inline-block w-5 text-center">🔧</span>Settings
+              </button>
+            </div>
           </div>
         </div>
 
@@ -86,7 +91,8 @@ export function MainMenu({ stats, difficulty, onStart, onNav, onDifficulty }: Pr
         </div>
       </div>
 
-      <p className="text-xs text-white/30">Choose your map in Settings · unlock more by surviving.</p>
+      <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT · ONE WORD AT A TIME</p>
+      <AdBanner />
     </div>
   );
 }

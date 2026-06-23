@@ -83,11 +83,11 @@ describe('word queue is independent of zombies', () => {
     expect(e.state.input).toBe('zzqqzz');
   });
 
-  it('multi-hit zombies take several shots', () => {
+  it('multi-hit zombies take several shots (each word does 2 damage)', () => {
     const e = makeEngine();
-    e.state.zombies = [zombie({ type: 'tank', hp: 3, maxHp: 3 })];
+    e.state.zombies = [zombie({ type: 'tank', hp: 6, maxHp: 6, y: 400 })];
     e.handleInput(firstWord(e) + ' ');
-    expect(e.state.zombies[0]?.hp).toBe(2);
+    expect(e.state.zombies[0]?.hp).toBe(4);
     e.handleInput(firstWord(e) + ' ');
     e.handleInput(firstWord(e) + ' ');
     expect(e.state.zombies).toHaveLength(0);
@@ -152,13 +152,21 @@ describe('base collision', () => {
   });
 });
 
-describe('commands', () => {
+describe('powerups (consumables)', () => {
   it('consumes a grenade charge and clears a cluster', () => {
     const e = makeEngine();
-    e.state.powerups.grenadeCharges = 1;
+    e.state.powerups.consumables.grenade = 1;
     e.state.zombies = [zombie({ y: 300 }), zombie({ y: 305 }), zombie({ y: 310 })];
     e.handleInput('grenade ');
-    expect(e.state.powerups.grenadeCharges).toBe(0);
+    expect(e.state.powerups.consumables.grenade).toBe(0);
     expect(e.state.zombies.length).toBeLessThan(3);
+  });
+
+  it('ignores a powerup word when none are owned', () => {
+    const e = makeEngine();
+    e.state.powerups.consumables.grenade = 0;
+    e.state.zombies = [zombie({ y: 300 }), zombie({ y: 305 })];
+    e.handleInput('grenade ');
+    expect(e.state.zombies.length).toBe(2); // no charge → no clear
   });
 });

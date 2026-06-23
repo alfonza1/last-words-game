@@ -1,42 +1,115 @@
 package com.deadkeys.service;
 
+import com.deadkeys.catalog.MapCatalog;
+import com.deadkeys.catalog.PowerupCatalog;
+import com.deadkeys.catalog.UpgradeCatalog;
+import com.deadkeys.exception.BadRequestException;
 import com.deadkeys.model.Dtos.LeaderboardEntry;
 import com.deadkeys.model.Dtos.RunResult;
 import com.deadkeys.model.Profile;
 import com.deadkeys.model.Stats;
 import com.deadkeys.model.Upgrades;
-import com.deadkeys.store.Store;
-import com.deadkeys.upgrades.UpgradeCatalog;
+import com.deadkeys.persistence.ProfileStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 /**
- * Domain logic for a player's profile: merging finished runs, buying upgrades,
- * and the testing grant. Keeps the web layer thin and the rules in one place.
+ * Domain logic for a player's profile: merging finished runs (with anti-cheat
+ * sanity caps), buying upgrades / maps / powerups, and the once-per-week rename.
+ * Keeps the web layer thin and all rules in one place.
  */
 @Service
 public class ProfileService {
-  private static final int DEV_GRANT_COINS = 30_000;
-  private static final int DEV_GRANT_MIN_KILLS = 250;
-  private static final int DEV_GRANT_MIN_BOSSES = 3;
+  private static final Logger log = LoggerFactory.getLogger(ProfileService.class);
+  private static final long USERNAME_COOLDOWN_MS = 7L * 24 * 60 * 60 * 1000; // once per week
+  private static final long REWARD_COOLDOWN_MS = 20_000; // limit rewarded-ad spam
 
-  private final Store store;
+  // Anti-cheat: clamp a submitted run to plausible maxima before it is stored,
+  // so a spoofed request can't inject an impossible score/coin haul.
+  private static final int MAX_SCORE = 5_000_000;
+  private static final int MAX_WAVE = 1_000;
+  private static final int MAX_WPM = 400;
+  private static final long MAX_SURVIVAL_MS = 6L * 60 * 60 * 1000; // 6 hours
+  private static final int MAX_KILLS = 200_000;
+  private static final int MAX_BOSSES = 5_000;
+  private static final int MAX_STREAK = 200_000;
+  private static final int MAX_COINS = 1_000_000;
 
-  public ProfileService(Store store) {
+  private final ProfileStore store;
+  private final String grantUser;
+  private final int grantCoins;
+  private final int rewardCoins;
+
+  public ProfileService(
+      ProfileStore store,
+      @Value("${deadkeys.grantUser:}") String grantUser,
+      @Value("${deadkeys.grantCoins:30000}") int grantCoins,
+      @Value("${deadkeys.rewardCoins:50}") int rewardCoins) {
     this.store = store;
+    this.grantUser = grantUser;
+    this.grantCoins = grantCoins;
+    this.rewardCoins = rewardCoins;
   }
 
-  /** Merge a finished run into the profile and record it on the leaderboard. */
+  /** The current account's profile (created on first sign-in), grant applied. */
+  public Profile getOrCreate(String uid, String name) {
+    Profile p = store.ensureProfile(uid, name);
+    if (!p.granted) {
+      maybeGrant(p);
+      if (p.granted) store.save(p);
+    }
+    return p;
+  }
+
+  /** Merge a finished (or abandoned) run into the profile + leaderboard. */
   public boolean applyRun(Profile profile, RunResult run) {
-    boolean isHighScore = run.score() > profile.stats.bestScore && run.score() > 0;
-    mergeStats(profile.stats, run);
+    RunResult safe = clamp(run);
+    boolean isHighScore = safe.score() > profile.stats.bestScore && safe.score() > 0;
+    mergeStats(profile.stats, safe);
     consumeUpgradeLife(profile);
-    store.addLeaderboardEntry(new LeaderboardEntry(
-        null, profile.name, run.score(), run.wave(), run.wpm(),
-        run.accuracy(), run.mode(), run.difficulty(), 0));
-    store.save();
+    // One leaderboard row per player — only updated on a new personal best.
+    store.upsertLeaderboard(profile.guestId, new LeaderboardEntry(
+        null, profile.name, safe.score(), safe.wave(), safe.wpm(),
+        safe.accuracy(), safe.mode(), safe.difficulty(), 0));
+    store.save(profile);
+    log.info("run applied uid={} score={} wave={} kills={} coins+={} highScore={}",
+        profile.guestId, safe.score(), safe.wave(), safe.kills(), safe.coins(), isHighScore);
     return isHighScore;
+  }
+
+  /** Grant the rewarded-ad bonus (coins for watching an optional ad). */
+  public int claimReward(Profile profile) {
+    long now = System.currentTimeMillis();
+    if (now - profile.lastRewardAt < REWARD_COOLDOWN_MS) {
+      throw new BadRequestException("Reward not ready yet — play another match first.");
+    }
+    profile.lastRewardAt = now;
+    profile.stats.totalCoins += rewardCoins;
+    store.save(profile);
+    log.info("reward claimed uid={} coins+={}", profile.guestId, rewardCoins);
+    return rewardCoins;
+  }
+
+  private static RunResult clamp(RunResult r) {
+    return new RunResult(
+        clampInt(r.score(), MAX_SCORE),
+        clampInt(r.wave(), MAX_WAVE),
+        clampInt(r.wpm(), MAX_WPM),
+        Math.max(0, Math.min(100, r.accuracy())),
+        Math.max(0, Math.min(MAX_SURVIVAL_MS, r.survivalMs())),
+        clampInt(r.kills(), MAX_KILLS),
+        clampInt(r.bossesDefeated(), MAX_BOSSES),
+        clampInt(r.streak(), MAX_STREAK),
+        clampInt(r.coins(), MAX_COINS),
+        r.missedWords(), r.mode(), r.difficulty());
+  }
+
+  private static int clampInt(int v, int max) {
+    return Math.max(0, Math.min(max, v));
   }
 
   private static void mergeStats(Stats stats, RunResult run) {
@@ -56,36 +129,89 @@ public class ProfileService {
     }
   }
 
-  /** Each finished run consumes one game of the upgrade lifespan; expire at zero. */
+  /** Each finished/abandoned run consumes one game of the upgrade lifespan. */
   private static void consumeUpgradeLife(Profile profile) {
     if (profile.upgradeGames <= 0) return;
     profile.upgradeGames -= 1;
     if (profile.upgradeGames <= 0) profile.upgrades = new Upgrades();
   }
 
-  /** Buy one level of an upgrade. Throws {@link UpgradeException} when not allowed. */
+  /** Buy one level of an upgrade. */
   public void buyUpgrade(Profile profile, String key) {
-    if (key == null || key.isBlank()) throw new UpgradeException("upgrade key is required");
+    if (key == null || key.isBlank()) throw new BadRequestException("upgrade key is required");
     UpgradeCatalog.Def def = UpgradeCatalog.find(key);
-    if (def == null) throw new UpgradeException("unknown upgrade key: " + key);
+    if (def == null) throw new BadRequestException("unknown upgrade key: " + key);
 
     int currentLevel = profile.upgrades.get(key);
-    if (currentLevel >= def.maxLevel()) throw new UpgradeException("upgrade already maxed");
+    if (currentLevel >= def.maxLevel()) throw new BadRequestException("upgrade already maxed");
 
     int cost = UpgradeCatalog.cost(def, currentLevel);
-    if (profile.stats.totalCoins < cost) throw new UpgradeException("not enough coins");
+    if (profile.stats.totalCoins < cost) throw new BadRequestException("not enough coins");
 
     profile.upgrades.set(key, currentLevel + 1);
     profile.stats.totalCoins -= cost;
     profile.upgradeGames = UpgradeCatalog.LIFESPAN; // a purchase (re)starts the timer
-    store.save();
+    store.save(profile);
+    log.info("upgrade bought uid={} key={} level={} cost={}", profile.guestId, key, currentLevel + 1, cost);
   }
 
-  /** Testing helper: top up coins and the stats that unlock maps. */
-  public void applyDevGrant(Profile profile) {
-    profile.stats.totalCoins += DEV_GRANT_COINS;
-    profile.stats.totalKills = Math.max(profile.stats.totalKills, DEV_GRANT_MIN_KILLS);
-    profile.stats.bossesDefeated = Math.max(profile.stats.bossesDefeated, DEV_GRANT_MIN_BOSSES);
-    store.save();
+  /** Update the display name. Limited to once per week per account. */
+  public void setName(Profile profile, String name) {
+    long now = System.currentTimeMillis();
+    if (profile.usernameChangedAt > 0 && now - profile.usernameChangedAt < USERNAME_COOLDOWN_MS) {
+      long days = Math.max(1, (USERNAME_COOLDOWN_MS - (now - profile.usernameChangedAt)) / (24L * 60 * 60 * 1000));
+      throw new BadRequestException("You can change your username again in about " + days + " day(s).");
+    }
+    profile.name = name;
+    profile.usernameChangedAt = now;
+    maybeGrant(profile);
+    store.save(profile);
+  }
+
+  /** Buy a map theme. */
+  public void buyMap(Profile profile, String mapId) {
+    MapCatalog.Def def = MapCatalog.find(mapId);
+    if (def == null) throw new BadRequestException("unknown map");
+    if (profile.maps.contains(mapId)) return; // already owned — no-op
+    if (profile.stats.totalCoins < def.cost()) throw new BadRequestException("not enough coins");
+    profile.stats.totalCoins -= def.cost();
+    profile.maps.add(mapId);
+    store.save(profile);
+    log.info("map bought uid={} map={} cost={}", profile.guestId, mapId, def.cost());
+  }
+
+  /** Buy one charge of a consumable powerup. */
+  public void buyPowerup(Profile profile, String key) {
+    PowerupCatalog.Def def = PowerupCatalog.find(key);
+    if (def == null) throw new BadRequestException("unknown powerup");
+    if (profile.stats.totalCoins < def.cost()) throw new BadRequestException("not enough coins");
+    profile.stats.totalCoins -= def.cost();
+    profile.powerups.merge(key, 1, Integer::sum);
+    store.save(profile);
+    log.info("powerup bought uid={} key={} cost={}", profile.guestId, key, def.cost());
+  }
+
+  /** Add coins from a completed coin-pack purchase (called after payment). */
+  public void grantCoins(Profile profile, int coins) {
+    profile.stats.totalCoins += coins;
+    store.save(profile);
+    log.info("coins granted uid={} coins+={}", profile.guestId, coins);
+  }
+
+  /** Spend one charge of a consumable powerup (used in-game). No-op if none owned. */
+  public void usePowerup(Profile profile, String key) {
+    int have = profile.powerups.getOrDefault(key, 0);
+    if (have <= 0) return;
+    profile.powerups.put(key, have - 1);
+    store.save(profile);
+  }
+
+  /** Apply the one-time owner coin grant if this account matches the configured name. */
+  public void maybeGrant(Profile profile) {
+    if (profile.granted) return;
+    if (grantUser == null || grantUser.isBlank()) return;
+    if (!grantUser.equalsIgnoreCase(profile.name)) return;
+    profile.stats.totalCoins += grantCoins;
+    profile.granted = true;
   }
 }

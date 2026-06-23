@@ -8,7 +8,7 @@ RUN ./mvnw -q -B -DskipTests package
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-COPY --from=build /app/target/dead-keys-backend-java-1.0.0.jar app.jar
+COPY --from=build /app/target/server-1.0.0.jar app.jar
 ENV PORT=4100
 EXPOSE 4100
 CMD ["java", "-jar", "app.jar"]

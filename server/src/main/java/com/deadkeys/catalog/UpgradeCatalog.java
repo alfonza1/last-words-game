@@ -1,4 +1,4 @@
-package com.deadkeys.upgrades;
+package com.deadkeys.catalog;
 
 import java.util.List;
 

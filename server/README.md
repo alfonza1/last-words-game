@@ -14,8 +14,8 @@ frontend calls its API. Progress is saved to a JSON file so it survives restarts
 
 ```bash
 # Option A — prebuilt jar (fastest)
-PORT=4100 java -jar target/dead-keys-backend-java-1.0.0.jar
-# Windows PowerShell:  $env:PORT=4100; java -jar target\dead-keys-backend-java-1.0.0.jar
+PORT=4100 java -jar target/server-1.0.0.jar
+# Windows PowerShell:  $env:PORT=4100; java -jar target\server-1.0.0.jar
 
 # Option B — Maven wrapper (downloads Maven on first run)
 ./mvnw spring-boot:run          # macOS/Linux/Git Bash

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   shouldArmShotgun,
   shouldGrantShield,
-  shouldGrantGrenade,
   shouldDoubleDamage,
   shouldSlowMotion,
   damageMultiplier,
@@ -25,10 +24,6 @@ describe('streak-based powerups', () => {
     expect(shouldGrantShield(30)).toBe(true);
     expect(shouldGrantShield(14)).toBe(false);
   });
-  it('grants a grenade every 20 combo', () => {
-    expect(shouldGrantGrenade(20)).toBe(true);
-    expect(shouldGrantGrenade(19)).toBe(false);
-  });
 });
 
 describe('metric-based powerups', () => {
@@ -47,6 +42,11 @@ describe('powerup state helpers', () => {
   it('initializes shield from upgrades', () => {
     const p = initialPowerups({ ...DEFAULT_UPGRADES, startShield: 2 });
     expect(p.shieldCharges).toBe(2);
+  });
+  it('seeds consumable charges from the owned inventory', () => {
+    const p = initialPowerups(DEFAULT_UPGRADES, { grenade: 3, freeze: 1 });
+    expect(p.consumables.grenade).toBe(3);
+    expect(p.consumables.freeze).toBe(1);
   });
   it('doubles damage while active', () => {
     const p = initialPowerups(DEFAULT_UPGRADES);

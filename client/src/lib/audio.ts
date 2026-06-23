@@ -45,6 +45,7 @@ class HorrorAudio {
   private sfxEnabled = true;
   private sfxVolume = 0.6; // 0..1
   private muted = false; // master mute (music + sfx)
+  private droneBuilt = false;
 
   get isStarted() {
     return this.started;
@@ -54,33 +55,63 @@ class HorrorAudio {
     return this.ctx != null && this.ctx.state === 'running' && this.enabled && !this.paused;
   }
 
-  /** Build the audio graph (music + sfx). Safe to call repeatedly. */
+  /** Create the audio context + buses if missing (no music graph yet). */
+  private ensureContext(): boolean {
+    if (this.ctx) return true;
+    if (typeof window === 'undefined') return false;
+    const AC =
+      window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return false;
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0;
+    this.master.connect(this.ctx.destination);
+    this.sfxBus = this.ctx.createGain();
+    this.sfxBus.gain.value = this.sfxEnabled ? this.sfxVolume * 0.3 : 0;
+    this.sfxBus.connect(this.ctx.destination);
+    return true;
+  }
+
+  /** Build the music graph (drone + heartbeat + stabs) and start it. */
   start(cfg: AudioConfig) {
     this.enabled = cfg.music;
     this.volume = clamp01(cfg.musicVolume);
     this.sfxEnabled = cfg.sfx;
     this.sfxVolume = clamp01(cfg.sfxVolume);
-    if (typeof window === 'undefined') return;
-    const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AC) return;
-
-    if (!this.ctx) {
-      this.ctx = new AC();
-      this.master = this.ctx.createGain();
-      this.master.gain.value = 0;
-      this.master.connect(this.ctx.destination);
-      this.sfxBus = this.ctx.createGain();
-      this.sfxBus.gain.value = this.sfxEnabled ? this.sfxVolume * 0.3 : 0;
-      this.sfxBus.connect(this.ctx.destination);
+    if (!this.ensureContext()) return;
+    if (!this.droneBuilt) {
       this.buildDrone();
       this.scheduleHeartbeat();
       this.scheduleStabs();
+      this.droneBuilt = true;
       this.started = true;
     }
     this.paused = false;
-    void this.ctx.resume();
+    void this.ctx!.resume();
     this.applySfxVolume();
     this.fadeIn();
+  }
+
+  /** A short, ominous sting — used for the Nightmare difficulty cue on the menu. */
+  sting() {
+    if (this.muted || !this.ensureContext() || !this.ctx) return;
+    void this.ctx.resume();
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+    g.connect(ctx.destination);
+    for (const freq of [110, 116.5, 73]) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.5, t + 0.8);
+      osc.connect(g);
+      osc.start(t);
+      osc.stop(t + 0.9);
+    }
   }
 
   /** Clean fade from silence to the current target — never spikes to full. */
@@ -333,6 +364,7 @@ class HorrorAudio {
       this.sfxBus = null;
     }
     this.started = false;
+    this.droneBuilt = false;
   }
 }
 

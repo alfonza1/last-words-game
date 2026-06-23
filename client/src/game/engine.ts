@@ -39,7 +39,6 @@ import {
   initialPowerups,
   shouldArmShotgun,
   shouldDoubleDamage,
-  shouldGrantGrenade,
   shouldGrantShield,
   shouldSlowMotion,
   tickPowerups,
@@ -64,24 +63,26 @@ export interface EngineOptions {
   width: number;
   height: number;
   seed?: number;
+  /** Consumable powerup charges the player owns (grenade/freeze). */
+  powerups?: Record<string, number>;
 }
 
 const DOUBLE_DAMAGE_MS = 5000;
 const FREEZE_MS = 3000;
 const INTER_WAVE_BREATHER = 2.4;
 const QUEUE_SIZE = 5; // words shown / typeable at once
-// Zombies must descend past this fraction of the screen before they can be shot,
-// so a fast typer can't one-shot them off-screen at the spawn line.
-const MIN_TARGET_FRAC = 0.16;
+const SHOT_DAMAGE = 2; // base damage a completed word deals to the nearest zombie
+const MEDKIT_HEAL = 35; // health restored by a med kit
+// Zombies spawn just below the on-screen word panel, and become shootable a bit
+// further down (so a fast typer can't snipe them the instant they appear).
+const SPAWN_FRAC = 0.24;
+const MIN_TARGET_FRAC = 0.29;
 
 export class GameEngine {
   state: GameState;
   private rng: () => number;
   private wordStartMs = 0;
   private slowMoCooldown = 0;
-  private emergencyCooldown = 0;
-  private freezeAvailable = false;
-  private freezeTimer = 12; // seconds until next freeze token offer
   private recentWords: Array<{ t: number; chars: number }> = []; // rolling WPM window
 
   constructor(opts: EngineOptions) {
@@ -120,7 +121,7 @@ export class GameEngine {
       maxWpm: 0,
       kills: 0,
       bossesDefeated: 0,
-      powerups: initialPowerups(opts.upgrades),
+      powerups: initialPowerups(opts.upgrades, opts.powerups),
       floatingTexts: [],
       events: [],
       shake: 0,
@@ -191,14 +192,13 @@ export class GameEngine {
     return !cmdPrefix && !wordPrefix;
   }
 
-  /** Commands the player may type right now (grenade, freeze, survive...). */
+  /** Consumable powerup words the player can type right now (only if owned). */
   activeCommands(): string[] {
     const cmds: string[] = [];
-    const s = this.state;
-    if (s.powerups.grenadeCharges > 0) cmds.push('grenade');
-    if (this.freezeAvailable) cmds.push('freeze');
-    if (s.health <= s.maxHealth * 0.35 && this.emergencyCooldown <= 0) cmds.push('survive');
-    if (!s.powerups.panicUsed && s.zombies.length >= 4) cmds.push('activate bunker defense');
+    const c = this.state.powerups.consumables;
+    if (c.grenade > 0) cmds.push('grenade');
+    if (c.freeze > 0) cmds.push('freeze');
+    if (c.medkit > 0) cmds.push('medkit');
     return cmds;
   }
 
@@ -275,21 +275,12 @@ export class GameEngine {
     s.elapsedMs += realMs;
     tickPowerups(s.powerups, realMs);
     this.slowMoCooldown = Math.max(0, this.slowMoCooldown - realMs);
-    this.emergencyCooldown = Math.max(0, this.emergencyCooldown - realMs);
     s.shake = Math.max(0, s.shake - dt * 60);
     s.flash = Math.max(0, s.flash - dt * 4);
     s.bossWarning = Math.max(0, s.bossWarning - dt);
 
     this.updateFloating(dt);
     this.updateEvents(dt);
-
-    // Freeze token offering.
-    this.freezeTimer -= dt;
-    if (this.freezeTimer <= 0 && !this.freezeAvailable) {
-      this.freezeAvailable = true;
-      this.freezeTimer = 22;
-      this.addEvent('A FREEZE charge is ready — type "freeze"!', 'system');
-    }
 
     this.updateSpawning(sdt);
     this.updateZombies(sdt);
@@ -347,15 +338,18 @@ export class GameEngine {
       speed *= 1 - Math.min(0.45, s.upgrades.slowWaves * 0.15);
     }
 
+    const spawnY = s.height * SPAWN_FRAC; // appear just below the word panel
     const bossWave = s.mode === 'bossrush' || isBossWave(s.wave);
     if (bossWave) {
       const boss = createBossZombie(pickBoss(this.rng), s.width / 2, speed * 0.5, s.wave);
+      boss.y = spawnY;
       s.zombies.push(boss);
       s.bossActive = true;
       this.addEvent(boss.bossName ?? 'BOSS', 'companion');
     } else {
       const type = zombieTypeForWave(this.rng, s.wave);
       const z = createZombie(type, { rng: this.rng, width: s.width, wave: s.wave, speed });
+      z.y = spawnY;
       s.zombies.push(z);
     }
     s.waveZombiesSpawned += 1;
@@ -432,7 +426,7 @@ export class GameEngine {
     const minY = s.height * MIN_TARGET_FRAC;
     const target = s.zombies.filter((z) => z.y >= minY).sort((a, b) => b.y - a.y)[0];
     if (!target) return; // nothing visible to shoot yet — the shot misses
-    let dmg = damageMultiplier(s.powerups);
+    let dmg = SHOT_DAMAGE * damageMultiplier(s.powerups);
     if (target.isBoss) dmg += bossDamageBonus(s.upgrades);
     target.hp -= dmg;
     target.hitFlash = 1;
@@ -450,7 +444,8 @@ export class GameEngine {
     const comboBonus = 1 + Math.min(1.5, s.combo * 0.02);
     const score = Math.round(z.reward.score * comboBonus);
     s.score += score;
-    s.coins += Math.round(z.reward.coins * coinMultiplier(s.upgrades));
+    const coinMult = coinMultiplier(s.upgrades) * getDifficultyConfig(s.difficulty).coinMult;
+    s.coins += Math.round(z.reward.coins * coinMult);
     s.xp += z.reward.xp;
 
     if (!silent) this.addFloating(z.x, z.y - z.size, `+${score}`, '#ffb300', 20);
@@ -519,10 +514,6 @@ export class GameEngine {
       s.powerups.shieldCharges += 1;
       this.addEvent('SHIELD UP', 'companion');
     }
-    if (shouldGrantGrenade(s.combo)) {
-      s.powerups.grenadeCharges += 1;
-      this.addEvent('GRENADE READY — type "grenade"', 'companion');
-    }
     if (shouldDoubleDamage(s.wpm) && s.powerups.doubleDamageMs <= 0) {
       s.powerups.doubleDamageMs = DOUBLE_DAMAGE_MS;
       this.addEvent('DOUBLE DAMAGE', 'companion');
@@ -549,39 +540,31 @@ export class GameEngine {
 
   // --- Commands -----------------------------------------------------------
 
+  /** Activate a consumable powerup (bought in the store, typed in-game). */
   private runCommand(cmd: string) {
     const s = this.state;
-    if (cmd === 'grenade') {
-      s.powerups.grenadeCharges -= 1;
-      this.clearNearestCluster(140, 'GRENADE');
-    } else if (cmd === 'freeze') {
-      this.freezeAvailable = false;
+    if (cmd === 'grenade' && s.powerups.consumables.grenade > 0) {
+      s.powerups.consumables.grenade -= 1;
+      this.clearNearestCluster(150, 'GRENADE');
+    } else if (cmd === 'freeze' && s.powerups.consumables.freeze > 0) {
+      s.powerups.consumables.freeze -= 1;
       s.powerups.freezeMs = FREEZE_MS;
       this.addEvent('ZOMBIES FROZEN', 'companion');
-    } else if (cmd === 'survive') {
-      this.emergencyCooldown = 10000;
-      for (const z of s.zombies) z.y = Math.max(0, z.y - 130);
-      s.shake = Math.max(s.shake, 12);
-      this.addFloating(s.width / 2, s.height * 0.5, 'PUSHBACK', '#00f0ff', 24);
-    } else if (cmd === 'activate bunker defense') {
-      s.powerups.panicUsed = true;
-      this.clearNearestCluster(220, 'BUNKER DEFENSE', true);
+      this.addFloating(s.width / 2, s.height * 0.45, 'FREEZE', '#00f0ff', 24);
+    } else if (cmd === 'medkit' && s.powerups.consumables.medkit > 0) {
+      s.powerups.consumables.medkit -= 1;
+      s.health = clamp(s.health + MEDKIT_HEAL, 0, s.maxHealth);
+      this.addEvent('+HEALTH', 'companion');
+      this.addFloating(s.width / 2, s.height * 0.45, `+${MEDKIT_HEAL} HP`, '#39ff14', 24);
     }
   }
 
-  private clearNearestCluster(radius: number, label: string, noScore = false) {
+  private clearNearestCluster(radius: number, label: string) {
     const s = this.state;
     const anchor = [...s.zombies].filter((z) => !z.isBoss).sort((a, b) => b.y - a.y)[0];
     if (!anchor) return;
     const hit = s.zombies.filter((z) => !z.isBoss && distance(z.x, z.y, anchor.x, anchor.y) <= radius);
-    for (const z of hit) {
-      if (noScore) {
-        s.zombies = s.zombies.filter((o) => o.id !== z.id);
-        s.kills += 1;
-      } else {
-        this.killZombie(z, true);
-      }
-    }
+    for (const z of hit) this.killZombie(z, true);
     s.shake = Math.max(s.shake, 16);
     this.addFloating(anchor.x, anchor.y, `${label} x${hit.length}`, '#ff2bd6', 22);
   }

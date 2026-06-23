@@ -18,14 +18,15 @@ export interface DifficultyConfig {
   powerupChance: number; // 0..1 chance a kill yields a bonus opportunity
   strict: boolean;
   wordLengthBias: number; // shifts the word tier upward
+  coinMult: number; // multiplies coins earned (harder = richer)
 }
 
 export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
   easy: {
     label: 'Easy',
-    baseSpeed: 16,
-    speedPerWave: 2,
-    maxSpeed: 70,
+    baseSpeed: 22,
+    speedPerWave: 3,
+    maxSpeed: 95,
     spawnInterval: 2.6,
     spawnIntervalMin: 1.1,
     spawnAccel: 0.12,
@@ -35,12 +36,13 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     powerupChance: 0.35,
     strict: false,
     wordLengthBias: -1,
+    coinMult: 1,
   },
   normal: {
     label: 'Normal',
-    baseSpeed: 22,
-    speedPerWave: 3,
-    maxSpeed: 95,
+    baseSpeed: 30,
+    speedPerWave: 4,
+    maxSpeed: 125,
     spawnInterval: 2.1,
     spawnIntervalMin: 0.85,
     spawnAccel: 0.14,
@@ -50,12 +52,13 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     powerupChance: 0.25,
     strict: false,
     wordLengthBias: 0,
+    coinMult: 1,
   },
   nightmare: {
     label: 'Nightmare',
-    baseSpeed: 36,
-    speedPerWave: 5,
-    maxSpeed: 150,
+    baseSpeed: 46,
+    speedPerWave: 6,
+    maxSpeed: 190,
     spawnInterval: 1.35,
     spawnIntervalMin: 0.5,
     spawnAccel: 0.18,
@@ -65,6 +68,7 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     powerupChance: 0.1,
     strict: true,
     wordLengthBias: 2,
+    coinMult: 2, // Nightmare pays double
   },
 };
 

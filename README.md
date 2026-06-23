@@ -11,12 +11,16 @@ zombie-text-rush/
 The **client** is the game; the **server** owns player progress (stats, coins,
 upgrades) and the global leaderboard, persisted to a JSON file.
 
+> **Backend is always Java.** The Spring Boot service in `server/` is the one and
+> only application backend. Firebase is used *only* for authentication (verifying
+> who the player is) — it is never the app's data/logic backend.
+
 ## Run it (two terminals)
 
 ```bash
 # 1) server — Java 17+ required, no Maven install needed
 cd server
-java -jar target/dead-keys-backend-java-1.0.0.jar      # or: ./mvnw spring-boot:run
+java -jar target/server-1.0.0.jar      # or: ./mvnw spring-boot:run
 
 # 2) client
 cd client

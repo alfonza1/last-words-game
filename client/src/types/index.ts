@@ -9,7 +9,9 @@ export type Screen =
   | 'gameover'
   | 'upgrades'
   | 'howto'
-  | 'settings';
+  | 'settings'
+  | 'signin'
+  | 'leaderboard';
 
 export type GameMode = 'survival' | 'bossrush';
 
@@ -74,8 +76,8 @@ export interface PowerupState {
   doubleDamageMs: number;
   slowMotionMs: number;
   freezeMs: number;
-  grenadeCharges: number;
-  panicUsed: boolean;
+  /** Consumable charges bought in the store, usable by typing the word. */
+  consumables: { grenade: number; freeze: number; medkit: number };
 }
 
 export interface GameEvent {

@@ -5,19 +5,21 @@ import type { PowerupState, Upgrades } from '../types';
 
 export const SHOTGUN_STREAK = 10;
 export const SHIELD_STREAK = 15;
-export const GRENADE_COMBO = 20;
 export const WPM_DOUBLE_THRESHOLD = 55;
 export const ACCURACY_SLOWMO_THRESHOLD = 95;
 
-export function initialPowerups(upgrades: Upgrades): PowerupState {
+export function initialPowerups(upgrades: Upgrades, inventory?: Record<string, number>): PowerupState {
   return {
     shotgunArmed: false,
     shieldCharges: upgrades.startShield,
     doubleDamageMs: 0,
     slowMotionMs: 0,
     freezeMs: 0,
-    grenadeCharges: 0,
-    panicUsed: false,
+    consumables: {
+      grenade: inventory?.grenade ?? 0,
+      freeze: inventory?.freeze ?? 0,
+      medkit: inventory?.medkit ?? 0,
+    },
   };
 }
 
@@ -29,11 +31,6 @@ export function shouldArmShotgun(streak: number): boolean {
 /** A shield is granted every Nth mistake-free word. */
 export function shouldGrantShield(noMistakeStreak: number): boolean {
   return noMistakeStreak > 0 && noMistakeStreak % SHIELD_STREAK === 0;
-}
-
-/** A grenade charge is granted every Nth combo word. */
-export function shouldGrantGrenade(combo: number): boolean {
-  return combo > 0 && combo % GRENADE_COMBO === 0;
 }
 
 export function shouldDoubleDamage(wpm: number, threshold = WPM_DOUBLE_THRESHOLD): boolean {

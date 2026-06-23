@@ -1,4 +1,4 @@
-package com.deadkeys.web;
+package com.deadkeys.exception;
 
 /** Thrown when a requested resource (e.g. a profile) does not exist → HTTP 404. */
 public class NotFoundException extends RuntimeException {

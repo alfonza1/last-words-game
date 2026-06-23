@@ -5,11 +5,11 @@ interface Props {
 }
 
 const STEPS: [string, string][] = [
-  ['Read the queue', 'Five words sit at the bottom. You always type the FIRST (highlighted) one.'],
-  ['Type it, then SPACE', 'Finish the word and press SPACE to fire. Each shot kills the nearest zombie.'],
-  ['Keep the order', 'On a hit the list shifts left and a new word appears at the end — never out of order.'],
-  ['Fix mistakes', 'A wrong word turns the box red and dents accuracy, but keeps your text so you can correct it.'],
-  ['Survive', 'Stop zombies before they reach the base. Lose all health and it’s game over.'],
+  ['Read the queue', 'Five words wait at the top of the screen — you always type the FIRST one (it’s highlighted).'],
+  ['Type it, then SPACE', 'Spell the word and hit SPACE — a shot rings out and drops the closest zombie.'],
+  ['Stay in order', 'Each hit slides the list left and adds a fresh word at the end, so the order never jumps on you.'],
+  ['Shake off typos', 'A wrong word flashes the box red and chips your accuracy, but your letters stay — just backspace and fix it.'],
+  ['Hold the line', 'Drop every zombie before it reaches the bunker. Let your health hit zero and it’s game over.'],
 ];
 
 const ZOMBIE_INFO: [string, string][] = [
@@ -24,25 +24,17 @@ const ZOMBIE_INFO: [string, string][] = [
 ];
 
 const POWERUPS: [string, string][] = [
-  ['Shotgun', '10-streak → next kill blasts nearby zombies.'],
-  ['Shield', '15 mistake-free words → blocks one hit.'],
-  ['Double Damage', 'High WPM → hits count double.'],
-  ['Slow Motion', 'High accuracy → time slows briefly.'],
-  ['Grenade', '20-combo → type “grenade” to clear a cluster.'],
-  ['Freeze', 'When offered → type “freeze” to stop all zombies.'],
-  ['Survive', 'Low health → type “survive” to push zombies back.'],
+  ['Shotgun', 'Earned at a 10-streak → next kill blasts nearby zombies.'],
+  ['Shield', 'Earned at 15 mistake-free words → blocks one hit.'],
+  ['Double Damage', 'High WPM → your shots hit twice as hard.'],
+  ['Slow Motion', 'High accuracy → time briefly slows.'],
   ['Headshot', 'Clear a word lightning-fast for bonus points.'],
+  ['Grenade', 'Buy in the Store → type “grenade” to clear a cluster.'],
+  ['Freeze', 'Buy in the Store → type “freeze” to freeze everything for 3s.'],
+  ['Med Kit', 'Buy in the Store → type “medkit” to restore health.'],
 ];
 
-function Card({
-  title,
-  color,
-  children,
-}: {
-  title: string;
-  color: string;
-  children: ReactNode;
-}) {
+function Card({ title, color, children }: { title: string; color: string; children: ReactNode }) {
   return (
     <section className="rounded-xl border border-white/10 bg-ink-800/60 p-4">
       <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.25em]" style={{ color }}>
@@ -56,9 +48,17 @@ function Card({
 export function HowToPlay({ onBack }: Props) {
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-4xl flex-col gap-5 overflow-y-auto p-6">
-      <div>
-        <h1 className="text-3xl font-black tracking-wide text-neon-green">HOW TO PLAY</h1>
-        <p className="mt-1 text-sm text-white/50">Type the words. Shoot the dead. Don’t let them in.</p>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onBack}
+          className="rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
+        >
+          ← Back
+        </button>
+        <div>
+          <h1 className="text-3xl font-black tracking-wide text-neon-green">HOW TO PLAY</h1>
+          <p className="mt-0.5 text-sm text-white/50">Type the words. Drop the dead. Don’t let them in.</p>
+        </div>
       </div>
 
       {/* Basics — numbered steps */}
@@ -84,8 +84,10 @@ export function HowToPlay({ onBack }: Props) {
           <ul className="space-y-1.5 text-sm text-white/70">
             <li><span className="font-bold text-neon-cyan">Easy</span> — words only.</li>
             <li><span className="font-bold text-neon-cyan">Normal</span> — words + numbers.</li>
-            <li><span className="font-bold text-neon-cyan">Nightmare</span> — words, numbers &amp; symbols, exact case.</li>
-            <li className="pt-1 text-xs text-white/40">Set difficulty on the menu; pick your map when you deploy.</li>
+            <li>
+              <span className="font-bold text-neon-cyan">Nightmare</span> — words, numbers &amp; symbols, exact
+              case. Earn 2× coins. Enter if you dare.
+            </li>
           </ul>
         </Card>
 
@@ -93,8 +95,7 @@ export function HowToPlay({ onBack }: Props) {
           <ul className="space-y-1.5 text-sm text-white/70">
             <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd> — fire the current word.</li>
             <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd> / <span className="text-neon-green">⏸</span> — pause (resume / restart / quit).</li>
-            <li>Type <span className="text-neon-green">grenade / freeze / survive</span> to use those powerups.</li>
-            <li>Mute &amp; volumes live in the HUD and Settings.</li>
+            <li>Own a powerup? Type its word (<span className="text-neon-green">grenade / freeze / medkit</span>) to spend a charge.</li>
           </ul>
         </Card>
       </div>
@@ -123,10 +124,6 @@ export function HowToPlay({ onBack }: Props) {
           </ul>
         </Card>
       </div>
-
-      <button className="menu-btn mt-1 max-w-xs self-center text-center" onClick={onBack}>
-        ← Back to Menu
-      </button>
     </div>
   );
 }

@@ -39,7 +39,6 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
   if (p.doubleDamageMs > 0) activePowerups.push({ label: '2x DMG', color: '#ffb300' });
   if (p.slowMotionMs > 0) activePowerups.push({ label: 'SLOW-MO', color: '#9b5de5' });
   if (p.freezeMs > 0) activePowerups.push({ label: 'FROZEN', color: '#00f0ff' });
-  if (p.grenadeCharges > 0) activePowerups.push({ label: `GRENADE x${p.grenadeCharges}`, color: '#39ff14' });
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-3">
@@ -106,23 +105,7 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
         </div>
       )}
 
-      {/* Event / companion ticker */}
-      <div className="mt-2 flex flex-col items-center gap-1">
-        {s.events.slice(-3).map((ev) => (
-          <span
-            key={ev.id}
-            className={
-              ev.kind === 'finisher'
-                ? 'text-2xl font-black tracking-widest text-neon-pink drop-shadow-[0_0_10px_rgba(255,43,214,0.8)]'
-                : ev.kind === 'companion'
-                  ? 'text-sm font-bold text-neon-green'
-                  : 'text-xs text-white/70'
-            }
-          >
-            {ev.text}
-          </span>
-        ))}
-      </div>
+      {/* The event ticker is rendered in GameScreen, under the word box. */}
 
       {/* Boss warning overlay */}
       {s.bossWarning > 0 && (

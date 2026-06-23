@@ -1,12 +1,29 @@
 package com.deadkeys.model;
 
-/** A player's saved profile: identity + progress. */
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/** A player's saved profile: identity + progress. The id is the account's
+ *  Firebase uid (a player can only ever read/modify their own profile). */
 public class Profile {
+  /** Account id (Firebase uid). Field name kept for client compatibility. */
   public String guestId;
   public String name;
   public Stats stats = new Stats();
   public Upgrades upgrades = new Upgrades();
   public int upgradeGames = 0; // games remaining before upgrades expire
+  /** Consumable powerup charges bought in the store (key -> count). */
+  public Map<String, Integer> powerups = new LinkedHashMap<>();
+  /** Map theme ids the player owns. The graveyard is always free. */
+  public List<String> maps = new ArrayList<>(List.of("graveyard"));
+  /** Epoch millis of the last username change (username is limited to once/week). */
+  public long usernameChangedAt = 0;
+  /** True once the one-time owner coin grant has been applied. */
+  public boolean granted = false;
+  /** Epoch millis of the last rewarded-ad claim (cooldown to limit abuse). */
+  public long lastRewardAt = 0;
 
   public Profile() {}
 

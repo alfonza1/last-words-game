@@ -1,28 +1,50 @@
+import { useState } from 'react';
 import type { GameMode } from '../types';
 import type { RunResult } from './GameScreen';
 import { formatTime } from '../lib/utils';
+import { showRewardedAd } from '../lib/ads';
+import { AdBanner } from './AdBanner';
 
 interface Props {
   result: RunResult;
   mode: GameMode;
   isHighScore: boolean;
+  rewardCoins: number;
+  /** Watch the rewarded ad → grant coins. Returns coins granted (throws on error). */
+  onWatchAd: () => Promise<number>;
   onRestart: () => void;
   onMenu: () => void;
 }
 
-export function GameOver({ result, mode, isHighScore, onRestart, onMenu }: Props) {
+export function GameOver({ result, mode, isHighScore, rewardCoins, onWatchAd, onRestart, onMenu }: Props) {
   const missed = Object.entries(result.missedWords)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
+
+  const [adPhase, setAdPhase] = useState<'idle' | 'playing' | 'claimed'>('idle');
+  const [earned, setEarned] = useState(0);
+  const [adError, setAdError] = useState<string | null>(null);
+
+  const watchAd = async () => {
+    setAdError(null);
+    setAdPhase('playing');
+    try {
+      await showRewardedAd();
+      const coins = await onWatchAd();
+      setEarned(coins);
+      setAdPhase('claimed');
+    } catch (e) {
+      setAdPhase('idle');
+      setAdError((e as Error)?.message || 'Couldn’t load an ad. Try again later.');
+    }
+  };
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-3xl flex-col items-center justify-center gap-6 p-6 text-center">
       <h1 className="text-6xl font-black tracking-widest text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.8)]">
         GAME OVER
       </h1>
-      {isHighScore && (
-        <div className="animate-pulse text-xl font-bold text-neon-amber">★ NEW HIGH SCORE ★</div>
-      )}
+      {isHighScore && <div className="animate-pulse text-xl font-bold text-neon-amber">★ NEW HIGH SCORE ★</div>}
 
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
         <Big label="Score" value={result.score.toLocaleString()} accent="#ffb300" />
@@ -35,11 +57,27 @@ export function GameOver({ result, mode, isHighScore, onRestart, onMenu }: Props
         <Big label="Coins" value={result.coins} accent="#ffd166" />
       </div>
 
+      {/* Optional rewarded ad for bonus coins */}
+      {adPhase === 'claimed' ? (
+        <div className="rounded-lg border border-neon-green/50 bg-neon-green/10 px-4 py-2 text-sm font-bold text-neon-green">
+          +{earned.toLocaleString()} bonus coins added 🪙
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={watchAd}
+            disabled={adPhase === 'playing'}
+            className="rounded-lg border border-neon-amber/60 bg-neon-amber/10 px-5 py-2 text-sm font-bold text-neon-amber hover:bg-neon-amber/20 disabled:opacity-60"
+          >
+            {adPhase === 'playing' ? 'Ad playing…' : `📺 Watch ad for +${rewardCoins} coins (optional)`}
+          </button>
+          {adError && <span className="text-xs text-neon-red">{adError}</span>}
+        </div>
+      )}
+
       {missed.length > 0 && (
         <div className="w-full rounded-xl border border-white/10 bg-ink-800/70 p-4 text-left">
-          <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-neon-red">
-            Weak Words
-          </h3>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-neon-red">Weak Words</h3>
           <div className="flex flex-wrap gap-2">
             {missed.map(([word, n]) => (
               <span key={word} className="rounded bg-black/50 px-2 py-1 text-sm text-white/70">
@@ -59,6 +97,16 @@ export function GameOver({ result, mode, isHighScore, onRestart, onMenu }: Props
         </button>
       </div>
       <p className="text-xs text-white/40">{mode.toUpperCase()} · press Enter to play again</p>
+
+      <AdBanner />
+
+      {adPhase === 'playing' && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-black/85">
+          <div className="text-xs uppercase tracking-[0.3em] text-white/40">Advertisement</div>
+          <div className="animate-pulse text-2xl font-black tracking-widest text-neon-green">PLAYING…</div>
+          <div className="text-xs text-white/40">(placeholder — real rewarded ad goes here)</div>
+        </div>
+      )}
     </div>
   );
 }
