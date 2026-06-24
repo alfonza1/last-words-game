@@ -3,7 +3,9 @@ package com.deadkeys.service;
 import com.deadkeys.catalog.MapCatalog;
 import com.deadkeys.catalog.PowerupCatalog;
 import com.deadkeys.catalog.UpgradeCatalog;
+import com.deadkeys.catalog.CharacterCatalog;
 import com.deadkeys.exception.BadRequestException;
+import com.deadkeys.model.CharacterLoadout;
 import com.deadkeys.model.Dtos.LeaderboardEntry;
 import com.deadkeys.model.Dtos.RunResult;
 import com.deadkeys.model.Profile;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * Domain logic for a player's profile: merging finished runs (with anti-cheat
@@ -58,10 +61,12 @@ public class ProfileService {
   /** The current account's profile (created on first sign-in), grant applied. */
   public Profile getOrCreate(String uid, String name) {
     Profile p = store.ensureProfile(uid, name);
+    boolean changed = normalizeCharacter(p);
     if (!p.granted) {
       maybeGrant(p);
-      if (p.granted) store.save(p);
+      changed = changed || p.granted;
     }
+    if (changed) store.save(p);
     return p;
   }
 
@@ -185,6 +190,53 @@ public class ProfileService {
     log.info("map bought uid={} map={} cost={}", profile.guestId, mapId, def.cost());
   }
 
+  /** Buy a permanent outfit or accessory. */
+  public void buyCosmetic(Profile profile, String key) {
+    CharacterCatalog.Def def = CharacterCatalog.find(key);
+    if (def == null) throw new BadRequestException("unknown cosmetic");
+    normalizeCharacter(profile);
+    if (profile.cosmetics.contains(key)) return;
+    if (profile.stats.totalCoins < def.cost()) throw new BadRequestException("not enough coins");
+    profile.stats.totalCoins -= def.cost();
+    profile.cosmetics.add(key);
+    store.save(profile);
+    log.info("cosmetic bought uid={} key={} cost={}", profile.guestId, key, def.cost());
+  }
+
+  /** Equip a complete validated survivor appearance. */
+  public void equipCharacter(
+      Profile profile,
+      String skinTone,
+      String hair,
+      String hairColor,
+      String outfit,
+      String accessory) {
+    normalizeCharacter(profile);
+    if (!CharacterCatalog.SKIN_TONES.contains(skinTone)) throw new BadRequestException("unknown skin tone");
+    if (!CharacterCatalog.HAIR_STYLES.contains(hair)) throw new BadRequestException("unknown hair style");
+    if (!CharacterCatalog.HAIR_COLORS.contains(hairColor)) throw new BadRequestException("unknown hair color");
+
+    CharacterCatalog.Def outfitDef = CharacterCatalog.find(outfit);
+    if (outfitDef == null || !CharacterCatalog.OUTFIT.equals(outfitDef.slot())) {
+      throw new BadRequestException("unknown outfit");
+    }
+    CharacterCatalog.Def accessoryDef = CharacterCatalog.find(accessory);
+    if (accessoryDef == null || !CharacterCatalog.ACCESSORY.equals(accessoryDef.slot())) {
+      throw new BadRequestException("unknown accessory");
+    }
+    if (!profile.cosmetics.contains(outfit) || !profile.cosmetics.contains(accessory)) {
+      throw new BadRequestException("cosmetic is not owned");
+    }
+
+    profile.character.skinTone = skinTone;
+    profile.character.hair = hair;
+    profile.character.hairColor = hairColor;
+    profile.character.outfit = outfit;
+    profile.character.accessory = accessory;
+    store.save(profile);
+    log.info("character equipped uid={} outfit={} accessory={}", profile.guestId, outfit, accessory);
+  }
+
   /** Buy one charge of a consumable powerup. */
   public void buyPowerup(Profile profile, String key) {
     PowerupCatalog.Def def = PowerupCatalog.find(key);
@@ -218,5 +270,33 @@ public class ProfileService {
     if (!grantUser.equalsIgnoreCase(profile.name)) return;
     profile.stats.totalCoins += grantCoins;
     profile.granted = true;
+  }
+
+  /** Backfill character defaults for profiles saved before cosmetics existed. */
+  private static boolean normalizeCharacter(Profile profile) {
+    boolean changed = false;
+    if (profile.cosmetics == null) {
+      profile.cosmetics = new ArrayList<>();
+      changed = true;
+    }
+    for (String key : CharacterCatalog.DEFAULT_OWNED) {
+      if (!profile.cosmetics.contains(key)) {
+        profile.cosmetics.add(key);
+        changed = true;
+      }
+    }
+    if (profile.character == null) {
+      profile.character = new CharacterLoadout();
+      changed = true;
+    }
+    if (!profile.cosmetics.contains(profile.character.outfit)) {
+      profile.character.outfit = "outfit-field";
+      changed = true;
+    }
+    if (!profile.cosmetics.contains(profile.character.accessory)) {
+      profile.character.accessory = "accessory-none";
+      changed = true;
+    }
+    return changed;
   }
 }

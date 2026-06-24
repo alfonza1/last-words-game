@@ -18,6 +18,11 @@ public class Profile {
   public Map<String, Integer> powerups = new LinkedHashMap<>();
   /** Map theme ids the player owns. The graveyard is always free. */
   public List<String> maps = new ArrayList<>(List.of("graveyard"));
+  /** Character cosmetic ids the player owns (two outfits are free). */
+  public List<String> cosmetics = new ArrayList<>(
+      List.of("outfit-field", "outfit-hoodie", "accessory-none"));
+  /** The survivor appearance shown in menus and during runs. */
+  public CharacterLoadout character = new CharacterLoadout();
   /** Epoch millis of the last username change (username is limited to once/week). */
   public long usernameChangedAt = 0;
   /** True once the one-time owner coin grant has been applied. */

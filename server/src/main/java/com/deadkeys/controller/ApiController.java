@@ -102,6 +102,26 @@ public class ApiController {
     return json("profile", profile);
   }
 
+  @PostMapping("/api/profile/buy-cosmetic")
+  public Object buyCosmetic(HttpServletRequest req, @RequestBody(required = false) Map<String, Object> body) {
+    Profile profile = current(req);
+    profileService.buyCosmetic(profile, readString(body, "key"));
+    return json("profile", profile);
+  }
+
+  @PostMapping("/api/profile/equip-character")
+  public Object equipCharacter(HttpServletRequest req, @RequestBody(required = false) Map<String, Object> body) {
+    Profile profile = current(req);
+    profileService.equipCharacter(
+        profile,
+        readString(body, "skinTone"),
+        readString(body, "hair"),
+        readString(body, "hairColor"),
+        readString(body, "outfit"),
+        readString(body, "accessory"));
+    return json("profile", profile);
+  }
+
   @PostMapping("/api/profile/reward")
   public Object claimReward(HttpServletRequest req) {
     Profile profile = current(req);
