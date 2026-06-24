@@ -9,128 +9,217 @@ export function drawSurvivor(
   time: number,
 ) {
   const mobile = s.width < 600;
-  const scale = Math.max(mobile ? 0.7 : 0.62, Math.min(1.32, Math.min(s.width / 960, s.height / 600)));
-  const x = mobile ? s.width * 0.18 : Math.max(72, s.width * 0.1);
-  const y = mobile ? s.height - 150 : s.height - 78;
-  const target = s.survivorShot ?? { x: s.width * 0.5, y: s.height * 0.28, life: 0, ttl: 1 };
+  const scale = Math.max(mobile ? 0.78 : 0.7, Math.min(1.38, Math.min(s.width / 900, s.height / 560)));
+  const x = mobile ? s.width * 0.23 : Math.max(86, s.width * 0.11);
+  const y = mobile ? s.height - 205 : s.height - 88;
+  const target = s.survivorShot ?? {
+    x: Math.min(s.width - 24, x + 220 * scale),
+    y: y - 72 * scale,
+    life: 0,
+    ttl: 1,
+  };
   const dx = target.x - x;
   const direction = dx >= 0 ? 1 : -1;
-  const aimAngle = Math.atan2(target.y - (y - 18 * scale), Math.abs(dx));
+  const aimAngle = Math.atan2(target.y - (y - 21 * scale), Math.abs(dx));
   const skin = skinColor(character.skinTone);
   const hair = hairColor(character.hairColor);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
-  const breathing = Math.sin(time * 0.003) * 1.2 * scale;
+  const breathing = Math.sin(time * 0.0024) * 0.85 * scale;
+  const shotStrength = s.survivorShot ? Math.max(0, s.survivorShot.life / s.survivorShot.ttl) : 0;
+  const recoil = shotStrength * 2.8 * scale;
+  const muzzleDistance = 92 * scale;
+  const shoulderWorldX = x + direction * (20 * scale - recoil);
+  const shoulderWorldY = y + breathing - 20 * scale;
+  const muzzleWorldX = shoulderWorldX + direction * Math.cos(aimAngle) * muzzleDistance;
+  const muzzleWorldY = shoulderWorldY + Math.sin(aimAngle) * muzzleDistance;
 
   ctx.save();
   ctx.translate(x, y + breathing);
   ctx.scale(direction, 1);
 
-  // Low profile shadow and a subtle loadout-colored pad.
+  // Ground contact and a small scavenged shooting mat.
   ctx.fillStyle = 'rgba(0,0,0,0.48)';
   ctx.beginPath();
-  ctx.ellipse(0, 11 * scale, 52 * scale, 9 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(-4 * scale, 10 * scale, 62 * scale, 10 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = `${outfit.trim}18`;
+  ctx.fillStyle = `${outfit.trim}1f`;
   ctx.beginPath();
-  ctx.ellipse(2 * scale, 8 * scale, 48 * scale, 7 * scale, 0, 0, Math.PI * 2);
+  ctx.moveTo(-58 * scale, 7 * scale);
+  ctx.lineTo(31 * scale, 4 * scale);
+  ctx.lineTo(40 * scale, 13 * scale);
+  ctx.lineTo(-52 * scale, 16 * scale);
+  ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = `${outfit.trim}45`;
+  ctx.lineWidth = scale;
+  ctx.stroke();
 
-  // Boots and legs stretched behind the shooter.
-  limb(ctx, -45, 2, -19, -3, 11, '#080b0d', scale);
-  limb(ctx, -42, 9, -15, 5, 10, '#11171a', scale);
+  // Boots, trousers, and staggered legs stretched behind the shooter.
+  limb(ctx, -48, 1, -14, -4, 12, '#0a0e10', scale);
+  limb(ctx, -45, 10, -11, 5, 11, '#172025', scale);
   ctx.fillStyle = '#050708';
-  roundRect(ctx, -53 * scale, -3 * scale, 17 * scale, 9 * scale, 3 * scale);
+  roundRect(ctx, -60 * scale, -5 * scale, 19 * scale, 10 * scale, 3 * scale);
   ctx.fill();
+  roundRect(ctx, -57 * scale, 5 * scale, 19 * scale, 10 * scale, 3 * scale);
+  ctx.fill();
+  ctx.strokeStyle = `${outfit.trim}55`;
+  ctx.lineWidth = 1.2 * scale;
+  ctx.beginPath();
+  ctx.moveTo(-34 * scale, -5 * scale);
+  ctx.lineTo(-31 * scale, 4 * scale);
+  ctx.moveTo(-30 * scale, 3 * scale);
+  ctx.lineTo(-27 * scale, 10 * scale);
+  ctx.stroke();
 
-  // Torso in the equipped outfit.
+  // Torso and shoulder armor retain the equipped outfit's silhouette.
   ctx.save();
-  ctx.rotate(-0.08);
+  ctx.rotate(-0.07);
   const body = ctx.createLinearGradient(-20 * scale, 0, 26 * scale, 0);
   body.addColorStop(0, outfit.secondary);
   body.addColorStop(0.55, outfit.primary);
   body.addColorStop(1, '#080b0d');
   ctx.fillStyle = body;
-  roundRect(ctx, -24 * scale, -18 * scale, 50 * scale, 27 * scale, 8 * scale);
+  roundRect(ctx, -28 * scale, -22 * scale, 57 * scale, 31 * scale, 9 * scale);
   ctx.fill();
   ctx.strokeStyle = outfit.trim;
   ctx.globalAlpha = 0.65;
-  ctx.lineWidth = 1.5 * scale;
+  ctx.lineWidth = 1.7 * scale;
   ctx.stroke();
   ctx.globalAlpha = 1;
+  ctx.fillStyle = `${outfit.secondary}dd`;
+  roundRect(ctx, -6 * scale, -21 * scale, 25 * scale, 24 * scale, 5 * scale);
+  ctx.fill();
+  ctx.strokeStyle = `${outfit.trim}99`;
+  ctx.stroke();
   drawOutfitDetails(ctx, character.outfit, outfit.trim, scale);
   ctx.restore();
 
-  // Head tucked behind the rifle.
+  // Head tucked low behind the optic.
+  ctx.fillStyle = `${outfit.secondary}dd`;
+  ctx.beginPath();
+  ctx.arc(17 * scale, -20 * scale, 13 * scale, 0, Math.PI * 2);
+  ctx.fill();
   ctx.fillStyle = skin;
   ctx.beginPath();
-  ctx.arc(24 * scale, -23 * scale, 11 * scale, 0, Math.PI * 2);
+  ctx.arc(28 * scale, -27 * scale, 12 * scale, 0, Math.PI * 2);
   ctx.fill();
+  ctx.save();
+  ctx.translate(5 * scale, 0);
   drawHair(ctx, character.hair, hair, scale);
   drawAccessory(ctx, character.accessory, outfit.trim, scale);
-
-  // Supporting arm.
-  limb(ctx, 5, -12, 33, -17, 6, skin, scale);
-  limb(ctx, 1, -4, 22, -8, 6, outfit.primary, scale);
-
-  // Rifle pivots to the actual target selected by the engine.
-  ctx.save();
-  ctx.translate(21 * scale, -18 * scale);
-  ctx.rotate(aimAngle);
-  ctx.fillStyle = '#10171b';
-  roundRect(ctx, -6 * scale, -3.5 * scale, 63 * scale, 7 * scale, 2 * scale);
-  ctx.fill();
-  ctx.strokeStyle = '#718087';
-  ctx.lineWidth = 1 * scale;
-  ctx.stroke();
-  ctx.fillStyle = '#05080a';
-  ctx.fillRect(48 * scale, -2 * scale, 29 * scale, 4 * scale);
-  ctx.fillStyle = outfit.trim;
-  ctx.globalAlpha = 0.78;
-  ctx.fillRect(4 * scale, -6 * scale, 17 * scale, 4 * scale);
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = '#080b0d';
+  ctx.restore();
+  ctx.fillStyle = '#111719';
   ctx.beginPath();
-  ctx.moveTo(14 * scale, 3 * scale);
-  ctx.lineTo(27 * scale, 3 * scale);
-  ctx.lineTo(22 * scale, 17 * scale);
-  ctx.lineTo(14 * scale, 17 * scale);
+  ctx.arc(34 * scale, -29 * scale, 1.6 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(70,35,30,.7)';
+  ctx.lineWidth = scale;
+  ctx.beginPath();
+  ctx.moveTo(36 * scale, -23 * scale);
+  ctx.lineTo(40 * scale, -21 * scale);
+  ctx.stroke();
+
+  // Trigger arm and braced support arm.
+  limb(ctx, 0, -12, 24, -19, 8, outfit.primary, scale);
+  limb(ctx, 22, -19, 35, -19, 5.5, skin, scale);
+  limb(ctx, -1, -4, 24, 2, 8, outfit.primary, scale);
+  limb(ctx, 24, 2, 45, -12, 5.5, skin, scale);
+  ctx.fillStyle = outfit.trim;
+  ctx.globalAlpha = 0.35;
+  ctx.beginPath();
+  ctx.arc(23 * scale, 1 * scale, 7 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Rifle pivots to the engine-selected zombie and recoils on a completed word.
+  ctx.save();
+  ctx.translate(20 * scale - recoil, -20 * scale);
+  ctx.rotate(aimAngle);
+
+  // Stock seated into the shoulder.
+  ctx.fillStyle = '#090d0f';
+  ctx.beginPath();
+  ctx.moveTo(-27 * scale, -3 * scale);
+  ctx.lineTo(-4 * scale, -5 * scale);
+  ctx.lineTo(3 * scale, 5 * scale);
+  ctx.lineTo(-23 * scale, 10 * scale);
   ctx.closePath();
   ctx.fill();
 
+  // Receiver and handguard.
+  ctx.fillStyle = '#151e22';
+  roundRect(ctx, -3 * scale, -5 * scale, 48 * scale, 10 * scale, 2 * scale);
+  ctx.fill();
+  ctx.strokeStyle = '#829198';
+  ctx.lineWidth = 1.1 * scale;
+  ctx.stroke();
+  ctx.fillStyle = outfit.trim;
+  ctx.globalAlpha = 0.7;
+  ctx.fillRect(17 * scale, -4 * scale, 23 * scale, 2 * scale);
+  ctx.globalAlpha = 1;
+
+  // Magazine, grip, optic, barrel, and muzzle brake.
+  ctx.fillStyle = '#080b0d';
+  ctx.beginPath();
+  ctx.moveTo(7 * scale, 4 * scale);
+  ctx.lineTo(20 * scale, 4 * scale);
+  ctx.lineTo(17 * scale, 18 * scale);
+  ctx.lineTo(7 * scale, 15 * scale);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(0, 4 * scale, 5 * scale, 12 * scale);
+  ctx.fillStyle = '#05080a';
+  ctx.fillRect(43 * scale, -2 * scale, 43 * scale, 4 * scale);
+  ctx.fillRect(84 * scale, -4 * scale, 8 * scale, 8 * scale);
+  ctx.fillStyle = '#1b272c';
+  roundRect(ctx, 7 * scale, -11 * scale, 17 * scale, 7 * scale, 2 * scale);
+  ctx.fill();
+  ctx.strokeStyle = outfit.trim;
+  ctx.globalAlpha = 0.85;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = outfit.trim;
+  ctx.fillRect(28 * scale, 5 * scale, 3 * scale, 9 * scale);
+
   if (s.survivorShot) {
-    const frac = Math.max(0, s.survivorShot.life / s.survivorShot.ttl);
-    const muzzleX = 79 * scale;
-    ctx.fillStyle = `rgba(255,235,145,${frac})`;
+    const muzzleX = 94 * scale;
+    ctx.fillStyle = `rgba(255,235,145,${shotStrength})`;
     ctx.shadowColor = '#ffd166';
-    ctx.shadowBlur = 15 * frac;
+    ctx.shadowBlur = 18 * shotStrength;
     ctx.beginPath();
     ctx.moveTo(muzzleX, 0);
-    ctx.lineTo(muzzleX + 15 * scale * frac, -6 * scale);
-    ctx.lineTo(muzzleX + 9 * scale * frac, 0);
-    ctx.lineTo(muzzleX + 15 * scale * frac, 6 * scale);
+    ctx.lineTo(muzzleX + 18 * scale * shotStrength, -7 * scale);
+    ctx.lineTo(muzzleX + 10 * scale * shotStrength, 0);
+    ctx.lineTo(muzzleX + 18 * scale * shotStrength, 7 * scale);
     ctx.closePath();
     ctx.fill();
     ctx.shadowBlur = 0;
+
+    // A brief brass casing sells the shot without adding screen clutter.
+    ctx.fillStyle = `rgba(255,193,74,${shotStrength})`;
+    ctx.save();
+    ctx.translate(8 * scale, -8 * scale);
+    ctx.rotate(-0.8 + shotStrength);
+    ctx.fillRect(0, 0, 5 * scale, 2 * scale);
+    ctx.restore();
   }
   ctx.restore();
   ctx.restore();
 
   if (s.survivorShot) {
-    drawTracer(ctx, x, y, s.survivorShot, scale);
+    drawTracer(ctx, muzzleWorldX, muzzleWorldY, s.survivorShot, scale);
   }
 }
 
 function drawTracer(
   ctx: CanvasRenderingContext2D,
-  originX: number,
-  originY: number,
+  muzzleX: number,
+  muzzleY: number,
   shot: NonNullable<GameState['survivorShot']>,
   scale: number,
 ) {
   const frac = Math.max(0, shot.life / shot.ttl);
-  const startX = originX + (shot.x >= originX ? 1 : -1) * 75 * scale;
-  const startY = originY - 18 * scale;
-  const gradient = ctx.createLinearGradient(startX, startY, shot.x, shot.y);
+  const gradient = ctx.createLinearGradient(muzzleX, muzzleY, shot.x, shot.y);
   gradient.addColorStop(0, `rgba(255,245,180,${0.9 * frac})`);
   gradient.addColorStop(0.6, `rgba(255,180,70,${0.45 * frac})`);
   gradient.addColorStop(1, 'rgba(255,80,30,0)');
@@ -139,7 +228,7 @@ function drawTracer(
   ctx.shadowColor = '#ffd166';
   ctx.shadowBlur = 6 * frac;
   ctx.beginPath();
-  ctx.moveTo(startX, startY);
+  ctx.moveTo(muzzleX, muzzleY);
   ctx.lineTo(shot.x, shot.y);
   ctx.stroke();
   ctx.shadowBlur = 0;
