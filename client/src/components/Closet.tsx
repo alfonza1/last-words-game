@@ -30,19 +30,25 @@ export function Closet({
 }: Props) {
   const [draft, setDraft] = useState(() => normalizeCharacter(character));
   const [saved, setSaved] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   useEffect(() => {
     setDraft(normalizeCharacter(character));
     setSaved(false);
   }, [character]);
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(character);
+  const hasUnsavedChanges = dirty && !saved;
   const owned = useMemo(() => new Set(ownedCosmetics), [ownedCosmetics]);
   const ownedOutfits = useMemo(() => cosmeticsFor('outfit').filter((item) => owned.has(item.key)), [owned]);
   const ownedAccessories = useMemo(() => cosmeticsFor('accessory').filter((item) => owned.has(item.key)), [owned]);
 
-  const chooseCosmetic = (key: string, slot: 'outfit' | 'accessory') => {
-    setDraft((prev) => ({ ...prev, [slot]: key }));
+  const updateDraft = (change: Partial<CharacterLoadout>) => {
+    setDraft((prev) => ({ ...prev, ...change }));
     setSaved(false);
+  };
+
+  const chooseCosmetic = (key: string, slot: 'outfit' | 'accessory') => {
+    updateDraft({ [slot]: key });
   };
 
   const save = () => {
@@ -55,11 +61,19 @@ export function Closet({
     setSaved(true);
   };
 
+  const requestBack = () => {
+    if (hasUnsavedChanges) {
+      setConfirmLeave(true);
+      return;
+    }
+    onBack();
+  };
+
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-4 overflow-y-auto p-5">
       <div className="flex items-center gap-3">
         <button
-          onClick={onBack}
+          onClick={requestBack}
           className="rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
         >
           ← Back
@@ -71,7 +85,7 @@ export function Closet({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[340px_1fr] lg:gap-5">
-        <section className="relative flex min-h-[520px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-4 lg:min-h-[470px]">
+        <section className="relative flex min-h-[520px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-4 lg:mt-[54px] lg:min-h-[470px]">
           <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-neon-cyan/10 to-transparent" />
 
           <div className="relative mt-2 flex flex-1 items-center justify-center">
@@ -82,30 +96,30 @@ export function Closet({
         <div className="relative overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/55 p-3">
           <div className="absolute inset-y-0 left-0 w-1 bg-neon-cyan shadow-[0_0_14px_rgba(0,240,255,0.8)]" />
           <div className="flex items-center justify-between gap-3 pl-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">Survivor Loadout</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">Survivor Look</span>
             <span
               className={`rounded border px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
-                dirty && !saved
+                hasUnsavedChanges
                   ? 'border-neon-amber/50 bg-neon-amber/10 text-neon-amber'
                   : 'border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan'
               }`}
             >
-              {dirty && !saved ? 'Unsaved' : 'Equipped'}
+              {hasUnsavedChanges ? 'Unsaved' : 'Equipped'}
             </span>
           </div>
           {!signedIn && (
-            <p className="mt-2 pl-2 text-[11px] text-neon-pink">Guest loadouts last for this visit.</p>
+            <p className="mt-2 pl-2 text-[11px] text-neon-pink">Guest looks last for this visit.</p>
           )}
           <button
             onClick={save}
             disabled={!dirty || saved}
             className={`mt-3 w-full rounded-lg border px-4 py-2 text-sm font-black tracking-wider ${
-              dirty && !saved
+              hasUnsavedChanges
                 ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-neon'
                 : 'border-neon-cyan/25 bg-neon-cyan/5 text-neon-cyan/60'
             }`}
           >
-            EQUIP LOADOUT
+            EQUIP LOOK
           </button>
         </div>
       </section>
@@ -125,7 +139,7 @@ export function Closet({
             {SKIN_TONES.map((tone) => (
               <button
                 key={tone.key}
-                onClick={() => setDraft((prev) => ({ ...prev, skinTone: tone.key }))}
+                onClick={() => updateDraft({ skinTone: tone.key })}
                 className={`rounded-lg border p-2 text-[10px] font-bold ${
                   draft.skinTone === tone.key ? 'border-neon-green text-neon-green' : 'border-white/10 text-white/50'
                 }`}
@@ -143,7 +157,7 @@ export function Closet({
               {HAIR_STYLES.map((style) => (
                 <button
                   key={style.key}
-                  onClick={() => setDraft((prev) => ({ ...prev, hair: style.key }))}
+                  onClick={() => updateDraft({ hair: style.key })}
                   className={`rounded-lg border px-3 py-2 text-xs font-bold ${
                     draft.hair === style.key ? 'border-neon-cyan bg-neon-cyan/10 text-neon-cyan' : 'border-white/10 text-white/50'
                   }`}
@@ -159,7 +173,7 @@ export function Closet({
                 <button
                   key={color.key}
                   title={color.label}
-                  onClick={() => setDraft((prev) => ({ ...prev, hairColor: color.key }))}
+                  onClick={() => updateDraft({ hairColor: color.key })}
                   className={`flex items-center gap-2 rounded-lg border p-2 text-[10px] ${
                     draft.hairColor === color.key ? 'border-neon-cyan text-neon-cyan' : 'border-white/10 text-white/45'
                   }`}
@@ -186,6 +200,31 @@ export function Closet({
         />
         </section>
       </div>
+
+      {confirmLeave && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-neon-amber/50 bg-ink-800 p-5 text-center shadow-[0_0_30px_rgba(255,183,0,0.15)]">
+            <h2 className="text-lg font-black tracking-wide text-neon-amber">UNSAVED SURVIVOR LOOK</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/70">
+              Your changes have not been equipped. Leaving now will discard them.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setConfirmLeave(false)}
+                className="flex-1 rounded-lg border border-neon-cyan/50 bg-neon-cyan/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-neon-cyan hover:bg-neon-cyan/20"
+              >
+                Keep Editing
+              </button>
+              <button
+                onClick={onBack}
+                className="flex-1 rounded-lg border border-neon-amber/50 bg-neon-amber/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-neon-amber hover:bg-neon-amber/20"
+              >
+                Discard Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -304,13 +304,13 @@ export default function App() {
     (next: CharacterLoadout) => {
       if (!user) {
         setCharacter(normalizeCharacter(next));
-        toast.success('Guest loadout equipped for this visit.');
+        toast.success('Guest look equipped for this visit.');
         return;
       }
       apiEquipCharacter(next)
         .then((p) => {
           applyProfile(p);
-          toast.success('Survivor loadout equipped.');
+          toast.success('Survivor look equipped.');
         })
         .catch(fail);
     },

@@ -162,7 +162,7 @@ export function MainMenu({
             className="absolute inset-x-0 bottom-9 mx-auto h-[310px] w-[245px] transition group-hover:scale-[1.025]"
           />
           <div className="absolute inset-x-4 bottom-3 flex items-center justify-between border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest">
-            <span className="text-white/35">Loadout online</span>
+            <span className="text-white/35">Look equipped</span>
             <span className="font-bold text-neon-green">Customize →</span>
           </div>
         </button>
