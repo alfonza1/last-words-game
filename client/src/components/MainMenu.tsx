@@ -65,9 +65,6 @@ export function MainMenu({ stats, difficulty, character, username, onStart, onNa
               <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
                 <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
               </button>
-              <button className="menu-btn text-base" onClick={() => onNav('closet')}>
-                <span className="mr-2 inline-block w-5 text-center">◈</span>Closet
-              </button>
               <button className="menu-btn text-base" onClick={() => onNav('leaderboard')}>
                 <span className="mr-2 inline-block w-5 text-center">🏆</span>Leaderboard
               </button>
@@ -88,7 +85,10 @@ export function MainMenu({ stats, difficulty, character, username, onStart, onNa
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
           <div className="absolute left-3 top-3 z-10">
-            <div className="max-w-[220px] truncate text-lg font-black tracking-wide text-white">{username}</div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-neon-cyan/70">Survivor</div>
+            <div className="max-w-[220px] truncate text-xl font-black tracking-wide text-neon-green drop-shadow-[0_0_12px_rgba(57,255,20,0.55)]">
+              {username}
+            </div>
           </div>
           <CharacterAvatar
             character={character}
