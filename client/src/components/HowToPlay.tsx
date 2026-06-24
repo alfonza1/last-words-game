@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 interface Props {
   onBack: () => void;
@@ -56,8 +56,10 @@ function Card({
 }
 
 export function HowToPlay({ onBack }: Props) {
+  const [mobileSection, setMobileSection] = useState<'basics' | 'zombies' | 'powerups'>('basics');
+
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4 lg:overflow-hidden">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-hidden p-4">
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
@@ -71,8 +73,28 @@ export function HowToPlay({ onBack }: Props) {
         </div>
       </div>
 
+      <div className="grid grid-cols-3 gap-2 lg:hidden">
+        {[
+          ['basics', 'Basics'],
+          ['zombies', 'Zombies'],
+          ['powerups', 'Powerups'],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setMobileSection(key as typeof mobileSection)}
+            className={`rounded-md border px-2 py-2 text-[10px] font-black uppercase tracking-wider ${
+              mobileSection === key
+                ? 'border-neon-green bg-neon-green/10 text-neon-green'
+                : 'border-white/15 text-white/50'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[1.15fr_0.85fr_1fr]">
-        <div className="space-y-3">
+        <div className={`${mobileSection === 'basics' ? 'block' : 'hidden'} space-y-3 lg:block`}>
           <Card title="The Basics" color="#39ff14">
             <ol className="space-y-2">
               {STEPS.map(([title, desc], i) => (
@@ -108,7 +130,11 @@ export function HowToPlay({ onBack }: Props) {
           </div>
         </div>
 
-        <Card title="Zombie Types" color="#ff2bd6" className="self-start">
+        <Card
+          title="Zombie Types"
+          color="#ff2bd6"
+          className={`${mobileSection === 'zombies' ? 'block' : 'hidden'} self-start lg:block`}
+        >
           <ul className="space-y-2">
             {ZOMBIE_INFO.map(([name, desc]) => (
               <li key={name} className="text-xs leading-snug">
@@ -120,7 +146,11 @@ export function HowToPlay({ onBack }: Props) {
           </ul>
         </Card>
 
-        <Card title="Powerups" color="#39ff14" className="self-start">
+        <Card
+          title="Powerups"
+          color="#39ff14"
+          className={`${mobileSection === 'powerups' ? 'block' : 'hidden'} self-start lg:block`}
+        >
           <ul className="space-y-2">
             {POWERUPS.map(([name, desc]) => (
               <li key={name} className="text-xs leading-snug">
