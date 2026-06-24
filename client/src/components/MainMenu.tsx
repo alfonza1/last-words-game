@@ -25,7 +25,7 @@ export function MainMenu({ stats, difficulty, character, onStart, onNav, onDiffi
   const outfit = cosmeticByKey(character.outfit);
   const accessory = cosmeticByKey(character.accessory);
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center gap-6 overflow-y-auto p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-6 overflow-y-auto px-6 pb-10 pt-16 lg:justify-center lg:p-6">
       <div className="text-center">
         <h1 className="text-5xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>

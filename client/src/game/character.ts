@@ -8,9 +8,10 @@ export function drawSurvivor(
   character: CharacterLoadout,
   time: number,
 ) {
-  const scale = Math.max(0.62, Math.min(1.32, Math.min(s.width / 960, s.height / 600)));
-  const x = Math.max(72, s.width * 0.1);
-  const y = s.height - 78;
+  const mobile = s.width < 600;
+  const scale = Math.max(mobile ? 0.7 : 0.62, Math.min(1.32, Math.min(s.width / 960, s.height / 600)));
+  const x = mobile ? s.width * 0.18 : Math.max(72, s.width * 0.1);
+  const y = mobile ? s.height - 150 : s.height - 78;
   const target = s.survivorShot ?? { x: s.width * 0.5, y: s.height * 0.28, life: 0, ttl: 1 };
   const dx = target.x - x;
   const direction = dx >= 0 ? 1 : -1;
