@@ -400,8 +400,8 @@ function drawThemeScenery(
       }
     }
 
-    // Ruined towers frame the lane. Their broken rooflines and small rotations
-    // keep the skyline from reading as a row of pristine rectangles.
+    // Ruined towers frame the lane. Every foundation sits on the same street
+    // grade; the broken rooflines provide the irregular silhouette.
     const towers = 10;
     for (let i = 0; i < towers; i++) {
       const seg = w / towers;
@@ -409,12 +409,10 @@ function drawThemeScenery(
       const bw = seg + 8;
       const edgeHeight = Math.abs((i + 0.5) / towers - 0.5) * 2;
       const bh = hzn * (0.38 + rand(i + 9) * 0.42 + edgeHeight * 0.38);
-      const lean = (rand(i + 51) - 0.5) * 0.055;
       const emergency = rand(i + 4) > 0.55 ? '32,242,194' : '255,72,55';
 
       ctx.save();
       ctx.translate(bx + bw / 2, hzn);
-      ctx.rotate(lean);
       const left = -bw / 2;
       const buildingTop = -bh;
       const bg = ctx.createLinearGradient(left, 0, left + bw, 0);
@@ -483,6 +481,17 @@ function drawThemeScenery(
       ctx.restore();
     }
 
+    // Continuous storefront plinth makes the skyline meet the road on one
+    // clean, level baseline instead of appearing to float at mixed heights.
+    ctx.fillStyle = '#071014';
+    ctx.fillRect(0, hzn - 2, w, 10);
+    ctx.strokeStyle = 'rgba(65,92,94,0.42)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, hzn + 7);
+    ctx.lineTo(w, hzn + 7);
+    ctx.stroke();
+
     // Wet evacuation boulevard in deep perspective.
     const road = ctx.createLinearGradient(0, hzn, 0, h);
     road.addColorStop(0, 'rgba(20,30,33,0.96)');
@@ -537,24 +546,8 @@ function drawThemeScenery(
     for (let x = -34; x < 36; x += 14) ctx.fillRect(x, -9, 8, 6);
     ctx.restore();
 
-    // Headlight beams begin at the bus's front fascia and project toward the
-    // player. The bulbs themselves are drawn over the bus below.
     const busX = w * 0.38;
     const busY = hzn + h * 0.17;
-    const busHeadlightY = busY + 7 * sceneScale;
-    for (const hx of [busX - 20 * sceneScale, busX + 20 * sceneScale]) {
-      const beam = ctx.createLinearGradient(hx, busHeadlightY, hx, busHeadlightY + h * 0.22);
-      beam.addColorStop(0, 'rgba(255,215,145,0.18)');
-      beam.addColorStop(1, 'rgba(255,190,100,0)');
-      ctx.fillStyle = beam;
-      ctx.beginPath();
-      ctx.moveTo(hx - 2, busHeadlightY);
-      ctx.lineTo(hx + 2, busHeadlightY);
-      ctx.lineTo(hx + 45, busHeadlightY + h * 0.22);
-      ctx.lineTo(hx - 45, busHeadlightY + h * 0.22);
-      ctx.closePath();
-      ctx.fill();
-    }
 
     // Most street lamps are dead. The survivors stay steadily lit rather than
     // flashing, so the road has a fixed readable lighting pattern.
@@ -604,39 +597,85 @@ function drawThemeScenery(
     ctx.fill();
     ctx.fillStyle = 'rgba(255,60,40,0.65)';
     ctx.fillRect(29, 0, 3, 5);
-    ctx.fillStyle = '#ffe0a0';
-    ctx.shadowColor = '#ffc66d';
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.arc(-20, 7, 2.8, 0, Math.PI * 2);
-    ctx.arc(20, 7, 2.8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
     ctx.restore();
 
-    // A crashed emergency vehicle and quarantine barricades sit near the
-    // player, leaving the center lane clear for approaching zombies.
+    // Abandoned civilian sedan, left crooked across a lane.
     ctx.save();
-    ctx.translate(w * 0.72, h - 116);
-    ctx.rotate(0.08);
+    ctx.translate(w * 0.27, h - 158);
+    ctx.rotate(-0.12);
     ctx.scale(sceneScale, sceneScale);
-    ctx.fillStyle = '#0b1115';
-    ctx.fillRect(-29, -9, 58, 17);
-    ctx.fillStyle = '#18242a';
+    ctx.fillStyle = 'rgba(0,0,0,0.34)';
     ctx.beginPath();
-    ctx.moveTo(-17, -9);
-    ctx.lineTo(-9, -20);
-    ctx.lineTo(13, -20);
-    ctx.lineTo(21, -9);
+    ctx.ellipse(0, 10, 34, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#2d302b';
+    ctx.fillRect(-31, -8, 62, 17);
+    ctx.fillStyle = '#3d423b';
+    ctx.beginPath();
+    ctx.moveTo(-18, -8);
+    ctx.lineTo(-10, -20);
+    ctx.lineTo(14, -20);
+    ctx.lineTo(22, -8);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#ff4938';
-    ctx.shadowColor = '#ff4938';
-    ctx.shadowBlur = 10;
-    ctx.fillRect(-7, -23, 6, 3);
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#132328';
-    ctx.fillRect(1, -23, 6, 3);
+    ctx.fillStyle = 'rgba(80,115,112,0.3)';
+    ctx.fillRect(-9, -17, 20, 7);
+    ctx.strokeStyle = '#191d1a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-28, -2);
+    ctx.lineTo(-16, 3);
+    ctx.stroke();
+    ctx.fillStyle = '#050708';
+    ctx.beginPath();
+    ctx.arc(-20, 10, 6, 0, Math.PI * 2);
+    ctx.arc(21, 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(120,25,18,0.58)';
+    ctx.fillRect(-31, -4, 3, 5);
+    ctx.restore();
+
+    // Abandoned police cruiser, right side, doors open and light bar dead.
+    ctx.save();
+    ctx.translate(w * 0.74, h - 125);
+    ctx.rotate(0.09);
+    ctx.scale(sceneScale, sceneScale);
+    ctx.fillStyle = 'rgba(0,0,0,0.38)';
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 36, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#d1d7d3';
+    ctx.fillRect(-32, -8, 64, 17);
+    ctx.fillStyle = '#12191d';
+    ctx.fillRect(-5, -8, 37, 17);
+    ctx.beginPath();
+    ctx.moveTo(-18, -8);
+    ctx.lineTo(-10, -21);
+    ctx.lineTo(14, -21);
+    ctx.lineTo(23, -8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(80,120,125,0.35)';
+    ctx.fillRect(-8, -18, 19, 7);
+    ctx.fillStyle = '#421718';
+    ctx.fillRect(-8, -24, 7, 3);
+    ctx.fillStyle = '#14283a';
+    ctx.fillRect(1, -24, 7, 3);
+    ctx.fillStyle = '#050708';
+    ctx.beginPath();
+    ctx.arc(-21, 10, 6, 0, Math.PI * 2);
+    ctx.arc(22, 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.save();
+    ctx.translate(27, -5);
+    ctx.rotate(-0.65);
+    ctx.fillStyle = '#11191d';
+    ctx.fillRect(0, -7, 18, 14);
+    ctx.restore();
+    ctx.fillStyle = 'rgba(15,20,22,0.85)';
+    ctx.font = '700 6px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('POLICE', -19, 3);
     ctx.restore();
 
     for (const side of [-1, 1] as const) {
