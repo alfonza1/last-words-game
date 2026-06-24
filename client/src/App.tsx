@@ -391,6 +391,7 @@ export default function App() {
             settings={settings}
             character={character}
             riddleMode={settings.riddleMode}
+            puzzleStyle={settings.puzzleStyle}
             onGameOver={handleGameOver}
             onUsePowerup={onUsePowerup}
             onQuit={(r) => endRun(r, () => setScreen('menu'))}
@@ -489,10 +490,12 @@ export default function App() {
             character={character}
             username={username || (signedIn ? 'Survivor' : 'Guest')}
             riddleMode={settings.riddleMode}
+            puzzleStyle={settings.puzzleStyle}
             onStart={chooseMode}
             onNav={(scr) => (scr === 'upgrades' ? openStore('menu') : setScreen(scr))}
             onDifficulty={setDifficulty}
             onRiddleMode={(v) => persistSettings({ ...settings, riddleMode: v })}
+            onPuzzleStyle={(s) => persistSettings({ ...settings, riddleMode: true, puzzleStyle: s })}
           />
         );
     }

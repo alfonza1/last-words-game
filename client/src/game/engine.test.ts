@@ -129,6 +129,19 @@ describe('riddle mode', () => {
     expect(e.state.kills).toBe(0);
     expect(e.state.input).toBe('definitelywrong');
   });
+
+  it('math style fires its own (smaller) volley — normal = 4 kills', () => {
+    const e = new GameEngine({
+      mode: 'survival', difficulty: 'normal', upgrades: DEFAULT_UPGRADES,
+      settings: DEFAULT_SETTINGS, width: 960, height: 600, seed: 1,
+      riddleMode: true, puzzleStyle: 'math',
+    });
+    expect(e.state.riddlePrompt).toBeTruthy(); // an equation
+    e.state.zombies = Array.from({ length: 8 }, () => zombie({ y: 400 }));
+    e.handleInput(firstWord(e) + ' '); // type the math answer
+    expect(e.state.kills).toBe(4); // puzzleKills.math.normal
+    expect(e.state.zombies).toHaveLength(4);
+  });
 });
 
 describe('live WPM', () => {

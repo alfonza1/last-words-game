@@ -8,6 +8,7 @@ import type {
   GameEvent,
   GameMode,
   GameState,
+  PuzzleStyle,
   Settings,
   Upgrades,
   Zombie,
@@ -20,7 +21,6 @@ import {
   uid,
 } from '../lib/utils';
 import {
-  RIDDLE_SPEED_MULT,
   getDifficultyConfig,
   isBossWave,
   waveSpawnInterval,
@@ -28,7 +28,7 @@ import {
   waveZombieCount,
   wordTierForWave,
 } from './difficulty';
-import { RIDDLES, type Riddle } from '../data/riddles';
+import { makePuzzle, puzzleKills, puzzleSpeedMult, type Puzzle } from '../data/puzzles';
 import {
   createScreamerAdd,
   createZombie,
@@ -67,8 +67,10 @@ export interface EngineOptions {
   seed?: number;
   /** Consumable powerup charges the player owns (grenade/freeze). */
   powerups?: Record<string, number>;
-  /** Riddle Mode: solve riddles to fire a multi-kill volley. */
+  /** Puzzle Mode: solve prompts to fire a multi-kill volley. */
   riddleMode?: boolean;
+  /** Which puzzle to solve when riddleMode is on (default 'riddles'). */
+  puzzleStyle?: PuzzleStyle;
 }
 
 const DOUBLE_DAMAGE_MS = 5000;
@@ -93,12 +95,14 @@ export class GameEngine {
   private wordStartMs = 0;
   private slowMoCooldown = 0;
   private recentWords: Array<{ t: number; chars: number }> = []; // rolling WPM window
-  // Riddle Mode: parallels wordQueue (which holds answers) with the full riddles,
+  // Puzzle Mode: parallels wordQueue (which holds answers) with the full puzzles,
   // so we can show prompts and accept synonyms while reusing the typing pipeline.
-  private riddleQueue: Riddle[] = [];
+  private riddleQueue: Puzzle[] = [];
+  private puzzleStyle: PuzzleStyle = 'riddles';
 
   constructor(opts: EngineOptions) {
     this.rng = mulberry32(opts.seed ?? hashSeed(`${Date.now()}-${Math.random()}`));
+    this.puzzleStyle = opts.puzzleStyle ?? 'riddles';
     const cfg = getDifficultyConfig(opts.difficulty);
     const maxHealth = cfg.startHealth + maxHealthBonus(opts.upgrades);
     this.state = {
@@ -185,17 +189,16 @@ export class GameEngine {
     this.syncRiddlePrompt();
   }
 
-  /** Pick a riddle for the current wave's tier, avoiding answers already queued. */
-  private pickRiddle(): Riddle {
+  /** Make a puzzle for the current style + wave tier, avoiding answers already queued. */
+  private pickRiddle(): Puzzle {
     const cfg = getDifficultyConfig(this.state.difficulty);
     const tier = wordTierForWave(Math.max(1, this.state.wave), cfg.wordLengthBias);
-    const pool = RIDDLES[tier];
-    let riddle = pool[Math.floor(this.rng() * pool.length)];
+    let puzzle = makePuzzle(this.puzzleStyle, this.rng, this.state.difficulty, tier);
     let guard = 0;
-    while (this.state.wordQueue.includes(riddle.answer) && guard++ < 8) {
-      riddle = pool[Math.floor(this.rng() * pool.length)];
+    while (this.state.wordQueue.includes(puzzle.answer) && guard++ < 8) {
+      puzzle = makePuzzle(this.puzzleStyle, this.rng, this.state.difficulty, tier);
     }
-    return riddle;
+    return puzzle;
   }
 
   private syncRiddlePrompt() {
@@ -409,8 +412,8 @@ export class GameEngine {
     if (s.wave <= 3 && s.upgrades.slowWaves > 0) {
       speed *= 1 - Math.min(0.45, s.upgrades.slowWaves * 0.15);
     }
-    // Riddle Mode slows zombies — kills come in bursts after each solve.
-    if (s.riddleMode) speed *= RIDDLE_SPEED_MULT;
+    // Puzzle Mode slows zombies — kills come in bursts after each solve.
+    if (s.riddleMode) speed *= puzzleSpeedMult(this.puzzleStyle);
 
     const spawnY = s.height * SPAWN_FRAC; // appear just below the word panel
     const bossWave = s.mode === 'bossrush' || isBossWave(s.wave);
@@ -513,14 +516,14 @@ export class GameEngine {
     if (target.hp <= 0) this.killZombie(target);
   }
 
-  /** A solved riddle fires several shots at once — the small survivor's volley. */
+  /** A solved puzzle fires several shots at once — the small survivor's volley. */
   private fireRiddleVolley() {
-    const shots = getDifficultyConfig(this.state.difficulty).riddleKills;
+    const shots = puzzleKills(this.puzzleStyle, this.state.difficulty);
     for (let i = 0; i < shots; i++) this.fireAtNearest();
   }
 
-  /** Riddle answers match case-insensitively, ignore spaces/articles, accept synonyms. */
-  private riddleMatches(candidate: string, riddle: Riddle): boolean {
+  /** Puzzle answers match case-insensitively, ignore spaces/articles, accept synonyms. */
+  private riddleMatches(candidate: string, riddle: Puzzle): boolean {
     const got = this.normalizeAnswer(candidate);
     if (got.length === 0) return false;
     if (got === this.normalizeAnswer(riddle.answer)) return true;

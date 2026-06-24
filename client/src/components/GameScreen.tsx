@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { CharacterLoadout, Difficulty, GameMode, GameState, Settings, Upgrades } from '../types';
+import type { CharacterLoadout, Difficulty, GameMode, GameState, PuzzleStyle, Settings, Upgrades } from '../types';
 import { GameEngine } from '../game/engine';
 import { drawGame } from '../game/render';
 import { getMap } from '../data/maps';
@@ -32,6 +32,7 @@ interface Props {
   settings: Settings;
   character: CharacterLoadout;
   riddleMode: boolean;
+  puzzleStyle: PuzzleStyle;
   onGameOver: (result: RunResult) => void;
   onUsePowerup: (key: string) => void;
   /** Quit/restart pass the partial run so its stats still save. */
@@ -51,6 +52,7 @@ export function GameScreen({
   settings,
   character,
   riddleMode,
+  puzzleStyle,
   onGameOver,
   onUsePowerup,
   onQuit,
@@ -83,6 +85,7 @@ export function GameScreen({
       powerups,
       settings,
       riddleMode,
+      puzzleStyle,
       width: 960,
       height: 600,
     });

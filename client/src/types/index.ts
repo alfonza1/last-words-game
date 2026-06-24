@@ -124,6 +124,9 @@ export interface Upgrades {
 
 export type UpgradeKey = keyof Upgrades;
 
+/** Puzzle play styles (riddleMode = true). All fire a multi-kill volley per solve. */
+export type PuzzleStyle = 'riddles' | 'math' | 'trivia';
+
 export interface Settings {
   difficulty: Difficulty;
   map: string; // selected map theme id
@@ -133,8 +136,10 @@ export interface Settings {
   sound: boolean; // sound effects enabled
   sfxVolume: number; // 0..1
   weapon: WeaponType;
-  /** Riddle Mode: solve riddles (instead of typing words) to fire a multi-kill volley. */
+  /** Puzzle Mode: solve prompts (instead of typing words) to fire a multi-kill volley. */
   riddleMode: boolean;
+  /** Which puzzle to solve when riddleMode is on. */
+  puzzleStyle: PuzzleStyle;
 }
 
 export interface HighScore {

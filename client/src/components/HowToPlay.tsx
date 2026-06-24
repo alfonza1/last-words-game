@@ -7,10 +7,12 @@ interface Props {
 type GuideSection = 'defense' | 'rules' | 'zombies' | 'powerups';
 
 const DEFENSE: [string, string][] = [
-  ['Typing Defense', 'Type the first highlighted target, then press SPACE. Each completed target fires one shot at the nearest visible zombie.'],
-  ['Riddle Defense', 'Type the answer, then press SPACE. Answers ignore case, spaces, and leading articles; accepted synonyms also work.'],
-  ['Riddle Volleys', 'A solved riddle fires 5 shots on Easy, 8 on Normal, or 12 on Nightmare.'],
-  ['Keep the Queue Moving', 'A successful target leaves the queue and a fresh one appears at the end.'],
+  ['Typing Defense', 'Type the highlighted word, then press SPACE. Each completed word fires one shot at the nearest zombie.'],
+  ['Riddle Defense', 'Solve the riddle, then press SPACE. A solve fires a volley: 5 / 8 / 12 shots on Easy / Normal / Nightmare.'],
+  ['Math Defense', 'Solve the arithmetic, then press SPACE. Harder math each difficulty; a solve fires 3 / 4 / 6 shots.'],
+  ['Trivia Defense', 'Answer the question, then press SPACE. Tougher questions each difficulty; a solve fires 3 / 5 / 8 shots.'],
+  ['Even by Design', 'Volley sizes are tuned so every style clears about the same zombies per minute as typing — pick what you enjoy.'],
+  ['Forgiving Answers', 'Puzzle answers ignore case, spaces, and a leading “a/an/the”; accepted synonyms also count.'],
   ['Recover from Mistakes', 'Incorrect text stays in the input so you can backspace and fix it. Nightmare mistakes fully reset your streak.'],
   ['Hold the Line', 'Zombies damage the base when they arrive. A boss reaching it ends the run instantly.'],
 ];
@@ -158,7 +160,7 @@ export function HowToPlay({ onBack }: Props) {
             <div>
               <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-amber">Controls</h3>
               <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
-                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> — submit a word or riddle answer.</span></li>
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> — submit a word or puzzle answer.</span></li>
                 <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — pause, resume, restart, or quit.</span></li>
                 <li><span className="text-white/60">Owned consumables appear in-game. Type their command to spend one charge.</span></li>
               </ul>

@@ -48,6 +48,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sfxVolume: 0.4,
   weapon: 'pistol',
   riddleMode: false,
+  puzzleStyle: 'riddles',
 };
 
 function getStore(store?: Storage): Storage | null {
