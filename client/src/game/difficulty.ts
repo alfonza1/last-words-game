@@ -56,9 +56,9 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
   },
   nightmare: {
     label: 'Nightmare',
-    baseSpeed: 46,
-    speedPerWave: 6,
-    maxSpeed: 190,
+    baseSpeed: 38,
+    speedPerWave: 5,
+    maxSpeed: 160,
     spawnInterval: 1.35,
     spawnIntervalMin: 0.5,
     spawnAccel: 0.18,
