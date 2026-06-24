@@ -136,7 +136,7 @@ export function MainMenu({
                   key={s}
                   onClick={() => selectStyle(s)}
                   className={`rounded-md px-3 py-2 text-sm font-bold transition-all ${
-                    activeStyle === s ? STYLE_META[s].active : 'text-white/55 hover:text-white/90'
+                    activeStyle === s ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
                   {STYLE_META[s].icon} {STYLE_META[s].label} Defense
@@ -149,7 +149,7 @@ export function MainMenu({
           {/* Modes + nav */}
           <div className="space-y-3">
             <button className="menu-btn text-base" onClick={() => onStart('survival')}>
-              <span className="mr-3 inline-block w-6 text-center">▶</span>Start Survival
+              <span className="mr-3 inline-block w-6 text-center">▶</span>Zombie Survival
             </button>
             <button className="menu-btn text-base" onClick={() => onStart('bossrush')}>
               <span className="mr-3 inline-block w-6 text-center">💀</span>Boss Rush
@@ -194,17 +194,10 @@ export function MainMenu({
         </button>
 
         {/* Records */}
-        <Records
-          stats={stats}
-          riddleStats={riddleStats}
-          riddleMode={riddleMode}
-          styleLabel={STYLE_META[activeStyle].label}
-        />
+        <Records stats={stats} riddleStats={riddleStats} riddleMode={riddleMode} />
       </div>
 
-      <p className="text-xs tracking-[0.25em] text-white/25">
-        SURVIVE THE NIGHT · ONE {STYLE_META[activeStyle].tagWord} AT A TIME
-      </p>
+      <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT · OUTLAST THE DEAD</p>
       <AdBanner />
     </div>
   );
@@ -214,35 +207,29 @@ function Records({
   stats,
   riddleStats,
   riddleMode,
-  styleLabel,
 }: {
   stats: GameStats;
   riddleStats: GameStats;
   riddleMode: boolean;
-  styleLabel: string;
 }) {
   const selected = riddleMode ? riddleStats : stats;
   return (
-    <div
-      className={`rounded-xl border bg-ink-800/70 p-4 transition-colors ${
-        riddleMode ? 'border-neon-pink/25' : 'border-white/10'
-      }`}
-    >
-      <h3 className={`mb-3 text-sm font-bold uppercase tracking-widest ${riddleMode ? 'text-neon-pink' : 'text-neon-green'}`}>
-        {styleLabel} Records
+    <div className="rounded-xl border border-neon-pink/25 bg-ink-800/70 p-4">
+      <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-neon-pink">
+        {riddleMode ? 'Solver' : 'Typing'} Records
       </h3>
       <dl className="space-y-1.5 text-sm">
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
         <Row k="Longest Survival" v={formatTime(selected.longestSurvivalMs)} />
         {riddleMode ? (
-          <Row k={`${styleLabel} Runs`} v={selected.gamesPlayed} />
+          <Row k="Total Runs" v={selected.gamesPlayed} />
         ) : (
           <Row k="Highest WPM" v={selected.highestWpm} />
         )}
         <Row k="Best Accuracy" v={`${selected.bestAccuracy}%`} />
-        <Row k={riddleMode ? `${styleLabel} Kills` : 'Total Kills'} v={selected.totalKills} />
+        <Row k="Total Kills" v={selected.totalKills} />
         <Row k="Bosses Defeated" v={selected.bossesDefeated} />
-        <Row k={riddleMode ? 'Best Solve Streak' : 'Longest Streak'} v={selected.longestStreak} />
+        <Row k="Longest Streak" v={selected.longestStreak} />
         <Row k="Coins Earned" v={(selected.coinsEarned ?? 0).toLocaleString()} />
       </dl>
     </div>

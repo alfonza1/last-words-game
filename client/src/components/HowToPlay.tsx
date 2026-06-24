@@ -25,15 +25,18 @@ const ZOMBIES: [string, string][] = [
   ['Boss', 'Large health bar · reaching the base is instant defeat'],
 ];
 
-const POWERUPS: [string, string][] = [
+const AUTO_POWERUPS: [string, string][] = [
   ['Shotgun', 'Every 10-word streak arms the next kill to blast nearby zombies.'],
   ['Shield', 'Every 15 mistake-free words grants one shield charge. Bosses ignore shields.'],
   ['Double Damage', 'Maintaining at least 55 WPM can trigger 5 seconds of double shot damage.'],
   ['Slow Motion', 'At 95% accuracy after 12 words, slow motion can trigger for 5 seconds.'],
   ['Headshot', 'Clear a target quickly for bonus points.'],
-  ['Grenade', 'Store consumable · type “grenade” to clear a nearby cluster.'],
-  ['Freeze', 'Store consumable · type “freeze” to stop every zombie for 3 seconds.'],
-  ['Med Kit', 'Store consumable · type “medkit” to restore 35 base health.'],
+];
+
+const CONSUMABLES: [string, string][] = [
+  ['grenade', 'Clears a nearby cluster of zombies.'],
+  ['freeze', 'Stops every zombie for 3 seconds.'],
+  ['medkit', 'Restores 35 base health.'],
 ];
 
 function Card({
@@ -157,12 +160,6 @@ export function HowToPlay({ onBack }: Props) {
                 <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — opens the menu, but the horde keeps advancing — no safe pause.</span></li>
               </ul>
             </div>
-            <div className="sm:col-span-2">
-              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-amber">All modes</h3>
-              <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
-                <li><span className="text-white/60">Owned consumables appear in-game — type their command (e.g. “grenade”) to spend one charge.</span></li>
-              </ul>
-            </div>
           </div>
         </Card>
 
@@ -171,14 +168,34 @@ export function HowToPlay({ onBack }: Props) {
           color="#ffb300"
           className={`${visible('powerups')} xl:block`}
         >
-          <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
-            {POWERUPS.map(([name, description]) => (
-              <div key={name} className="text-[13px] leading-snug sm:text-sm">
-                <span className="font-bold text-neon-green">{name}</span>
-                <span className="text-white/30"> — </span>
-                <span className="text-white/60">{description}</span>
+          <div className="space-y-4">
+            <div>
+              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-green">Earned in play</h3>
+              <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                {AUTO_POWERUPS.map(([name, description]) => (
+                  <div key={name} className="text-[13px] leading-snug sm:text-sm">
+                    <span className="font-bold text-neon-green">{name}</span>
+                    <span className="text-white/30"> — </span>
+                    <span className="text-white/60">{description}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            <div>
+              <h3 className="mb-1 text-xs font-black uppercase tracking-widest text-neon-amber">Consumables</h3>
+              <p className="mb-2 text-[11px] leading-snug text-white/45">
+                Bought in the Store. In any mode, type the command to spend one charge.
+              </p>
+              <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                {CONSUMABLES.map(([cmd, description]) => (
+                  <div key={cmd} className="text-[13px] leading-snug sm:text-sm">
+                    <span className="font-bold text-neon-green">type “{cmd}”</span>
+                    <span className="text-white/30"> — </span>
+                    <span className="text-white/60">{description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </Card>
       </div>
