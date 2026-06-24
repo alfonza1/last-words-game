@@ -129,6 +129,7 @@ public class ProfileService {
     stats.totalKills += run.kills();
     stats.bossesDefeated += run.bossesDefeated();
     stats.longestStreak = Math.max(stats.longestStreak, run.streak());
+    stats.coinsEarned += run.coins();
     stats.totalCoins += run.coins();
     stats.gamesPlayed += 1;
     if (run.missedWords() != null) {

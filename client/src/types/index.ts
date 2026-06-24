@@ -104,6 +104,8 @@ export interface GameStats {
   totalKills: number;
   bossesDefeated: number;
   longestStreak: number;
+  /** Lifetime coins earned from runs in this play style, before purchases. */
+  coinsEarned: number;
   totalCoins: number;
   gamesPlayed: number;
   missedWords: Record<string, number>;

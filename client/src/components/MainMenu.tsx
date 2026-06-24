@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import type { CharacterLoadout, Difficulty, GameMode, GameStats } from '../types';
 import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
+import { COIN_PACKS } from '../data/coinPacks';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -11,17 +13,27 @@ interface Props {
   character: CharacterLoadout;
   username: string;
   riddleMode: boolean;
+  signedIn: boolean;
   onStart: (mode: GameMode) => void;
   onNav: (screen: 'upgrades' | 'closet' | 'howto' | 'settings' | 'leaderboard') => void;
   onDifficulty: (d: Difficulty) => void;
   onRiddleMode: (v: boolean) => void;
+  onBuyCoinPack: (packId: string) => void;
+  onRequireSignIn: () => void;
 }
 
 const DIFFS: Difficulty[] = ['easy', 'normal', 'nightmare'];
-const DIFF_BLURB: Record<Difficulty, string> = {
-  easy: 'Words only — relaxed.',
-  normal: 'Words + numbers.',
-  nightmare: 'Words, numbers & symbols — exact case. Earn 2× coins. Enter if you dare.',
+const DIFF_BLURB: Record<'typing' | 'riddles', Record<Difficulty, string>> = {
+  typing: {
+    easy: 'Short words with a relaxed horde.',
+    normal: 'Words and numbers against the full outbreak.',
+    nightmare: 'Exact-case words, numbers, and symbols. Earn 2× coins.',
+  },
+  riddles: {
+    easy: 'Straightforward clues with extra time to solve.',
+    normal: 'Sharper clues and a faster approaching horde.',
+    nightmare: 'The hardest clues under maximum pressure. Earn 2× coins.',
+  },
 };
 
 export function MainMenu({
@@ -31,11 +43,15 @@ export function MainMenu({
   character,
   username,
   riddleMode,
+  signedIn,
   onStart,
   onNav,
   onDifficulty,
   onRiddleMode,
+  onBuyCoinPack,
+  onRequireSignIn,
 }: Props) {
+  const [showCoinPacks, setShowCoinPacks] = useState(false);
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-6 overflow-y-auto px-6 pb-10 pt-16 lg:justify-center lg:p-6">
       <div className="text-center">
@@ -43,6 +59,12 @@ export function MainMenu({
           DEAD<span className="text-neon-pink"> KEYS</span>
         </h1>
         <p className="mt-2 text-sm tracking-[0.35em] text-neon-cyan">TYPE OR BE DEVOURED</p>
+        <button
+          onClick={() => setShowCoinPacks(true)}
+          className="mt-3 rounded-full border border-neon-amber/50 bg-neon-amber/10 px-4 py-1.5 text-xs font-black tracking-wider text-neon-amber transition hover:bg-neon-amber/20"
+        >
+          🪙 {stats.totalCoins.toLocaleString()} COINS
+        </button>
       </div>
 
       <div className="grid w-full gap-5 lg:grid-cols-[1.2fr_0.85fr_0.8fr]">
@@ -64,7 +86,9 @@ export function MainMenu({
               ))}
             </div>
             {/* Reserve 2 lines so switching difficulty never shifts the buttons. */}
-            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">{DIFF_BLURB[difficulty]}</p>
+            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">
+              {DIFF_BLURB[riddleMode ? 'riddles' : 'typing'][difficulty]}
+            </p>
           </div>
 
           {/* Play style: type the falling words, or solve riddles for a volley */}
@@ -77,7 +101,7 @@ export function MainMenu({
                   !riddleMode ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                 }`}
               >
-                ⌨ Type Words
+                ⌨ Typing Defense
               </button>
               <button
                 onClick={() => onRiddleMode(true)}
@@ -85,7 +109,7 @@ export function MainMenu({
                   riddleMode ? 'bg-neon-pink/15 text-neon-pink shadow-neon' : 'text-white/55 hover:text-white/90'
                 }`}
               >
-                🧩 Riddles
+                🧩 Solve Riddles
               </button>
             </div>
             <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">
@@ -149,6 +173,53 @@ export function MainMenu({
 
       <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT · ONE WORD AT A TIME</p>
       <AdBanner />
+
+      {showCoinPacks && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setShowCoinPacks(false);
+          }}
+        >
+          <div className="w-full max-w-4xl rounded-2xl border border-neon-amber/45 bg-ink-800/95 p-5 shadow-[0_0_34px_rgba(255,190,40,0.18)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black tracking-widest text-neon-amber">COIN SUPPLY DROP</h2>
+                <p className="mt-1 text-xs text-white/45">Add coins to your shared wallet.</p>
+              </div>
+              <button
+                onClick={() => setShowCoinPacks(false)}
+                className="rounded-md border border-white/15 px-3 py-1 text-sm text-white/60 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {COIN_PACKS.map((pack) => (
+                <button
+                  key={pack.id}
+                  onClick={() => {
+                    setShowCoinPacks(false);
+                    if (signedIn) onBuyCoinPack(pack.id);
+                    else onRequireSignIn();
+                  }}
+                  className={`relative rounded-xl border bg-black/35 p-4 text-center transition hover:-translate-y-0.5 hover:bg-neon-amber/10 ${
+                    pack.best ? 'border-neon-amber' : 'border-white/15 hover:border-neon-amber/60'
+                  }`}
+                >
+                  {pack.best && (
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded bg-neon-amber px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-black">
+                      Best value
+                    </span>
+                  )}
+                  <span className="block text-lg font-black text-neon-amber">🪙 {pack.coins.toLocaleString()}</span>
+                  <span className="mt-2 block text-sm font-bold text-white">{pack.price}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -184,7 +255,7 @@ function Records({
         <Row k={riddleMode ? 'Riddle Kills' : 'Total Kills'} v={selected.totalKills} />
         <Row k="Bosses Defeated" v={selected.bossesDefeated} />
         <Row k={riddleMode ? 'Best Solve Streak' : 'Longest Streak'} v={selected.longestStreak} />
-        <Row k={riddleMode ? 'Coins Earned' : 'Coins'} v={selected.totalCoins} />
+        <Row k="Coins Earned" v={(selected.coinsEarned ?? 0).toLocaleString()} />
       </dl>
     </div>
   );

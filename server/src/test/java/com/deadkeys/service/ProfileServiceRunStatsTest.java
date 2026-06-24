@@ -32,6 +32,7 @@ class ProfileServiceRunStatsTest {
     assertEquals(120, profile.stats.totalCoins);
     assertEquals(500, profile.riddleStats.bestScore);
     assertEquals(8, profile.riddleStats.totalKills);
+    assertEquals(20, profile.riddleStats.coinsEarned);
     assertEquals(20, profile.riddleStats.totalCoins);
     assertEquals(1, profile.riddleStats.gamesPlayed);
   }
@@ -42,6 +43,7 @@ class ProfileServiceRunStatsTest {
 
     assertEquals(300, profile.stats.bestScore);
     assertEquals(2, profile.stats.totalKills);
+    assertEquals(10, profile.stats.coinsEarned);
     assertEquals(110, profile.stats.totalCoins);
     assertEquals(0, profile.riddleStats.bestScore);
     assertEquals(0, profile.riddleStats.gamesPlayed);

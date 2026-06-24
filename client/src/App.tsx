@@ -487,10 +487,13 @@ export default function App() {
             character={character}
             username={username || (signedIn ? 'Survivor' : 'Guest')}
             riddleMode={settings.riddleMode}
+            signedIn={signedIn}
             onStart={chooseMode}
             onNav={(scr) => (scr === 'upgrades' ? openStore('menu') : setScreen(scr))}
             onDifficulty={setDifficulty}
             onRiddleMode={(v) => persistSettings({ ...settings, riddleMode: v })}
+            onBuyCoinPack={buyCoinPack}
+            onRequireSignIn={() => requireSignIn('Sign in to securely add coins to your wallet.')}
           />
         );
     }
