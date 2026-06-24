@@ -67,13 +67,13 @@ export const MAPS: MapTheme[] = [
   {
     id: 'city',
     name: 'Dead City',
-    description: 'Neon-drenched ruins of a fallen metropolis.',
+    description: 'Fight down the last evacuation route beneath a poisoned electric storm.',
     cost: 350,
     palette: {
-      skyTop: '#070417', skyHorizon: '#2a0f44', ground1: '#181230', ground2: '#070512',
-      fog: '150,90,210', moon: '#a9e0ff', glow: 'rgba(150,120,255,0.4)', accent: '#00f0ff',
+      skyTop: '#03070d', skyHorizon: '#18333a', ground1: '#151b20', ground2: '#05080b',
+      fog: '70,190,190', moon: '#b9e7df', glow: 'rgba(70,220,205,0.32)', accent: '#20f2c2',
     },
-    // Skyline is drawn bespoke in drawThemeScenery (richer than the generic one).
+    // The ruined evacuation corridor is drawn bespoke in drawThemeScenery.
     features: { ...NONE },
   },
   {

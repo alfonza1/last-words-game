@@ -44,7 +44,7 @@ export function drawGame(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   ctx.translate(ox, oy);
 
   drawEnvironment(ctx, s, theme, time);
-  drawBase(ctx, s, theme);
+  drawBase(ctx, s, theme, time);
 
   const ordered = [...s.zombies].sort((a, b) => a.y - b.y);
   for (const z of ordered) drawZombie(ctx, z, s, time);
@@ -96,18 +96,21 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
     ctx.fill();
   }
 
-  // Stars (two layers — distant + brighter twinkles)
-  for (let i = 0; i < 90; i++) {
-    const sx = rand(i) * w;
-    const sy = rand(i + 99) * hy * 0.95;
-    const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * 0.001 + i));
-    const big = rand(i + 13) > 0.92;
-    ctx.fillStyle = `rgba(220,235,225,${0.12 + tw * 0.4})`;
-    ctx.fillRect(sx, sy, big ? 2.4 : 1.4, big ? 2.4 : 1.4);
+  // Stars (two layers — distant + brighter twinkles). Dead City replaces
+  // these with a low, light-polluted storm ceiling.
+  if (theme.id !== 'city') {
+    for (let i = 0; i < 90; i++) {
+      const sx = rand(i) * w;
+      const sy = rand(i + 99) * hy * 0.95;
+      const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * 0.001 + i));
+      const big = rand(i + 13) > 0.92;
+      ctx.fillStyle = `rgba(220,235,225,${0.12 + tw * 0.4})`;
+      ctx.fillRect(sx, sy, big ? 2.4 : 1.4, big ? 2.4 : 1.4);
+    }
   }
 
   // Occasional shooting star streaking across.
-  {
+  if (theme.id !== 'city') {
     const period = 5200;
     const phase = (time % period) / period;
     if (phase < 0.16) {
@@ -138,6 +141,8 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
     ctx.fillRect(0, hy - h * 0.12, w, h * 0.12 + 6);
   }
 
+  if (theme.id === 'city') drawDeadCitySky(ctx, s, time, hy);
+
   // Aurora for the tundra
   if (theme.id === 'tundra') {
     for (let b = 0; b < 3; b++) {
@@ -159,26 +164,28 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
     }
   }
 
-  // Moon
-  const mx = w * 0.82;
-  const my = hy * 0.45;
-  const mr = Math.min(60, h * 0.09);
-  const glow = ctx.createRadialGradient(mx, my, mr * 0.3, mx, my, mr * 3);
-  glow.addColorStop(0, p.glow);
-  glow.addColorStop(1, p.glow.replace(/[\d.]+\)$/, '0)'));
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(mx, my, mr * 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = p.moon;
-  ctx.beginPath();
-  ctx.arc(mx, my, mr, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(60,40,40,0.25)';
-  for (let i = 0; i < 5; i++) {
+  // Moon. Dead City has its own occluded moon inside the storm layer.
+  if (theme.id !== 'city') {
+    const mx = w * 0.82;
+    const my = hy * 0.45;
+    const mr = Math.min(60, h * 0.09);
+    const glow = ctx.createRadialGradient(mx, my, mr * 0.3, mx, my, mr * 3);
+    glow.addColorStop(0, p.glow);
+    glow.addColorStop(1, p.glow.replace(/[\d.]+\)$/, '0)'));
+    ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(mx + (rand(i) - 0.5) * mr, my + (rand(i + 3) - 0.5) * mr, mr * (0.1 + rand(i + 7) * 0.18), 0, Math.PI * 2);
+    ctx.arc(mx, my, mr * 3, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = p.moon;
+    ctx.beginPath();
+    ctx.arc(mx, my, mr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(60,40,40,0.25)';
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.arc(mx + (rand(i) - 0.5) * mr, my + (rand(i + 3) - 0.5) * mr, mr * (0.1 + rand(i + 7) * 0.18), 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   // Skyline silhouette (+ neon windows)
@@ -281,6 +288,83 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   drawThemeScenery(ctx, s, theme, time, hy);
 }
 
+function drawDeadCitySky(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+
+  // A sickly moon is almost swallowed by the storm front.
+  const mx = w * 0.7;
+  const my = horizon * 0.48;
+  const mr = Math.min(68, h * 0.105);
+  const moonGlow = ctx.createRadialGradient(mx, my, mr * 0.1, mx, my, mr * 3.2);
+  moonGlow.addColorStop(0, 'rgba(180,255,235,0.34)');
+  moonGlow.addColorStop(0.45, 'rgba(40,220,190,0.1)');
+  moonGlow.addColorStop(1, 'rgba(20,120,130,0)');
+  ctx.fillStyle = moonGlow;
+  ctx.fillRect(mx - mr * 3.2, my - mr * 3.2, mr * 6.4, mr * 6.4);
+  ctx.fillStyle = '#b7d8cf';
+  ctx.beginPath();
+  ctx.arc(mx, my, mr, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(20,45,48,0.3)';
+  for (let i = 0; i < 7; i++) {
+    ctx.beginPath();
+    ctx.arc(
+      mx + (rand(i + 410) - 0.5) * mr * 1.25,
+      my + (rand(i + 420) - 0.5) * mr,
+      mr * (0.07 + rand(i + 430) * 0.17),
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+
+  // Heavy cloud shelves move at different rates and repeatedly veil the moon.
+  for (let layer = 0; layer < 4; layer++) {
+    const speed = 0.006 + layer * 0.002;
+    const drift = (time * speed + layer * 170) % (w + 360);
+    const cy = horizon * (0.12 + layer * 0.2);
+    ctx.fillStyle = `rgba(${4 + layer * 5},${13 + layer * 8},${18 + layer * 10},${0.72 - layer * 0.08})`;
+    ctx.beginPath();
+    ctx.moveTo(-220, cy + 20);
+    for (let x = -220; x <= w + 220; x += 48) {
+      const wave = Math.sin((x + drift) * 0.016 + layer) * (10 + layer * 3);
+      const noise = (rand(Math.floor((x + drift) / 48) + layer * 19) - 0.5) * 18;
+      ctx.lineTo(x, cy + wave + noise);
+    }
+    ctx.lineTo(w + 220, cy + 54);
+    ctx.lineTo(-220, cy + 54);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // The rim stays barely visible through the cloud cover.
+  ctx.strokeStyle = 'rgba(185,246,230,0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(mx, my, mr, -1.25, 1.1);
+  ctx.stroke();
+
+  // A rare, brief lightning fork silhouettes the ruined skyline.
+  const lightningPhase = (time % 7300) / 7300;
+  if (lightningPhase > 0.965) {
+    const alpha = Math.sin(((lightningPhase - 0.965) / 0.035) * Math.PI);
+    ctx.fillStyle = `rgba(140,255,235,${alpha * 0.1})`;
+    ctx.fillRect(0, 0, w, horizon + 12);
+    ctx.strokeStyle = `rgba(205,255,248,${alpha * 0.88})`;
+    ctx.shadowColor = '#70ffe1';
+    ctx.shadowBlur = 16;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.22, 0);
+    ctx.lineTo(w * 0.25, horizon * 0.23);
+    ctx.lineTo(w * 0.21, horizon * 0.42);
+    ctx.lineTo(w * 0.27, horizon * 0.66);
+    ctx.lineTo(w * 0.24, horizon * 0.92);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+}
+
 /** Distinctive, recognizable set-dressing per map theme. */
 function drawThemeScenery(
   ctx: CanvasRenderingContext2D,
@@ -293,192 +377,357 @@ function drawThemeScenery(
 
   if (theme.id === 'city') {
     const hzn = hy;
+    const sceneScale = Math.max(0.78, Math.min(1.5, w / 960));
 
-    // 1. Atmospheric glow behind the skyline (magenta fading to cyan).
+    // Toxic light pollution burns through the lowest cloud deck.
     const glow = ctx.createLinearGradient(0, hzn - h * 0.28, 0, hzn + 8);
-    glow.addColorStop(0, 'rgba(120,60,200,0)');
-    glow.addColorStop(0.65, 'rgba(150,70,210,0.16)');
-    glow.addColorStop(1, 'rgba(50,200,255,0.2)');
+    glow.addColorStop(0, 'rgba(20,120,125,0)');
+    glow.addColorStop(0.6, 'rgba(30,180,170,0.12)');
+    glow.addColorStop(1, 'rgba(80,255,205,0.24)');
     ctx.fillStyle = glow;
     ctx.fillRect(0, hzn - h * 0.28, w, h * 0.28 + 8);
 
-    // 2. Far skyline — dim, dense, for depth.
-    for (let i = 0; i < 24; i++) {
-      const bx = (i / 24) * w + (rand(i + 200) - 0.5) * 6;
-      const bw = w / 24 + 2;
-      const bh = h * (0.05 + rand(i + 201) * 0.12);
-      ctx.fillStyle = '#0c0a24';
-      ctx.fillRect(bx, hzn - bh, bw, bh + 6);
-      for (let wy = hzn - bh + 4; wy < hzn - 2; wy += 7) {
-        if (rand(bx * 0.3 + wy) > 0.86) {
-          ctx.fillStyle = 'rgba(130,110,200,0.5)';
-          ctx.fillRect(bx + 2, wy, 1.5, 2);
-        }
+    // Dense, powerless blocks disappear into the haze behind the main avenue.
+    for (let i = 0; i < 30; i++) {
+      const bx = (i / 30) * w + (rand(i + 200) - 0.5) * 10;
+      const bw = w / 29 + 3;
+      const bh = h * (0.04 + rand(i + 201) * 0.14);
+      ctx.fillStyle = i % 3 === 0 ? '#071116' : '#09151a';
+      ctx.fillRect(bx, hzn - bh, bw, bh + 8);
+      if (rand(i + 220) > 0.78) {
+        ctx.fillStyle = 'rgba(255,92,55,0.45)';
+        ctx.fillRect(bx + bw * 0.3, hzn - bh + 7, 2, 2);
       }
     }
 
-    // 3. Foreground towers — depth-shaded bodies with lit office-window grids.
-    const towers = 9;
+    // Ruined towers frame the lane. Their broken rooflines and small rotations
+    // keep the skyline from reading as a row of pristine rectangles.
+    const towers = 10;
     for (let i = 0; i < towers; i++) {
       const seg = w / towers;
-      const bx = i * seg + 3;
-      const bw = seg - 6;
-      const bh = h * (0.18 + rand(i + 9) * 0.27);
-      const top = hzn - bh;
-      const edge = rand(i) > 0.5 ? '0,240,255' : '255,43,214';
+      const bx = i * seg - 4;
+      const bw = seg + 8;
+      const edgeHeight = Math.abs((i + 0.5) / towers - 0.5) * 2;
+      const bh = hzn * (0.38 + rand(i + 9) * 0.42 + edgeHeight * 0.38);
+      const lean = (rand(i + 51) - 0.5) * 0.055;
+      const emergency = rand(i + 4) > 0.55 ? '32,242,194' : '255,72,55';
 
-      // body with left-to-right shading so it reads as a solid 3D block
-      const bg = ctx.createLinearGradient(bx, top, bx + bw, top);
-      bg.addColorStop(0, '#1a1444');
-      bg.addColorStop(0.5, '#120d33');
-      bg.addColorStop(1, '#08061c');
+      ctx.save();
+      ctx.translate(bx + bw / 2, hzn);
+      ctx.rotate(lean);
+      const left = -bw / 2;
+      const buildingTop = -bh;
+      const bg = ctx.createLinearGradient(left, 0, left + bw, 0);
+      bg.addColorStop(0, '#111c22');
+      bg.addColorStop(0.48, '#0a1319');
+      bg.addColorStop(1, '#03090d');
       ctx.fillStyle = bg;
-      ctx.fillRect(bx, top, bw, bh + 6);
-      // rooftop ledge
-      ctx.fillStyle = '#0c0826';
-      ctx.fillRect(bx - 1, top - 3, bw + 2, 4);
-      // rooftop water tank / housing on some towers
-      if (rand(i + 3) > 0.45) {
-        const tkw = bw * (0.2 + rand(i) * 0.2);
-        const tkx = bx + bw * (0.18 + rand(i + 1) * 0.4);
-        ctx.fillStyle = '#0c0826';
-        ctx.fillRect(tkx, top - 12, tkw, 9);
-        ctx.fillRect(tkx + tkw * 0.3, top - 16, tkw * 0.12, 4); // little pipe
-      }
-      // glowing neon edge strip
-      ctx.fillStyle = `rgba(${edge},0.55)`;
-      ctx.fillRect(bx, top, 2, bh + 6);
-      // window grid — rows of lit/dark office windows
-      const colW = 9;
-      const rowH = 11;
-      for (let wy = top + 8; wy < hzn - 5; wy += rowH) {
-        for (let wx = bx + 5; wx < bx + bw - 5; wx += colW) {
-          const r = rand(wx * 0.7 + wy * 1.3);
-          const lit = r > 0.62;
-          if (lit) {
-            ctx.fillStyle = rand(wx + wy) > 0.6 ? 'rgba(255,210,140,0.95)' : `rgba(${edge},0.9)`;
-            ctx.globalAlpha = 0.55 + 0.4 * Math.abs(Math.sin(time * 0.0016 + wx + wy));
+      ctx.beginPath();
+      ctx.moveTo(left, 6);
+      ctx.lineTo(left, buildingTop + 12);
+      ctx.lineTo(left + bw * 0.18, buildingTop + 2);
+      ctx.lineTo(left + bw * 0.34, buildingTop + 15 + rand(i + 70) * 16);
+      ctx.lineTo(left + bw * 0.56, buildingTop + rand(i + 71) * 8);
+      ctx.lineTo(left + bw * 0.74, buildingTop + 18 + rand(i + 72) * 15);
+      ctx.lineTo(left + bw, buildingTop + 8);
+      ctx.lineTo(left + bw, 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // Mostly dead windows; a few emergency circuits and fires still pulse.
+      const colW = Math.max(8, bw / 8);
+      for (let wy = buildingTop + 27; wy < -5; wy += 12) {
+        for (let wx = left + 6; wx < left + bw - 6; wx += colW) {
+          const power = rand((i + 1) * 900 + wx * 0.7 + wy);
+          if (power > 0.83) {
+            const flicker = power > 0.94 ? Math.sin(time * 0.012 + wx) > -0.25 : true;
+            ctx.fillStyle = flicker ? `rgba(${emergency},0.72)` : 'rgba(15,35,38,0.55)';
           } else {
-            ctx.fillStyle = 'rgba(42,38,72,0.6)';
-            ctx.globalAlpha = 1;
+            ctx.fillStyle = 'rgba(17,34,39,0.72)';
           }
-          ctx.fillRect(wx, wy, colW - 3, rowH - 4);
-          ctx.globalAlpha = 1;
+          ctx.fillRect(wx, wy, Math.max(3, colW - 4), 5);
         }
       }
-      // antenna + red blinker on tall towers
+
+      // Exposed floor slabs and a dangling cable sell the structural collapse.
+      if (i % 3 === 1) {
+        ctx.strokeStyle = 'rgba(70,92,96,0.6)';
+        ctx.lineWidth = 1;
+        for (let slab = 0; slab < 3; slab++) {
+          const sy = buildingTop + 15 + slab * 7;
+          ctx.beginPath();
+          ctx.moveTo(left + bw * 0.58, sy);
+          ctx.lineTo(left + bw + 6, sy + 3);
+          ctx.stroke();
+        }
+        ctx.strokeStyle = 'rgba(30,45,48,0.9)';
+        ctx.beginPath();
+        ctx.moveTo(left + bw * 0.78, buildingTop + 10);
+        ctx.quadraticCurveTo(left + bw * 0.95, buildingTop + 42, left + bw * 0.7, buildingTop + 75);
+        ctx.stroke();
+      }
+
       if (bh > h * 0.34) {
-        ctx.strokeStyle = '#0c0826';
+        ctx.strokeStyle = '#17252a';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(bx + bw / 2, top - 3);
-        ctx.lineTo(bx + bw / 2, top - 18);
+        ctx.moveTo(0, buildingTop + 5);
+        ctx.lineTo(0, buildingTop - 17);
         ctx.stroke();
-        ctx.fillStyle = `rgba(255,60,60,${Math.sin(time * 0.005 + i) > 0 ? 0.95 : 0.2})`;
+        ctx.fillStyle = `rgba(255,65,45,${Math.sin(time * 0.006 + i) > 0.2 ? 0.95 : 0.12})`;
         ctx.beginPath();
-        ctx.arc(bx + bw / 2, top - 18, 2.2, 0, Math.PI * 2);
+        ctx.arc(0, buildingTop - 17, 2.3, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.restore();
     }
 
-    // 4. Glowing neon billboards.
-    for (const sign of [{ x: w * 0.2, c: '#00f0ff' }, { x: w * 0.78, c: '#ff2bd6' }]) {
-      const sy = hzn - h * 0.23;
-      ctx.globalAlpha = 0.55 + 0.45 * Math.abs(Math.sin(time * 0.004 + sign.x));
+    // Failing evacuation signs are the last recognizable human signal.
+    const signs = [
+      { x: w * 0.2, y: hzn * 0.25, c: '#20f2c2', label: 'EVAC 09' },
+      { x: w * 0.8, y: hzn * 0.12, c: '#ff4938', label: 'NO SIGNAL' },
+    ];
+    for (const sign of signs) {
+      const flicker = Math.sin(time * 0.009 + sign.x) > -0.72 ? 1 : 0.18;
+      const signW = 82 * sceneScale;
+      const signH = 24 * sceneScale;
+      ctx.globalAlpha = flicker;
       ctx.strokeStyle = sign.c;
       ctx.lineWidth = 2;
       ctx.shadowColor = sign.c;
-      ctx.shadowBlur = 14;
-      ctx.strokeRect(sign.x - 26, sy, 52, 20);
-      for (let b = 0; b < 3; b++) {
-        ctx.fillStyle = sign.c;
-        ctx.fillRect(sign.x - 18 + b * 14, sy + 7, 8, 6);
-      }
+      ctx.shadowBlur = 12;
+      ctx.strokeRect(sign.x - signW / 2, sign.y, signW, signH);
+      ctx.fillStyle = sign.c;
+      ctx.font = `700 ${9 * sceneScale}px "JetBrains Mono", monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(sign.label, sign.x, sign.y + signH * 0.68);
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
     }
 
-    // 5. Asphalt road in perspective + glowing centre line.
-    ctx.fillStyle = 'rgba(8,8,18,0.88)';
+    // Wet evacuation boulevard in deep perspective.
+    const road = ctx.createLinearGradient(0, hzn, 0, h);
+    road.addColorStop(0, 'rgba(20,30,33,0.96)');
+    road.addColorStop(1, 'rgba(4,8,10,0.98)');
+    ctx.fillStyle = road;
     ctx.beginPath();
-    ctx.moveTo(w * 0.42, hzn);
-    ctx.lineTo(w * 0.58, hzn);
-    ctx.lineTo(w * 0.96, h);
-    ctx.lineTo(w * 0.04, h);
+    ctx.moveTo(w * 0.43, hzn);
+    ctx.lineTo(w * 0.57, hzn);
+    ctx.lineTo(w * 0.93, h);
+    ctx.lineTo(w * 0.07, h);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0,240,255,0.4)';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([16, 18]);
-    ctx.beginPath();
-    ctx.moveTo(w / 2, hzn);
-    ctx.lineTo(w / 2, h);
-    ctx.stroke();
-    ctx.setLineDash([]);
 
-    // 6. Street lamps lining the road edges (poles sit right at the asphalt,
-    //    arms reach over it). Matches the road polygon (edges 0.42→0.04 / 0.58→0.96).
-    const lampRows = 4;
-    for (let r = 0; r < lampRows; r++) {
-      const v = (r + 0.6) / lampRows; // 0 near horizon → 1 near camera
+    // Reflected quarantine light lifts the combat lane out of the darkness.
+    const laneGlow = ctx.createRadialGradient(w / 2, hzn + h * 0.14, 8, w / 2, hzn + h * 0.3, h * 0.62);
+    laneGlow.addColorStop(0, 'rgba(42,185,170,0.13)');
+    laneGlow.addColorStop(0.52, 'rgba(25,95,96,0.055)');
+    laneGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = laneGlow;
+    ctx.fillRect(0, hzn, w, h - hzn);
+
+    // Concrete curbs and dead lane markers widen toward the camera.
+    for (const side of [-1, 1] as const) {
+      ctx.strokeStyle = 'rgba(85,102,105,0.52)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(w / 2 + side * w * 0.07, hzn);
+      ctx.lineTo(w / 2 + side * w * 0.43, h);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,188,64,0.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([14, 18]);
+      ctx.beginPath();
+      ctx.moveTo(w / 2 + side * w * 0.022, hzn + 8);
+      ctx.lineTo(w / 2 + side * w * 0.12, h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Broken elevated rail at the horizon, including one half-dropped carriage.
+    const railY = hzn + h * 0.035;
+    ctx.fillStyle = '#10191d';
+    ctx.fillRect(0, railY, w, 8);
+    ctx.fillStyle = '#071014';
+    for (let x = w * 0.03; x < w; x += w * 0.16) ctx.fillRect(x, railY + 8, 8, h * 0.12);
+    ctx.save();
+    ctx.translate(w * 0.66, railY + 2);
+    ctx.rotate(0.1);
+    ctx.fillStyle = '#172329';
+    ctx.fillRect(-42, -13, 84, 18);
+    ctx.fillStyle = 'rgba(255,72,45,0.28)';
+    for (let x = -34; x < 36; x += 14) ctx.fillRect(x, -9, 8, 6);
+    ctx.restore();
+
+    // Headlights from a vehicle that never made it to the checkpoint.
+    const headlightY = hzn + h * 0.17;
+    for (const hx of [w * 0.365, w * 0.395]) {
+      const beam = ctx.createLinearGradient(hx, headlightY, hx, headlightY + h * 0.22);
+      beam.addColorStop(0, 'rgba(255,215,145,0.18)');
+      beam.addColorStop(1, 'rgba(255,190,100,0)');
+      ctx.fillStyle = beam;
+      ctx.beginPath();
+      ctx.moveTo(hx - 2, headlightY);
+      ctx.lineTo(hx + 2, headlightY);
+      ctx.lineTo(hx + 45, headlightY + h * 0.22);
+      ctx.lineTo(hx - 45, headlightY + h * 0.22);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Most street lamps are dead; three unstable sodium lights define depth.
+    for (let r = 0; r < 3; r++) {
+      const v = 0.26 + r * 0.23;
       const ly = hzn + v * (h - hzn);
-      const edgeHalf = 0.08 + 0.38 * v; // road half-width at this depth
-      const scale = 0.4 + v * 0.95;
-      for (const side of [-1, 1] as const) {
-        const lx = w / 2 + side * w * (edgeHalf + 0.015); // pole just outside the road
-        const poleTop = ly - 52 * scale;
-        const headX = lx - side * 16 * scale; // arm + lamp head over the road
-        ctx.strokeStyle = '#10131f';
-        ctx.lineWidth = 3 * scale;
-        ctx.beginPath();
-        ctx.moveTo(lx, ly);
-        ctx.lineTo(lx, poleTop);
-        ctx.lineTo(headX, poleTop);
-        ctx.stroke();
-        const lamp = ctx.createRadialGradient(headX, poleTop + 2, 1, headX, poleTop + 2, 40 * scale);
-        lamp.addColorStop(0, 'rgba(255,210,120,0.5)');
-        lamp.addColorStop(1, 'rgba(255,210,120,0)');
+      const edgeHalf = 0.07 + 0.36 * v;
+      const scale = 0.48 + v * 0.75;
+      const side = r % 2 === 0 ? -1 : 1;
+      const lx = w / 2 + side * w * (edgeHalf + 0.02);
+      const poleTop = ly - 58 * scale;
+      const headX = lx - side * 17 * scale;
+      ctx.strokeStyle = '#151f22';
+      ctx.lineWidth = 3 * scale;
+      ctx.beginPath();
+      ctx.moveTo(lx, ly);
+      ctx.lineTo(lx, poleTop);
+      ctx.lineTo(headX, poleTop + (r === 2 ? 7 : 0));
+      ctx.stroke();
+      const alive = Math.sin(time * 0.011 + r * 2.3) > -0.45;
+      if (alive) {
+        const lamp = ctx.createRadialGradient(headX, poleTop, 1, headX, poleTop, 44 * scale);
+        lamp.addColorStop(0, 'rgba(255,181,76,0.48)');
+        lamp.addColorStop(1, 'rgba(255,130,40,0)');
         ctx.fillStyle = lamp;
         ctx.beginPath();
-        ctx.arc(headX, poleTop + 2, 40 * scale, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffe8a8';
-        ctx.beginPath();
-        ctx.arc(headX, poleTop + 2, 3 * scale, 0, Math.PI * 2);
-        ctx.fill();
-        // light pool on the road beneath the lamp head
-        const pool = ctx.createRadialGradient(headX, ly + 3, 2, headX, ly + 3, 52 * scale);
-        pool.addColorStop(0, 'rgba(255,210,120,0.12)');
-        pool.addColorStop(1, 'rgba(255,210,120,0)');
-        ctx.fillStyle = pool;
-        ctx.beginPath();
-        ctx.ellipse(headX, ly + 3, 52 * scale, 14 * scale, 0, 0, Math.PI * 2);
+        ctx.arc(headX, poleTop, 44 * scale, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    // 7. A wrecked car on the road.
-    const wcx = w * 0.36;
-    const wcy = h - 86;
-    ctx.fillStyle = '#0e0c1a';
+    // Abandoned evacuation bus blocks one lane near the horizon.
+    ctx.save();
+    ctx.translate(w * 0.38, hzn + h * 0.17);
+    ctx.rotate(-0.045);
+    ctx.scale(sceneScale, sceneScale);
+    ctx.fillStyle = '#172126';
+    ctx.fillRect(-34, -13, 68, 25);
+    ctx.fillStyle = '#26343a';
+    ctx.fillRect(-29, -9, 54, 9);
+    ctx.fillStyle = 'rgba(70,170,165,0.18)';
+    for (let x = -26; x < 22; x += 12) ctx.fillRect(x, -7, 8, 5);
+    ctx.fillStyle = '#080c0e';
     ctx.beginPath();
-    ctx.ellipse(wcx, wcy + 9, 26, 7, 0, 0, Math.PI * 2);
+    ctx.arc(-22, 13, 6, 0, Math.PI * 2);
+    ctx.arc(23, 13, 6, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#15121f';
-    ctx.fillRect(wcx - 22, wcy - 6, 44, 14);
-    ctx.fillRect(wcx - 12, wcy - 16, 24, 12);
-    ctx.fillStyle = 'rgba(255,80,40,0.7)';
-    ctx.fillRect(wcx + 20, wcy - 2, 3, 4);
+    ctx.fillStyle = 'rgba(255,60,40,0.65)';
+    ctx.fillRect(29, 0, 3, 5);
+    ctx.restore();
 
-    // 8. Neon puddle reflections shimmering on the wet street.
-    for (let i = 0; i < 6; i++) {
-      const rx = (rand(i + 80) * 0.9 + 0.05) * w;
-      const ry = hzn + 50 + rand(i + 81) * (h - hzn - 110);
-      const col = rand(i) > 0.5 ? '0,240,255' : '255,43,214';
-      ctx.fillStyle = `rgba(${col},${0.08 + 0.07 * Math.abs(Math.sin(time * 0.003 + i))})`;
+    // A crashed emergency vehicle and quarantine barricades sit near the
+    // player, leaving the center lane clear for approaching zombies.
+    ctx.save();
+    ctx.translate(w * 0.72, h - 116);
+    ctx.rotate(0.08);
+    ctx.scale(sceneScale, sceneScale);
+    ctx.fillStyle = '#0b1115';
+    ctx.fillRect(-29, -9, 58, 17);
+    ctx.fillStyle = '#18242a';
+    ctx.beginPath();
+    ctx.moveTo(-17, -9);
+    ctx.lineTo(-9, -20);
+    ctx.lineTo(13, -20);
+    ctx.lineTo(21, -9);
+    ctx.closePath();
+    ctx.fill();
+    const policePulse = Math.sin(time * 0.014) > 0;
+    ctx.fillStyle = policePulse ? '#ff4938' : '#20f2c2';
+    ctx.shadowColor = ctx.fillStyle as string;
+    ctx.shadowBlur = 14;
+    ctx.fillRect(-7, -23, 14, 3);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    for (const side of [-1, 1] as const) {
+      const bx = w / 2 + side * w * 0.31;
+      const by = h - 73;
+      ctx.fillStyle = '#343d3e';
       ctx.beginPath();
-      ctx.ellipse(rx, ry, 10 + rand(i) * 14, 3, 0, 0, Math.PI * 2);
+      ctx.moveTo(bx - 34, by);
+      ctx.lineTo(bx - 27, by - 18);
+      ctx.lineTo(bx + 27, by - 18);
+      ctx.lineTo(bx + 34, by);
+      ctx.closePath();
       ctx.fill();
+      ctx.fillStyle = '#ffb340';
+      for (let stripe = -20; stripe <= 20; stripe += 16) {
+        ctx.save();
+        ctx.translate(bx + stripe, by - 9);
+        ctx.rotate(-0.7);
+        ctx.fillRect(-2, -8, 4, 16);
+        ctx.restore();
+      }
+    }
+
+    // Cracked asphalt and smeared reflections make the road feel wet and used.
+    ctx.strokeStyle = 'rgba(84,109,109,0.32)';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 9; i++) {
+      let cx = w * (0.18 + rand(i + 610) * 0.64);
+      let cy = hzn + h * (0.16 + rand(i + 620) * 0.56);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      for (let branch = 0; branch < 3; branch++) {
+        cx += (rand(i * 7 + branch + 630) - 0.5) * 34;
+        cy += 9 + rand(i * 9 + branch + 640) * 17;
+        ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+    }
+    for (let i = 0; i < 8; i++) {
+      const rx = (rand(i + 80) * 0.72 + 0.14) * w;
+      const ry = hzn + 42 + rand(i + 81) * (h - hzn - 125);
+      const col = i % 3 === 0 ? '255,73,56' : '32,242,194';
+      ctx.fillStyle = `rgba(${col},${0.06 + 0.05 * Math.abs(Math.sin(time * 0.003 + i))})`;
+      ctx.beginPath();
+      ctx.ellipse(rx, ry, 12 + rand(i) * 23, 2.5 + rand(i + 7) * 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Small fires burn at the edges; smoke stays out of the combat lane.
+    for (const fire of [{ x: w * 0.09, y: h * 0.61 }, { x: w * 0.91, y: h * 0.46 }]) {
+      const pulse = 0.7 + Math.sin(time * 0.015 + fire.x) * 0.18;
+      const fireGlow = ctx.createRadialGradient(fire.x, fire.y, 2, fire.x, fire.y, 48);
+      fireGlow.addColorStop(0, `rgba(255,165,55,${0.45 * pulse})`);
+      fireGlow.addColorStop(1, 'rgba(255,70,20,0)');
+      ctx.fillStyle = fireGlow;
+      ctx.fillRect(fire.x - 48, fire.y - 48, 96, 96);
+      ctx.fillStyle = '#ff7a32';
+      ctx.beginPath();
+      ctx.moveTo(fire.x - 7, fire.y + 7);
+      ctx.quadraticCurveTo(fire.x - 3, fire.y - 18 * pulse, fire.x, fire.y - 7);
+      ctx.quadraticCurveTo(fire.x + 8, fire.y - 24 * pulse, fire.x + 9, fire.y + 7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(22,31,32,0.2)';
+      for (let smoke = 0; smoke < 3; smoke++) {
+        const sy = fire.y - 24 - smoke * 17 - ((time * 0.01 + smoke * 9) % 14);
+        ctx.beginPath();
+        ctx.arc(fire.x + Math.sin(time * 0.001 + smoke) * 7, sy, 11 + smoke * 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Fine slanted rain catches the city lights without obscuring targets.
+    ctx.strokeStyle = 'rgba(135,225,220,0.16)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 42; i++) {
+      const x = (rand(i + 700) * (w + 80) + time * 0.065) % (w + 80) - 40;
+      const y = (rand(i + 720) * h + time * 0.16 * (0.7 + rand(i + 730))) % h;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 7, y + 18);
+      ctx.stroke();
     }
     return;
   }
@@ -997,9 +1246,82 @@ function drawGrave(ctx: CanvasRenderingContext2D, x: number, y: number, sc: numb
   ctx.fill();
 }
 
-function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme) {
+function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, time: number) {
   const { width: w, height: h } = s;
   const baseY = h - 60;
+
+  if (theme.id === 'city') {
+    // The final checkpoint: concrete blast wall, shutter, hazard paint, and
+    // emergency beacons. It replaces the generic green bunker on this map.
+    const asphalt = ctx.createLinearGradient(0, baseY, 0, h);
+    asphalt.addColorStop(0, '#10171a');
+    asphalt.addColorStop(1, '#030608');
+    ctx.fillStyle = asphalt;
+    ctx.fillRect(0, baseY, w, 60);
+
+    ctx.fillStyle = '#303a3b';
+    for (let x = -10; x < w + 70; x += 72) {
+      ctx.beginPath();
+      ctx.moveTo(x, h);
+      ctx.lineTo(x + 9, baseY + 8);
+      ctx.lineTo(x + 61, baseY + 8);
+      ctx.lineTo(x + 72, h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(8,14,16,0.65)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Worn quarantine stripe along the collision line.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, baseY, w, 9);
+    ctx.clip();
+    ctx.fillStyle = '#d38b2f';
+    for (let x = -24; x < w + 24; x += 32) {
+      ctx.save();
+      ctx.translate(x, baseY + 4);
+      ctx.rotate(-0.72);
+      ctx.fillRect(-4, -18, 8, 36);
+      ctx.restore();
+    }
+    ctx.restore();
+
+    const cx = w / 2;
+    ctx.fillStyle = '#091115';
+    ctx.fillRect(cx - 43, baseY - 5, 86, 40);
+    ctx.strokeStyle = '#53666a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 43, baseY - 5, 86, 40);
+    ctx.fillStyle = '#182326';
+    for (let y = baseY; y < baseY + 31; y += 7) ctx.fillRect(cx - 36, y, 72, 3);
+
+    ctx.fillStyle = '#20f2c2';
+    ctx.shadowColor = '#20f2c2';
+    ctx.shadowBlur = 14;
+    ctx.fillRect(cx - 3, baseY - 32, 6, 27);
+    ctx.beginPath();
+    ctx.arc(cx, baseY - 33, 7, Math.PI, 0);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    const beaconOn = Math.sin(time * 0.012) > 0;
+    for (const side of [-1, 1] as const) {
+      const bx = cx + side * 57;
+      const color = side < 0 ? '#ff4938' : '#20f2c2';
+      ctx.fillStyle = color;
+      ctx.globalAlpha = beaconOn === (side < 0) ? 1 : 0.22;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.arc(bx, baseY - 6, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    }
+    return;
+  }
 
   ctx.fillStyle = '#1a2417';
   ctx.fillRect(0, baseY, w, 60);
