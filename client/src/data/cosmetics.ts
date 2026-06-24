@@ -9,6 +9,8 @@ export interface CosmeticDef {
   description: string;
   cost: number;
   rarity: 'standard' | 'rare' | 'epic' | 'legendary';
+  /** Item's color follows the equipped outfit's glow (e.g. crown, glasses). */
+  outfitReactive?: boolean;
 }
 
 export interface OutfitPalette {
@@ -126,6 +128,7 @@ export const COSMETICS: CosmeticDef[] = [
     description: 'Standard issue, long after standards stopped mattering.',
     cost: 180,
     rarity: 'standard',
+    outfitReactive: true,
   },
   {
     key: 'accessory-headphones',
@@ -134,14 +137,16 @@ export const COSMETICS: CosmeticDef[] = [
     description: 'Heavy comms headphones with a live cyan channel.',
     cost: 300,
     rarity: 'rare',
+    outfitReactive: true,
   },
   {
     key: 'accessory-goggles',
     slot: 'accessory',
-    name: 'Night Optics',
+    name: 'Glasses',
     description: 'Glowing tactical lenses tuned for movement.',
     cost: 420,
     rarity: 'rare',
+    outfitReactive: true,
   },
   {
     key: 'accessory-mask',
@@ -158,6 +163,7 @@ export const COSMETICS: CosmeticDef[] = [
     description: 'A broken broadcast halo for survivors with a reputation.',
     cost: 1000,
     rarity: 'legendary',
+    outfitReactive: true,
   },
 ];
 
