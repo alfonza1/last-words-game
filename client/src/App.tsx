@@ -432,6 +432,7 @@ export default function App() {
             character={character}
             ownedCosmetics={cosmetics}
             signedIn={signedIn}
+            username={username || (signedIn ? 'Survivor' : 'Guest')}
             onEquip={equipCharacter}
             onOpenStore={() => openStore('closet')}
             onBack={() => setScreen('menu')}

@@ -13,6 +13,7 @@ interface Props {
   character: CharacterLoadout;
   ownedCosmetics: string[];
   signedIn: boolean;
+  username: string;
   onEquip: (character: CharacterLoadout) => void;
   onOpenStore: () => void;
   onBack: () => void;
@@ -22,6 +23,7 @@ export function Closet({
   character,
   ownedCosmetics,
   signedIn,
+  username,
   onEquip,
   onOpenStore,
   onBack,
@@ -54,23 +56,25 @@ export function Closet({
   };
 
   return (
-    <div className="crt relative mx-auto grid h-full w-full max-w-6xl overflow-y-auto p-5 lg:grid-cols-[340px_1fr] lg:gap-5">
-      <section className="relative flex min-h-[620px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-4 lg:min-h-[470px]">
-        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-neon-cyan/10 to-transparent" />
-        <div className="relative flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
-          >
-            ← Back
-          </button>
-          <div>
-            <h1 className="text-2xl font-black tracking-widest text-neon-cyan">SURVIVOR CLOSET</h1>
-            <p className="text-[10px] uppercase tracking-[0.28em] text-white/35">Build your last known look</p>
-          </div>
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-4 overflow-y-auto p-5">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onBack}
+          className="rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
+        >
+          ← Back
+        </button>
+        <div>
+          <h1 className="text-2xl font-black tracking-widest text-neon-cyan">{username}’s Closet</h1>
+          <p className="text-[10px] uppercase tracking-[0.28em] text-white/35">Build your last known look</p>
         </div>
+      </div>
 
-        <div className="relative mt-2 flex flex-1 items-center justify-center">
+      <div className="grid gap-4 lg:grid-cols-[340px_1fr] lg:gap-5">
+        <section className="relative flex min-h-[520px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-4 lg:min-h-[470px]">
+          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-neon-cyan/10 to-transparent" />
+
+          <div className="relative mt-2 flex flex-1 items-center justify-center">
           <div className="absolute bottom-8 h-20 w-64 rounded-full bg-neon-cyan/10 blur-2xl" />
           <CharacterAvatar character={draft} armed={false} className="relative h-[330px] w-[260px] max-w-full" />
         </div>
@@ -106,16 +110,15 @@ export function Closet({
         </div>
       </section>
 
-      <section className="mt-4 space-y-5 pb-8 lg:mt-0">
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-ink-800/65 p-3">
-          <h2 className="font-black uppercase tracking-widest text-neon-green">Your Gear</h2>
-          <button
-            onClick={onOpenStore}
-            className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-neon-pink hover:bg-neon-pink/20"
-          >
-            Open Shop
-          </button>
-        </div>
+        <section className="space-y-5 pb-8">
+          <div className="flex items-center justify-end gap-3 rounded-xl border border-white/10 bg-ink-800/65 p-3">
+            <button
+              onClick={onOpenStore}
+              className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-neon-pink hover:bg-neon-pink/20"
+            >
+              Open Shop
+            </button>
+          </div>
 
         <Picker title="Skin tone">
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -181,7 +184,8 @@ export function Closet({
           selected={draft.accessory}
           onChoose={(key) => chooseCosmetic(key, 'accessory')}
         />
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
