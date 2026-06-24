@@ -113,14 +113,14 @@ export const MAPS: MapTheme[] = [
   {
     id: 'inferno',
     name: 'The Inferno',
-    description: 'A burning hellscape of ash and ember. Free — Nightmare only.',
+    description: 'Descend beneath the black sun, where the Ash Cathedral is still awake.',
     cost: 0,
     nightmareOnly: true,
     palette: {
-      skyTop: '#1a0500', skyHorizon: '#5a1500', ground1: '#2a0a04', ground2: '#0c0301',
-      fog: '255,110,30', moon: '#ffd27a', glow: 'rgba(255,90,20,0.55)', accent: '#ff6a00',
+      skyTop: '#090101', skyHorizon: '#3b0704', ground1: '#1b0705', ground2: '#050101',
+      fog: '210,48,22', moon: '#ffb347', glow: 'rgba(255,55,15,0.48)', accent: '#ff3b12',
     },
-    features: { ...NONE, embers: true, skyline: true, deadTrees: true },
+    features: { ...NONE, embers: true },
   },
 ];
 

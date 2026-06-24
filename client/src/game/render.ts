@@ -98,7 +98,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
 
   // Stars (two layers — distant + brighter twinkles). Dead City replaces
   // these with a low, light-polluted storm ceiling.
-  if (theme.id !== 'city') {
+  if (theme.id !== 'city' && theme.id !== 'inferno') {
     for (let i = 0; i < 90; i++) {
       const sx = rand(i) * w;
       const sy = rand(i + 99) * hy * 0.95;
@@ -110,7 +110,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   }
 
   // Occasional shooting star streaking across.
-  if (theme.id !== 'city') {
+  if (theme.id !== 'city' && theme.id !== 'inferno') {
     const period = 5200;
     const phase = (time % period) / period;
     if (phase < 0.16) {
@@ -142,6 +142,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   }
 
   if (theme.id === 'city') drawDeadCitySky(ctx, s, time, hy);
+  if (theme.id === 'inferno') drawInfernoSky(ctx, s, time, hy);
 
   // Aurora for the tundra
   if (theme.id === 'tundra') {
@@ -165,7 +166,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   }
 
   // Moon. Dead City has its own occluded moon inside the storm layer.
-  if (theme.id !== 'city') {
+  if (theme.id !== 'city' && theme.id !== 'inferno') {
     const mx = w * 0.82;
     const my = hy * 0.45;
     const mr = Math.min(60, h * 0.09);
@@ -365,6 +366,77 @@ function drawDeadCitySky(ctx: CanvasRenderingContext2D, s: GameState, time: numb
   }
 }
 
+function drawInfernoSky(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+
+  // A black sun with a breathing corona replaces the ordinary moon.
+  const sx = w * 0.22;
+  const sy = horizon * 0.5;
+  const sr = Math.min(72, h * 0.11);
+  const pulse = 0.82 + Math.sin(time * 0.0013) * 0.08;
+  const corona = ctx.createRadialGradient(sx, sy, sr * 0.7, sx, sy, sr * 3.5 * pulse);
+  corona.addColorStop(0, 'rgba(255,55,12,0.48)');
+  corona.addColorStop(0.28, 'rgba(210,30,8,0.2)');
+  corona.addColorStop(0.65, 'rgba(120,12,5,0.08)');
+  corona.addColorStop(1, 'rgba(70,4,2,0)');
+  ctx.fillStyle = corona;
+  ctx.fillRect(sx - sr * 4, sy - sr * 4, sr * 8, sr * 8);
+
+  ctx.fillStyle = '#ff4a16';
+  ctx.beginPath();
+  ctx.arc(sx, sy, sr * 1.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#080102';
+  ctx.beginPath();
+  ctx.arc(sx, sy, sr * 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Uneven flame-like prominences make the eclipse feel alive.
+  ctx.strokeStyle = `rgba(255,70,18,${0.55 + Math.sin(time * 0.002) * 0.12})`;
+  ctx.lineWidth = 2;
+  for (let ray = 0; ray < 12; ray++) {
+    const a = (ray / 12) * Math.PI * 2;
+    const inner = sr * 1.05;
+    const outer = sr * (1.2 + rand(ray + 1300) * 0.32 + Math.sin(time * 0.0018 + ray) * 0.06);
+    ctx.beginPath();
+    ctx.moveTo(sx + Math.cos(a) * inner, sy + Math.sin(a) * inner);
+    ctx.quadraticCurveTo(
+      sx + Math.cos(a + 0.12) * outer,
+      sy + Math.sin(a + 0.12) * outer,
+      sx + Math.cos(a + 0.24) * inner,
+      sy + Math.sin(a + 0.24) * inner,
+    );
+    ctx.stroke();
+  }
+
+  // Low soot clouds roll in thick horizontal layers.
+  for (let layer = 0; layer < 5; layer++) {
+    const drift = (time * (0.003 + layer * 0.001) + layer * 190) % (w + 420);
+    const y = horizon * (0.12 + layer * 0.18);
+    ctx.fillStyle = `rgba(${8 + layer * 4},${2 + layer},${2 + layer},${0.72 - layer * 0.07})`;
+    ctx.beginPath();
+    ctx.moveTo(-230, y + 28);
+    for (let x = -230; x <= w + 230; x += 52) {
+      const wave = Math.sin((x + drift) * 0.013 + layer) * (9 + layer * 3);
+      const noise = (rand(Math.floor((x + drift) / 52) + layer * 31) - 0.5) * 20;
+      ctx.lineTo(x, y + wave + noise);
+    }
+    ctx.lineTo(w + 230, y + 62);
+    ctx.lineTo(-230, y + 62);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Ash falls slowly from the cloud ceiling before the brighter embers rise.
+  ctx.fillStyle = 'rgba(120,90,82,0.24)';
+  for (let i = 0; i < 46; i++) {
+    const x = (rand(i + 1340) * w + Math.sin(time * 0.0004 + i) * 22) % w;
+    const y = (rand(i + 1390) * horizon + time * 0.009 * (0.5 + rand(i))) % horizon;
+    const size = 1 + rand(i + 1430) * 1.8;
+    ctx.fillRect(x, y, size, size);
+  }
+}
+
 function drawArea67Scenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
   const { width: w, height: h } = s;
   const scale = Math.max(0.78, Math.min(1.5, w / 960));
@@ -514,6 +586,7 @@ function drawArea67Scenery(ctx: CanvasRenderingContext2D, s: GameState, time: nu
       ctx.fillRect(x - 4 * scale, h - 120, 8 * scale, 52);
     }
   }
+
   // Fixed runway lights: deliberately sparse and non-flashing.
   for (let row = 0; row < 7; row++) {
     const v = (row + 0.8) / 7.8;
@@ -975,6 +1048,380 @@ function drawFrozenOutpostScenery(ctx: CanvasRenderingContext2D, s: GameState, t
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + len, y - 3);
+    ctx.stroke();
+  }
+}
+
+function drawInfernoScenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const scale = Math.max(0.78, Math.min(1.5, w / 960));
+
+  // Jagged volcanic teeth close the horizon around the cathedral.
+  ctx.fillStyle = '#100203';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 10);
+  for (let x = 0; x <= w; x += Math.max(32, w / 26)) {
+    const centralGap = Math.abs(x / w - 0.5) < 0.18;
+    const peak = centralGap ? h * 0.035 : h * (0.06 + rand(x + 1500) * 0.17);
+    ctx.lineTo(x, horizon - peak);
+  }
+  ctx.lineTo(w, horizon + 18);
+  ctx.closePath();
+  ctx.fill();
+
+  // Distant fires behind the ridge silhouette.
+  for (let i = 0; i < 9; i++) {
+    const fx = w * (0.05 + rand(i + 1510) * 0.9);
+    if (Math.abs(fx / w - 0.5) < 0.2) continue;
+    const fy = horizon - 5 - rand(i + 1520) * h * 0.08;
+    const radius = 18 + rand(i + 1530) * 34;
+    const fire = ctx.createRadialGradient(fx, fy, 1, fx, fy, radius);
+    fire.addColorStop(0, 'rgba(255,90,18,0.32)');
+    fire.addColorStop(1, 'rgba(130,12,2,0)');
+    ctx.fillStyle = fire;
+    ctx.fillRect(fx - radius, fy - radius, radius * 2, radius * 2);
+  }
+
+  // The Ash Cathedral is a colossal ribbed gate rather than a normal building.
+  const gateX = w / 2;
+  const gateTop = horizon - h * 0.2;
+  const gateW = Math.min(w * 0.38, 390);
+  const gateH = h * 0.24;
+
+  // Rear mass and horned roofline.
+  ctx.fillStyle = '#0b0102';
+  ctx.beginPath();
+  ctx.moveTo(gateX - gateW * 0.6, horizon + 14);
+  ctx.lineTo(gateX - gateW * 0.48, gateTop + gateH * 0.24);
+  ctx.lineTo(gateX - gateW * 0.38, gateTop - gateH * 0.28);
+  ctx.lineTo(gateX - gateW * 0.2, gateTop + gateH * 0.04);
+  ctx.lineTo(gateX, gateTop - gateH * 0.16);
+  ctx.lineTo(gateX + gateW * 0.2, gateTop + gateH * 0.04);
+  ctx.lineTo(gateX + gateW * 0.38, gateTop - gateH * 0.28);
+  ctx.lineTo(gateX + gateW * 0.48, gateTop + gateH * 0.24);
+  ctx.lineTo(gateX + gateW * 0.6, horizon + 14);
+  ctx.closePath();
+  ctx.fill();
+
+  // Rib-like buttresses curl inward toward the gate.
+  for (const side of [-1, 1] as const) {
+    for (let rib = 0; rib < 5; rib++) {
+      const outerX = gateX + side * gateW * (0.22 + rib * 0.085);
+      const outerY = gateTop + gateH * (0.12 + rib * 0.11);
+      const innerX = gateX + side * gateW * (0.08 + rib * 0.018);
+      const innerY = horizon + 10;
+      ctx.strokeStyle = rib % 2 === 0 ? '#26100d' : '#170706';
+      ctx.lineWidth = (10 - rib * 1.1) * scale;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(outerX, outerY);
+      ctx.quadraticCurveTo(
+        gateX + side * gateW * (0.43 - rib * 0.035),
+        gateTop + gateH * 0.55,
+        innerX,
+        innerY,
+      );
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,55,15,0.18)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+  }
+
+  // Colossal faceless sentinels flank the gate, too large to mistake for enemies.
+  for (const side of [-1, 1] as const) {
+    const statueX = gateX + side * gateW * 0.52;
+    const statueBase = horizon + 6;
+    const statueH = gateH * 0.92;
+    ctx.fillStyle = '#070101';
+    ctx.beginPath();
+    ctx.moveTo(statueX - 24 * scale, statueBase);
+    ctx.lineTo(statueX - 14 * scale, statueBase - statueH * 0.68);
+    ctx.quadraticCurveTo(statueX, statueBase - statueH, statueX + 14 * scale, statueBase - statueH * 0.68);
+    ctx.lineTo(statueX + 24 * scale, statueBase);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#190504';
+    ctx.beginPath();
+    ctx.ellipse(statueX, statueBase - statueH * 0.78, 11 * scale, 16 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#160403';
+    ctx.lineWidth = 5 * scale;
+    ctx.beginPath();
+    ctx.moveTo(statueX - 5 * scale, statueBase - statueH * 0.9);
+    ctx.lineTo(statueX - 20 * scale, statueBase - statueH * 1.1);
+    ctx.lineTo(statueX - 28 * scale, statueBase - statueH * 1.03);
+    ctx.moveTo(statueX + 5 * scale, statueBase - statueH * 0.9);
+    ctx.lineTo(statueX + 20 * scale, statueBase - statueH * 1.1);
+    ctx.lineTo(statueX + 28 * scale, statueBase - statueH * 1.03);
+    ctx.stroke();
+  }
+
+  // The entrance reads like an open mouth, but remains architectural.
+  const archW = gateW * 0.31;
+  const archH = gateH * 0.72;
+  ctx.fillStyle = '#020001';
+  ctx.beginPath();
+  ctx.moveTo(gateX - archW / 2, horizon + 8);
+  ctx.lineTo(gateX - archW / 2, gateTop + archH * 0.55);
+  ctx.arc(gateX, gateTop + archH * 0.55, archW / 2, Math.PI, 0);
+  ctx.lineTo(gateX + archW / 2, horizon + 8);
+  ctx.closePath();
+  ctx.fill();
+
+  const innerGlow = ctx.createRadialGradient(gateX, horizon - 5, 2, gateX, horizon - 5, archW * 0.9);
+  innerGlow.addColorStop(0, 'rgba(255,45,8,0.25)');
+  innerGlow.addColorStop(0.5, 'rgba(120,6,2,0.1)');
+  innerGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = innerGlow;
+  ctx.fillRect(gateX - archW, gateTop, archW * 2, gateH);
+
+  // Vertical teeth / portcullis inside the opening.
+  ctx.fillStyle = '#2b0b08';
+  for (let tooth = -3; tooth <= 3; tooth++) {
+    const x = gateX + tooth * archW * 0.11;
+    const len = gateH * (0.2 + (3 - Math.abs(tooth)) * 0.045);
+    ctx.beginPath();
+    ctx.moveTo(x - 3 * scale, gateTop + archH * 0.43);
+    ctx.lineTo(x + 3 * scale, gateTop + archH * 0.43);
+    ctx.lineTo(x, gateTop + archH * 0.43 + len);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Two unwavering eyes high in the structure imply something enormous behind it.
+  const eyeY = gateTop + gateH * 0.27;
+  const eyeAlpha = 0.58 + Math.sin(time * 0.00075) * 0.12;
+  ctx.fillStyle = `rgba(255,54,12,${eyeAlpha})`;
+  ctx.shadowColor = '#ff2d08';
+  ctx.shadowBlur = 15;
+  for (const side of [-1, 1] as const) {
+    ctx.beginPath();
+    ctx.ellipse(gateX + side * gateW * 0.105, eyeY, 7 * scale, 2.2 * scale, side * 0.16, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+
+  // Lava chasms flank a narrow obsidian processional causeway.
+  const lava = ctx.createLinearGradient(0, horizon, 0, h);
+  lava.addColorStop(0, '#5c0b04');
+  lava.addColorStop(0.45, '#310401');
+  lava.addColorStop(1, '#120100');
+  ctx.fillStyle = lava;
+  ctx.fillRect(0, horizon, w, h - horizon);
+
+  for (let band = 0; band < 5; band++) {
+    const y = horizon + h * (0.08 + band * 0.14);
+    const alpha = 0.12 + band * 0.025 + Math.sin(time * 0.0015 + band) * 0.025;
+    ctx.strokeStyle = `rgba(255,105,22,${alpha})`;
+    ctx.lineWidth = 2 + band * 0.4;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 32) {
+      const yy = y + Math.sin(x * 0.019 + band * 1.7 + time * 0.0007) * (5 + band);
+      if (x === 0) ctx.moveTo(x, yy);
+      else ctx.lineTo(x, yy);
+    }
+    ctx.stroke();
+  }
+
+  // Broken shelves of cooled rock float on the chasm surface.
+  for (let i = 0; i < 16; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.22 + rand(i + 1540) * 0.25);
+    const y = horizon + 40 + rand(i + 1550) * (h - horizon - 110);
+    const rw = 16 + rand(i + 1560) * 42;
+    const rh = 5 + rand(i + 1570) * 9;
+    ctx.fillStyle = '#0c0202';
+    ctx.beginPath();
+    ctx.moveTo(x - rw, y);
+    ctx.lineTo(x - rw * 0.45, y - rh);
+    ctx.lineTo(x + rw * 0.5, y - rh * 0.7);
+    ctx.lineTo(x + rw, y + rh * 0.15);
+    ctx.lineTo(x + rw * 0.18, y + rh);
+    ctx.lineTo(x - rw * 0.65, y + rh * 0.55);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,82,18,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  const road = ctx.createLinearGradient(0, horizon, 0, h);
+  road.addColorStop(0, '#150605');
+  road.addColorStop(0.5, '#0b0202');
+  road.addColorStop(1, '#020101');
+  ctx.fillStyle = road;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.44, horizon);
+  ctx.lineTo(w * 0.56, horizon);
+  ctx.lineTo(w * 0.82, h);
+  ctx.lineTo(w * 0.18, h);
+  ctx.closePath();
+  ctx.fill();
+
+  // Molten edges make the causeway look suspended over the chasm.
+  for (const side of [-1, 1] as const) {
+    const edge = ctx.createLinearGradient(w / 2, horizon, w / 2 + side * w * 0.34, h);
+    edge.addColorStop(0, 'rgba(255,65,10,0.55)');
+    edge.addColorStop(1, 'rgba(255,120,24,0.82)');
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ff3b12';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 + side * w * 0.06, horizon);
+    ctx.lineTo(w / 2 + side * w * 0.32, h);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Ancient slab joints repeat toward the gate and give the bridge weight.
+  for (let joint = 0; joint < 7; joint++) {
+    const v = 0.18 + joint * 0.12;
+    const y = horizon + v * (h - horizon);
+    const half = w * (0.06 + v * 0.26);
+    ctx.strokeStyle = 'rgba(80,20,14,0.42)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - half, y);
+    ctx.lineTo(w / 2 + half, y);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,55,12,0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - half, y + 3);
+    ctx.lineTo(w / 2 + half, y + 3);
+    ctx.stroke();
+  }
+
+  // Fractures and dim ritual glyphs break up the black stone.
+  ctx.strokeStyle = 'rgba(255,62,15,0.32)';
+  ctx.lineWidth = 1.5;
+  for (let crack = 0; crack < 11; crack++) {
+    let x = w * (0.29 + rand(crack + 1560) * 0.42);
+    let y = horizon + 38 + rand(crack + 1570) * (h - horizon - 120);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    for (let part = 0; part < 3; part++) {
+      x += (rand(crack * 9 + part + 1580) - 0.5) * 32;
+      y += 10 + rand(crack * 11 + part + 1590) * 18;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = 'rgba(190,26,12,0.2)';
+  for (let sigil = 0; sigil < 4; sigil++) {
+    const v = 0.24 + sigil * 0.18;
+    const x = w / 2 + (sigil % 2 === 0 ? -1 : 1) * w * 0.05;
+    const y = horizon + v * (h - horizon);
+    const r = (9 + v * 18) * scale;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.moveTo(x - r, y);
+    ctx.lineTo(x + r, y);
+    ctx.moveTo(x, y - r);
+    ctx.lineTo(x, y + r);
+    ctx.stroke();
+  }
+
+  // Chained monoliths frame the lower causeway.
+  const drawMonolith = (x: number, y: number, size: number, side: -1 | 1) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = '#110303';
+    ctx.beginPath();
+    ctx.moveTo(-12 * size, 0);
+    ctx.lineTo(-9 * size, -54 * size);
+    ctx.lineTo(0, -72 * size);
+    ctx.lineTo(9 * size, -54 * size);
+    ctx.lineTo(12 * size, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,50,12,0.24)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,48,12,0.52)';
+    ctx.beginPath();
+    ctx.arc(0, -43 * size, 3 * size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Heavy chain vanishes out of frame.
+    ctx.strokeStyle = '#26110e';
+    ctx.lineWidth = 4 * size;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 53 * size);
+    ctx.quadraticCurveTo(x + side * 42 * size, y - 100 * size, x + side * 95 * size, y - 125 * size);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(100,45,32,0.45)';
+    ctx.lineWidth = 1.2;
+    for (let link = 0; link < 7; link++) {
+      const t = link / 6;
+      const lx = x + side * (42 * t + 53 * t * t) * size;
+      const ly = y - (53 + 72 * t - 22 * t * t) * size;
+      ctx.beginPath();
+      ctx.ellipse(lx, ly, 6 * size, 3 * size, side * 0.65, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  };
+  drawMonolith(w * 0.12, h * 0.7, 0.85 * scale, -1);
+  drawMonolith(w * 0.88, h * 0.64, 0.78 * scale, 1);
+
+  // Motionless watchers stand beyond the bridge. Their eyes blink rarely.
+  for (let i = 0; i < 8; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.25 + rand(i + 1610) * 0.19);
+    const y = horizon + h * (0.13 + rand(i + 1620) * 0.53);
+    const size = 0.45 + ((y - horizon) / (h - horizon)) * 0.75;
+    ctx.fillStyle = 'rgba(2,0,0,0.92)';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 16 * size, 5 * size, 9 * size, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x - 8 * size, y);
+    ctx.lineTo(x, y - 19 * size);
+    ctx.lineTo(x + 8 * size, y);
+    ctx.closePath();
+    ctx.fill();
+    const awake = Math.sin(time * 0.0007 + i * 1.9) > -0.82;
+    if (awake) {
+      ctx.fillStyle = 'rgba(255,45,10,0.65)';
+      ctx.fillRect(x - 3.5 * size, y - 18 * size, 2 * size, 1.2 * size);
+      ctx.fillRect(x + 1.5 * size, y - 18 * size, 2 * size, 1.2 * size);
+    }
+  }
+
+  // Skeletal arches repeat down the bridge, reinforcing the processional scale.
+  for (let row = 0; row < 4; row++) {
+    const v = 0.2 + row * 0.19;
+    const y = horizon + v * (h - horizon);
+    const half = w * (0.08 + v * 0.24);
+    const archH = (28 + v * 50) * scale;
+    for (const side of [-1, 1] as const) {
+      const x = w / 2 + side * half;
+      ctx.strokeStyle = '#23100c';
+      ctx.lineWidth = 4 + v * 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x - side * 13 * scale, y - archH, x - side * 30 * scale, y - archH * 1.18);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,72,18,0.13)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  // Heat distortion appears as subtle vertical waves near the chasms.
+  ctx.strokeStyle = 'rgba(255,100,45,0.07)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 18; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.24 + rand(i + 1650) * 0.24);
+    const y = horizon + rand(i + 1660) * (h - horizon - 80);
+    ctx.beginPath();
+    ctx.moveTo(x, y + 26);
+    ctx.bezierCurveTo(x - 8, y + 16, x + 8, y + 8, x, y);
     ctx.stroke();
   }
 }
@@ -1716,52 +2163,7 @@ function drawThemeScenery(
   }
 
   if (theme.id === 'inferno') {
-    // Lava pools.
-    for (let i = 0; i < 3; i++) {
-      const px = (rand(i + 4) * 0.7 + 0.15) * w;
-      const py = hy + 60 + rand(i + 8) * (h - hy - 140);
-      const pw = 40 + rand(i) * 50;
-      const pulse = 0.35 + 0.25 * Math.abs(Math.sin(time * 0.003 + i));
-      const pool = ctx.createRadialGradient(px, py, 2, px, py, pw);
-      pool.addColorStop(0, `rgba(255,150,40,${pulse})`);
-      pool.addColorStop(1, 'rgba(120,20,0,0)');
-      ctx.fillStyle = pool;
-      ctx.beginPath();
-      ctx.ellipse(px, py, pw, pw * 0.4, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // Branching lava cracks across the ground.
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 6; i++) {
-      const glow = 0.4 + 0.4 * Math.abs(Math.sin(time * 0.004 + i));
-      ctx.strokeStyle = `rgba(255,${90 + Math.floor(rand(i) * 80)},20,${glow})`;
-      const sx = rand(i + 30) * w;
-      let cx = sx;
-      let cy = hy + 30;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      while (cy < h - 60) {
-        cx += (rand(cx + cy) - 0.5) * 40;
-        cy += 24;
-        ctx.lineTo(cx, cy);
-      }
-      ctx.stroke();
-    }
-    // Volcanic rocks with an ember rim.
-    for (let i = 0; i < 5; i++) {
-      const rx = (rand(i + 60) * 0.9 + 0.05) * w;
-      const ry = hy + 60 + rand(i + 9) * (h - hy - 120);
-      const rr = 8 + rand(i) * 14;
-      ctx.fillStyle = '#160805';
-      ctx.beginPath();
-      ctx.ellipse(rx, ry, rr, rr * 0.7, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = `rgba(255,120,30,${0.5 + 0.3 * Math.sin(time * 0.005 + i)})`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.ellipse(rx, ry + 1, rr, rr * 0.7, 0, 0, Math.PI);
-      ctx.stroke();
-    }
+    drawInfernoScenery(ctx, s, time, hy);
     return;
   }
 }
@@ -2015,6 +2417,94 @@ function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, 
     ctx.lineTo(0, baseY + 8);
     ctx.closePath();
     ctx.fill();
+    return;
+  }
+
+  if (theme.id === 'inferno') {
+    // The player holds a sealed threshold at the end of the causeway.
+    const basalt = ctx.createLinearGradient(0, baseY, 0, h);
+    basalt.addColorStop(0, '#180504');
+    basalt.addColorStop(1, '#020101');
+    ctx.fillStyle = basalt;
+    ctx.fillRect(0, baseY, w, 60);
+
+    // Interlocking black-stone blocks.
+    for (let row = 0; row < 3; row++) {
+      const blockW = 62;
+      const blockH = 20;
+      for (let x = -blockW + (row % 2) * (blockW / 2); x < w + blockW; x += blockW) {
+        ctx.fillStyle = row % 2 === 0 ? '#1e0907' : '#130403';
+        ctx.fillRect(x + 1, baseY + row * blockH + 1, blockW - 2, blockH - 2);
+        ctx.strokeStyle = 'rgba(85,28,20,0.52)';
+        ctx.strokeRect(x + 1, baseY + row * blockH + 1, blockW - 2, blockH - 2);
+      }
+    }
+
+    // Molten seam marks the collision threshold.
+    const seam = ctx.createLinearGradient(0, baseY, w, baseY);
+    seam.addColorStop(0, 'rgba(255,45,8,0.25)');
+    seam.addColorStop(0.5, 'rgba(255,105,22,0.95)');
+    seam.addColorStop(1, 'rgba(255,45,8,0.25)');
+    ctx.strokeStyle = seam;
+    ctx.shadowColor = '#ff3b12';
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY);
+    ctx.lineTo(w, baseY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const cx = w / 2;
+    const sealY = baseY + 9;
+    ctx.fillStyle = '#070101';
+    ctx.beginPath();
+    ctx.arc(cx, sealY, 38, Math.PI, 0);
+    ctx.lineTo(cx + 38, baseY + 42);
+    ctx.lineTo(cx - 38, baseY + 42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#4a130d';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Slowly breathing ritual seal—readable, not a rapid flash.
+    const sealAlpha = 0.48 + Math.sin(time * 0.0012) * 0.12;
+    ctx.strokeStyle = `rgba(255,61,15,${sealAlpha})`;
+    ctx.fillStyle = `rgba(255,61,15,${sealAlpha})`;
+    ctx.shadowColor = '#ff3b12';
+    ctx.shadowBlur = 11;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.arc(cx, sealY + 4, 18, 0, Math.PI * 2);
+    ctx.stroke();
+    for (let point = 0; point < 5; point++) {
+      const a = -Math.PI / 2 + (point / 5) * Math.PI * 2;
+      const b = -Math.PI / 2 + (((point + 2) % 5) / 5) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * 16, sealY + 4 + Math.sin(a) * 16);
+      ctx.lineTo(cx + Math.cos(b) * 16, sealY + 4 + Math.sin(b) * 16);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(cx, sealY + 4, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Obsidian spikes make the wall feel like a final desperate barricade.
+    ctx.fillStyle = '#100302';
+    for (let x = 18; x < w; x += 42) {
+      if (Math.abs(x - cx) < 58) continue;
+      const height = 18 + rand(x + 1700) * 18;
+      ctx.beginPath();
+      ctx.moveTo(x - 7, baseY + 4);
+      ctx.lineTo(x, baseY - height);
+      ctx.lineTo(x + 7, baseY + 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,55,12,0.16)';
+      ctx.stroke();
+    }
     return;
   }
 
