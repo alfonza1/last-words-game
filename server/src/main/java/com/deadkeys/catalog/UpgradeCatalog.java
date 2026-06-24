@@ -6,7 +6,7 @@ import java.util.List;
 public final class UpgradeCatalog {
   private UpgradeCatalog() {}
 
-  /** Games an upgrade purchase stays active before expiring. */
+  /** Games added to the shared active-upgrade timer by each purchase. */
   public static final int LIFESPAN = 5;
 
   public record Def(String key, int maxLevel, int baseCost, double costGrowth) {}

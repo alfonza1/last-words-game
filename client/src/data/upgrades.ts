@@ -16,13 +16,13 @@ export interface UpgradeDef {
 }
 
 export const UPGRADE_DEFS: UpgradeDef[] = [
-  { key: 'maxHealth', name: 'Reinforced Base', description: '+20 max health per level.', maxLevel: 5, baseCost: 240, costGrowth: 1.6 },
+  { key: 'maxHealth', name: 'Reinforced Base', description: 'Raise the base’s maximum health.', maxLevel: 5, baseCost: 240, costGrowth: 1.6 },
   { key: 'startShield', name: 'Starting Shield', description: 'Begin each run with +1 shield charge.', maxLevel: 3, baseCost: 400, costGrowth: 1.8 },
   { key: 'slowWaves', name: 'Slow Start', description: 'Early waves move slower.', maxLevel: 3, baseCost: 300, costGrowth: 1.7 },
   { key: 'shotgunRadius', name: 'Wide Choke', description: 'Bigger shotgun blast radius.', maxLevel: 4, baseCost: 280, costGrowth: 1.6 },
   { key: 'slowMoDuration', name: 'Time Dilation', description: 'Longer slow-motion windows.', maxLevel: 4, baseCost: 320, costGrowth: 1.6 },
   { key: 'bossDamage', name: 'Boss Slayer', description: 'Deal bonus progress vs bosses.', maxLevel: 3, baseCost: 440, costGrowth: 1.9 },
-  { key: 'bonusCoins', name: 'Scavenger', description: '+10% coins per level.', maxLevel: 5, baseCost: 260, costGrowth: 1.5 },
+  { key: 'bonusCoins', name: 'Scavenger', description: 'Earn more coins from every run.', maxLevel: 5, baseCost: 260, costGrowth: 1.5 },
   { key: 'powerupChance', name: 'Lucky Charm', description: 'More frequent powerups.', maxLevel: 4, baseCost: 360, costGrowth: 1.7 },
 ];
 

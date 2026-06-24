@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { CharacterLoadout, GameStats, UpgradeKey, Upgrades as UpgradesType } from '../types';
-import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from '../data/upgrades';
+import { UPGRADE_DEFS, UPGRADE_LIFESPAN, upgradeCost } from '../data/upgrades';
 import { POWERUP_DEFS } from '../data/powerups';
 import { COIN_PACKS } from '../data/coinPacks';
 import { COSMETICS, DEFAULT_CHARACTER, type CosmeticDef, type CosmeticSlot } from '../data/cosmetics';
@@ -219,7 +219,7 @@ export function Upgrades({
       <h2 className="mt-2 text-sm font-bold uppercase tracking-widest text-neon-cyan">Upgrades</h2>
       <div className="-mt-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-white/50">
-          Spend coins from runs. Upgrades are temporary — each purchase lasts {UPGRADE_LIFESPAN} games.
+          Spend coins from runs. Every purchase adds {UPGRADE_LIFESPAN} games to your active upgrade timer.
         </p>
         <span
           className={`rounded-md border px-3 py-1 text-xs font-bold ${
@@ -232,9 +232,9 @@ export function Upgrades({
       <div className="grid gap-3 sm:grid-cols-2">
         {UPGRADE_DEFS.map((def) => {
           const level = upgrades[def.key];
-          const maxed = !canUpgrade(def, upgrades);
-          const cost = upgradeCost(def, level);
-          const affordable = !maxed && coins >= cost;
+          const cost = upgradeCost(def, Math.min(level, def.maxLevel - 1));
+          const affordable = coins >= cost;
+          const enabled = level > 0 && gamesLeft > 0;
           return (
             <div
               key={def.key}
@@ -243,34 +243,33 @@ export function Upgrades({
               <div>
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-neon-cyan">{def.name}</h3>
-                  <span className="text-xs text-white/40">
-                    Lv {level}/{def.maxLevel}
-                  </span>
+                  {enabled && (
+                    <span className="rounded border border-neon-cyan/40 bg-neon-cyan/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-neon-cyan">
+                      Active
+                    </span>
+                  )}
                 </div>
                 <p className="mt-1 text-sm text-white/60">{def.description}</p>
-                <div className="mt-2 flex gap-1">
-                  {Array.from({ length: def.maxLevel }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={`h-1.5 flex-1 rounded-full ${i < level ? 'bg-neon-green' : 'bg-white/10'}`}
-                    />
-                  ))}
-                </div>
               </div>
               <button
-                disabled={maxed || (signedIn && !affordable)}
+                disabled={signedIn && !affordable}
                 onClick={() =>
                   signedIn
-                    ? setPending({ kind: 'upgrade', id: def.key, label: def.name, cost: `${cost} 🪙` })
+                    ? setPending({
+                        kind: 'upgrade',
+                        id: def.key,
+                        label: def.name,
+                        cost: `${cost} 🪙 · +${UPGRADE_LIFESPAN} games`,
+                      })
                     : onRequireSignIn()
                 }
                 className={`mt-3 rounded-lg border px-4 py-2 text-sm font-bold transition-all ${
-                  maxed || (signedIn && !affordable)
+                  signedIn && !affordable
                     ? 'cursor-not-allowed border-white/10 text-white/30'
                     : 'border-neon-green bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
                 }`}
               >
-                {maxed ? 'MAXED' : `${cost} 🪙`}
+                {cost.toLocaleString()} 🪙 · +{UPGRADE_LIFESPAN} GAMES
               </button>
             </div>
           );

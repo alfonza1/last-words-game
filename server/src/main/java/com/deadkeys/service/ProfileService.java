@@ -153,16 +153,18 @@ public class ProfileService {
     if (def == null) throw new BadRequestException("unknown upgrade key: " + key);
 
     int currentLevel = profile.upgrades.get(key);
-    if (currentLevel >= def.maxLevel()) throw new BadRequestException("upgrade already maxed");
-
-    int cost = UpgradeCatalog.cost(def, currentLevel);
+    int costLevel = Math.min(currentLevel, def.maxLevel() - 1);
+    int cost = UpgradeCatalog.cost(def, costLevel);
     if (profile.stats.totalCoins < cost) throw new BadRequestException("not enough coins");
 
-    profile.upgrades.set(key, currentLevel + 1);
+    if (currentLevel < def.maxLevel()) {
+      profile.upgrades.set(key, currentLevel + 1);
+    }
     profile.stats.totalCoins -= cost;
-    profile.upgradeGames = UpgradeCatalog.LIFESPAN; // a purchase (re)starts the timer
+    profile.upgradeGames += UpgradeCatalog.LIFESPAN;
     store.save(profile);
-    log.info("upgrade bought uid={} key={} level={} cost={}", profile.guestId, key, currentLevel + 1, cost);
+    log.info("upgrade bought uid={} key={} strength={} games={} cost={}",
+        profile.guestId, key, profile.upgrades.get(key), profile.upgradeGames, cost);
   }
 
   /** Update the display name. Limited to once per week per account. */
