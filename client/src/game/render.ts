@@ -506,7 +506,7 @@ function drawArea67Scenery(ctx: CanvasRenderingContext2D, s: GameState, time: nu
     ctx.stroke();
   }
 
-  // Runway threshold bars and the installation number.
+  // Runway threshold bars.
   ctx.fillStyle = 'rgba(218,224,202,0.35)';
   for (const side of [-1, 1] as const) {
     for (let stripe = 0; stripe < 4; stripe++) {
@@ -514,15 +514,6 @@ function drawArea67Scenery(ctx: CanvasRenderingContext2D, s: GameState, time: nu
       ctx.fillRect(x - 4 * scale, h - 120, 8 * scale, 52);
     }
   }
-  ctx.save();
-  ctx.translate(w / 2, h * 0.7);
-  ctx.scale(1, 0.48);
-  ctx.fillStyle = 'rgba(218,224,202,0.24)';
-  ctx.font = `900 ${72 * scale}px "JetBrains Mono", monospace`;
-  ctx.textAlign = 'center';
-  ctx.fillText('67', 0, 0);
-  ctx.restore();
-
   // Fixed runway lights: deliberately sparse and non-flashing.
   for (let row = 0; row < 7; row++) {
     const v = (row + 0.8) / 7.8;
