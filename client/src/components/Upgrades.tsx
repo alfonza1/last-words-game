@@ -3,6 +3,7 @@ import type { GameStats, UpgradeKey, Upgrades as UpgradesType } from '../types';
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from '../data/upgrades';
 import { POWERUP_DEFS } from '../data/powerups';
 import { COIN_PACKS } from '../data/coinPacks';
+import { AdBanner } from './AdBanner';
 
 type Pending = { kind: 'upgrade' | 'powerup' | 'coinpack'; id: string; label: string; cost: string; real?: boolean };
 
@@ -208,6 +209,8 @@ export function Upgrades({
           );
         })}
       </div>
+
+      <AdBanner className="mt-2" />
 
       {/* Confirm purchase popup — prevents accidental / spam buys */}
       {pending && (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getLeaderboard, type LeaderboardEntry } from '../lib/api';
+import { AdBanner } from './AdBanner';
 
 export function Leaderboard({ onBack }: { onBack: () => void }) {
   const [entries, setEntries] = useState<LeaderboardEntry[] | null>(null);
@@ -59,6 +60,8 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
           ))}
         </div>
       )}
+
+      <AdBanner className="mt-auto" />
     </div>
   );
 }
