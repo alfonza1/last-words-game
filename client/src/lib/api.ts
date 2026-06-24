@@ -5,7 +5,7 @@
 // only ever touches the caller's own profile. Guests don't hit these endpoints
 // (their progress is local) — the only public read is the leaderboard.
 // ---------------------------------------------------------------------------
-import type { GameStats, Upgrades } from '../types';
+import type { CharacterLoadout, GameStats, Upgrades } from '../types';
 import { auth } from './firebase';
 
 const BASE = (import.meta.env.VITE_API_BASE ?? '') + '/api';
@@ -18,6 +18,8 @@ export interface Profile {
   upgradeGames: number;
   powerups: Record<string, number>;
   maps: string[];
+  cosmetics: string[];
+  character: CharacterLoadout;
 }
 
 export interface RunPayload {
@@ -121,6 +123,16 @@ export async function usePowerup(key: string): Promise<Profile> {
 
 export async function buyMap(mapId: string): Promise<Profile> {
   const { profile } = await apost<{ profile: Profile }>('/profile/buy-map', { mapId });
+  return profile;
+}
+
+export async function buyCosmetic(key: string): Promise<Profile> {
+  const { profile } = await apost<{ profile: Profile }>('/profile/buy-cosmetic', { key });
+  return profile;
+}
+
+export async function equipCharacter(character: CharacterLoadout): Promise<Profile> {
+  const { profile } = await apost<{ profile: Profile }>('/profile/equip-character', character);
   return profile;
 }
 

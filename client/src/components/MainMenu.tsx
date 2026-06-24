@@ -1,13 +1,16 @@
-import type { Difficulty, GameMode, GameStats } from '../types';
+import type { CharacterLoadout, Difficulty, GameMode, GameStats } from '../types';
 import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
 import { AdBanner } from './AdBanner';
+import { CharacterAvatar } from './CharacterAvatar';
+import { cosmeticByKey } from '../data/cosmetics';
 
 interface Props {
   stats: GameStats;
   difficulty: Difficulty;
+  character: CharacterLoadout;
   onStart: (mode: GameMode) => void;
-  onNav: (screen: 'upgrades' | 'howto' | 'settings' | 'leaderboard') => void;
+  onNav: (screen: 'upgrades' | 'closet' | 'howto' | 'settings' | 'leaderboard') => void;
   onDifficulty: (d: Difficulty) => void;
 }
 
@@ -18,17 +21,19 @@ const DIFF_BLURB: Record<Difficulty, string> = {
   nightmare: 'Words, numbers & symbols — exact case. Earn 2× coins. Enter if you dare.',
 };
 
-export function MainMenu({ stats, difficulty, onStart, onNav, onDifficulty }: Props) {
+export function MainMenu({ stats, difficulty, character, onStart, onNav, onDifficulty }: Props) {
+  const outfit = cosmeticByKey(character.outfit);
+  const accessory = cosmeticByKey(character.accessory);
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-5xl flex-col items-center justify-center gap-10 p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-center gap-6 overflow-y-auto p-6">
       <div className="text-center">
-        <h1 className="text-6xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-7xl">
+        <h1 className="text-5xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
         </h1>
         <p className="mt-2 text-sm tracking-[0.35em] text-neon-cyan">TYPE OR BE DEVOURED</p>
       </div>
 
-      <div className="grid w-full max-w-3xl gap-6 sm:grid-cols-[1.4fr_1fr]">
+      <div className="grid w-full gap-5 lg:grid-cols-[1.2fr_0.85fr_0.8fr]">
         <div className="space-y-4">
           {/* Difficulty */}
           <div>
@@ -62,6 +67,9 @@ export function MainMenu({ stats, difficulty, onStart, onNav, onDifficulty }: Pr
               <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
                 <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
               </button>
+              <button className="menu-btn border-neon-cyan/40 text-base text-neon-cyan" onClick={() => onNav('closet')}>
+                <span className="mr-2 inline-block w-5 text-center">◈</span>Closet
+              </button>
               <button className="menu-btn text-base" onClick={() => onNav('leaderboard')}>
                 <span className="mr-2 inline-block w-5 text-center">🏆</span>Leaderboard
               </button>
@@ -74,6 +82,24 @@ export function MainMenu({ stats, difficulty, onStart, onNav, onDifficulty }: Pr
             </div>
           </div>
         </div>
+
+        {/* Equipped survivor */}
+        <button
+          onClick={() => onNav('closet')}
+          className="group relative min-h-[360px] overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/75 text-left transition hover:border-neon-cyan/70 hover:shadow-[0_0_28px_rgba(0,240,255,0.2)]"
+        >
+          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-cyan/12 to-transparent" />
+          <div className="absolute left-3 top-3 z-10">
+            <div className="text-[9px] font-black uppercase tracking-[0.28em] text-neon-cyan">Active survivor</div>
+            <div className="mt-1 text-sm font-bold text-white">{outfit?.name}</div>
+            <div className="text-[10px] text-white/35">{accessory?.name}</div>
+          </div>
+          <CharacterAvatar character={character} className="absolute inset-x-0 bottom-9 mx-auto h-[310px] w-[245px] transition group-hover:scale-[1.025]" />
+          <div className="absolute inset-x-4 bottom-3 flex items-center justify-between border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest">
+            <span className="text-white/35">Loadout online</span>
+            <span className="font-bold text-neon-cyan">Open Closet →</span>
+          </div>
+        </button>
 
         {/* Records */}
         <div className="rounded-xl border border-white/10 bg-ink-800/70 p-4">

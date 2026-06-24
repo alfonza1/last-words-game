@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import type { GameStats, UpgradeKey, Upgrades as UpgradesType } from '../types';
+import type { CharacterLoadout, GameStats, UpgradeKey, Upgrades as UpgradesType } from '../types';
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from '../data/upgrades';
 import { POWERUP_DEFS } from '../data/powerups';
 import { COIN_PACKS } from '../data/coinPacks';
+import { COSMETICS } from '../data/cosmetics';
 import { AdBanner } from './AdBanner';
+import { CharacterAvatar } from './CharacterAvatar';
 
-type Pending = { kind: 'upgrade' | 'powerup' | 'coinpack'; id: string; label: string; cost: string; real?: boolean };
+type Pending = { kind: 'upgrade' | 'powerup' | 'coinpack' | 'cosmetic'; id: string; label: string; cost: string; real?: boolean };
 
 interface Props {
   upgrades: UpgradesType;
@@ -13,12 +15,15 @@ interface Props {
   gamesLeft: number;
   /** Owned consumable powerup charges (key -> count). */
   powerups: Record<string, number>;
+  character: CharacterLoadout;
+  ownedCosmetics: string[];
   /** Whether the player is signed in (required to purchase). */
   signedIn: boolean;
   /** Purchase is authoritative on the backend — just send the key. */
   onBuy: (key: UpgradeKey) => void;
   /** Buy one charge of a consumable powerup. */
   onBuyPowerup: (key: string) => void;
+  onBuyCosmetic: (key: string) => void;
   /** Buy a real-money coin pack (Stripe). */
   onBuyCoinPack: (packId: string) => void;
   /** Called when a guest tries to buy — prompts sign-in. */
@@ -31,9 +36,12 @@ export function Upgrades({
   stats,
   gamesLeft,
   powerups,
+  character,
+  ownedCosmetics,
   signedIn,
   onBuy,
   onBuyPowerup,
+  onBuyCosmetic,
   onBuyCoinPack,
   onRequireSignIn,
   onBack,
@@ -50,6 +58,7 @@ export function Upgrades({
     setPending(null);
     if (p.kind === 'upgrade') onBuy(p.id as UpgradeKey);
     else if (p.kind === 'powerup') onBuyPowerup(p.id);
+    else if (p.kind === 'cosmetic') onBuyCosmetic(p.id);
     else onBuyCoinPack(p.id);
   };
 
@@ -88,6 +97,58 @@ export function Upgrades({
           🔒 You’re playing as a guest. <span className="font-bold underline">Sign in</span> to buy from the store.
         </button>
       )}
+
+      <h2 className="mt-1 text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
+      <p className="-mt-2 text-xs text-white/40">
+        Permanent outfits and accessories. Equip owned items from the Closet.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {COSMETICS.filter((item) => item.cost > 0).map((item) => {
+          const owned = ownedCosmetics.includes(item.key);
+          const affordable = coins >= item.cost;
+          const preview: CharacterLoadout = { ...character, [item.slot]: item.key };
+          const rarityColor =
+            item.rarity === 'legendary'
+              ? 'border-neon-amber/60'
+              : item.rarity === 'epic'
+                ? 'border-neon-pink/50'
+                : 'border-neon-cyan/35';
+          return (
+            <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-3 ${rarityColor}`}>
+              <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/30">
+                {item.rarity}
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-28 w-24 flex-none overflow-hidden rounded-lg border border-white/10 bg-black/35">
+                  <CharacterAvatar character={preview} armed={false} className="h-32 w-full -translate-y-1" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-bold text-neon-pink">{item.name}</h3>
+                  <p className="mt-1 text-[10px] leading-snug text-white/45">{item.description}</p>
+                  <div className="mt-1 text-[9px] uppercase tracking-widest text-white/30">{item.slot}</div>
+                </div>
+              </div>
+              <button
+                disabled={owned || (signedIn && !affordable)}
+                onClick={() =>
+                  signedIn
+                    ? setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })
+                    : onRequireSignIn()
+                }
+                className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black ${
+                  owned
+                    ? 'border-neon-green/35 text-neon-green'
+                    : signedIn && !affordable
+                      ? 'cursor-not-allowed border-white/10 text-white/25'
+                      : 'border-neon-pink/60 bg-neon-pink/10 text-neon-pink hover:bg-neon-pink/20'
+                }`}
+              >
+                {owned ? 'OWNED · EQUIP IN CLOSET' : `${item.cost} 🪙`}
+              </button>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Coin packs (real money) — top of the store */}
       <h2 className="text-sm font-bold uppercase tracking-widest text-neon-amber">Coin Packs</h2>

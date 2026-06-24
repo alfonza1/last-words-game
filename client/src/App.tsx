@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Difficulty, GameMode, GameStats, Screen, Settings, UpgradeKey, Upgrades } from './types';
+import type { CharacterLoadout, Difficulty, GameMode, GameStats, Screen, Settings, UpgradeKey, Upgrades } from './types';
 import {
   DEFAULT_STATS,
   DEFAULT_UPGRADES,
@@ -11,11 +11,13 @@ import {
 } from './lib/storage';
 import {
   buyMap as apiBuyMap,
+  buyCosmetic as apiBuyCosmetic,
   buyPowerup as apiBuyPowerup,
   buyUpgrade as apiBuyUpgrade,
   checkoutCoinPack as apiCheckoutCoinPack,
   claimReward as apiClaimReward,
   getProfile as apiGetProfile,
+  equipCharacter as apiEquipCharacter,
   setUsername as apiSetUsername,
   submitRun as apiSubmitRun,
   usePowerup as apiUsePowerup,
@@ -23,6 +25,7 @@ import {
   type RunPayload,
 } from './lib/api';
 import { getMap } from './data/maps';
+import { DEFAULT_CHARACTER, DEFAULT_COSMETICS, normalizeCharacter } from './data/cosmetics';
 import { audio } from './lib/audio';
 import { useAuth } from './lib/auth';
 import { useToast } from './lib/toast';
@@ -42,6 +45,7 @@ const GameOver = lazy(() => import('./components/GameOver').then((m) => ({ defau
 const UpgradesScreen = lazy(() => import('./components/Upgrades').then((m) => ({ default: m.Upgrades })));
 const HowToPlay = lazy(() => import('./components/HowToPlay').then((m) => ({ default: m.HowToPlay })));
 const SettingsPanel = lazy(() => import('./components/SettingsPanel').then((m) => ({ default: m.SettingsPanel })));
+const Closet = lazy(() => import('./components/Closet').then((m) => ({ default: m.Closet })));
 
 const REWARD_COINS = 50; // bonus for an optional rewarded ad (server is authoritative)
 
@@ -70,6 +74,8 @@ export default function App() {
   const [upgradeGames, setUpgradeGames] = useState<number>(0);
   const [powerups, setPowerups] = useState<Record<string, number>>({});
   const [maps, setMaps] = useState<string[]>(['graveyard']);
+  const [cosmetics, setCosmetics] = useState<string[]>(DEFAULT_COSMETICS);
+  const [character, setCharacter] = useState<CharacterLoadout>(DEFAULT_CHARACTER);
   const [loading, setLoading] = useState(true);
   const [serverOk, setServerOk] = useState(true);
 
@@ -87,6 +93,8 @@ export default function App() {
     setUpgradeGames(p.upgradeGames);
     setPowerups(p.powerups ?? {});
     setMaps(p.maps ?? ['graveyard']);
+    setCosmetics(p.cosmetics ?? DEFAULT_COSMETICS);
+    setCharacter(normalizeCharacter(p.character));
   }, []);
 
   const applyGuest = useCallback(() => {
@@ -95,6 +103,8 @@ export default function App() {
     setUpgradeGames(0);
     setPowerups({});
     setMaps(['graveyard']);
+    setCosmetics(DEFAULT_COSMETICS);
+    setCharacter(DEFAULT_CHARACTER);
   }, []);
 
   // Load the right progress for the current identity. Re-runs on sign in / out.
@@ -255,6 +265,36 @@ export default function App() {
     [user, applyProfile, persistSettings, settings, toast, fail],
   );
 
+  const buyCosmetic = useCallback(
+    (key: string) => {
+      if (!user) return;
+      apiBuyCosmetic(key)
+        .then((p) => {
+          applyProfile(p);
+          toast.success('Gear unlocked — check your Closet.');
+        })
+        .catch(fail);
+    },
+    [user, applyProfile, toast, fail],
+  );
+
+  const equipCharacter = useCallback(
+    (next: CharacterLoadout) => {
+      if (!user) {
+        setCharacter(normalizeCharacter(next));
+        toast.success('Guest loadout equipped for this visit.');
+        return;
+      }
+      apiEquipCharacter(next)
+        .then((p) => {
+          applyProfile(p);
+          toast.success('Survivor loadout equipped.');
+        })
+        .catch(fail);
+    },
+    [user, applyProfile, toast, fail],
+  );
+
   // Optional rewarded ad → bonus coins. Server-authoritative for accounts;
   // local for guests. Throws on cooldown/error so the UI can show it.
   const claimReward = useCallback(async (): Promise<number> => {
@@ -368,11 +408,27 @@ export default function App() {
             stats={stats}
             gamesLeft={upgradeGames}
             powerups={powerups}
+            character={character}
+            ownedCosmetics={cosmetics}
             signedIn={signedIn}
             onBuy={buyUpgrade}
             onBuyPowerup={buyPowerup}
+            onBuyCosmetic={buyCosmetic}
             onBuyCoinPack={buyCoinPack}
             onRequireSignIn={() => requireSignIn('Sign in to securely buy from our store — safe checkout with Stripe.')}
+            onBack={() => setScreen('menu')}
+          />
+        );
+      case 'closet':
+        return (
+          <Closet
+            character={character}
+            ownedCosmetics={cosmetics}
+            stats={stats}
+            signedIn={signedIn}
+            onEquip={equipCharacter}
+            onOpenStore={() => setScreen('upgrades')}
+            onRequireSignIn={() => requireSignIn('Sign in to buy survivor gear and save your Closet.')}
             onBack={() => setScreen('menu')}
           />
         );
@@ -405,6 +461,7 @@ export default function App() {
           <MainMenu
             stats={stats}
             difficulty={settings.difficulty}
+            character={character}
             onStart={chooseMode}
             onNav={(scr) => setScreen(scr)}
             onDifficulty={setDifficulty}
@@ -421,6 +478,8 @@ export default function App() {
     upgradeGames,
     powerups,
     maps,
+    cosmetics,
+    character,
     result,
     isHighScore,
     stats,
@@ -434,6 +493,8 @@ export default function App() {
     buyUpgrade,
     buyPowerup,
     buyMap,
+    buyCosmetic,
+    equipCharacter,
     buyCoinPack,
     claimReward,
     saveUsername,

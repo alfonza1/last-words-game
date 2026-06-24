@@ -8,6 +8,7 @@ export type Screen =
   | 'game'
   | 'gameover'
   | 'upgrades'
+  | 'closet'
   | 'howto'
   | 'settings'
   | 'signin'
@@ -30,6 +31,14 @@ export type ZombieType =
 export type Weather = 'clear' | 'fog' | 'rain';
 
 export type WeaponType = 'pistol' | 'shotgun' | 'rifle' | 'smg';
+
+export interface CharacterLoadout {
+  skinTone: string;
+  hair: string;
+  hairColor: string;
+  outfit: string;
+  accessory: string;
+}
 
 export interface Reward {
   score: number;
