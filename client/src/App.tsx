@@ -3,9 +3,11 @@ import type { CharacterLoadout, Difficulty, GameMode, GameStats, Screen, Setting
 import {
   DEFAULT_STATS,
   DEFAULT_UPGRADES,
+  loadRiddleStats,
   loadSettings,
   loadStats,
   mergeRunIntoStats,
+  saveRiddleStats,
   saveSettings,
   saveStats,
 } from './lib/storage';
@@ -71,6 +73,7 @@ export default function App() {
   // Signed-in progress lives on the server (keyed to the Firebase uid).
   // Guests are fully local — no server calls — and only keep lifetime stats.
   const [stats, setStats] = useState<GameStats>(DEFAULT_STATS);
+  const [riddleStats, setRiddleStats] = useState<GameStats>(DEFAULT_STATS);
   const [upgrades, setUpgrades] = useState<Upgrades>(DEFAULT_UPGRADES);
   const [upgradeGames, setUpgradeGames] = useState<number>(0);
   const [powerups, setPowerups] = useState<Record<string, number>>({});
@@ -90,6 +93,7 @@ export default function App() {
 
   const applyProfile = useCallback((p: Profile) => {
     setStats(p.stats);
+    setRiddleStats(p.riddleStats ?? DEFAULT_STATS);
     setUpgrades(p.upgrades);
     setUpgradeGames(p.upgradeGames);
     setPowerups(p.powerups ?? {});
@@ -100,6 +104,7 @@ export default function App() {
 
   const applyGuest = useCallback(() => {
     setStats(loadStats());
+    setRiddleStats(loadRiddleStats());
     setUpgrades(DEFAULT_UPGRADES);
     setUpgradeGames(0);
     setPowerups({});
@@ -180,7 +185,8 @@ export default function App() {
   // Save a finished run: server for accounts, localStorage for guests.
   const saveRun = useCallback(
     (r: RunResult, onResult?: (high: boolean) => void) => {
-      const high = r.score > stats.bestScore && r.score > 0;
+      const records = r.riddle ? riddleStats : stats;
+      const high = r.score > records.bestScore && r.score > 0;
       if (user) {
         const payload: RunPayload = { ...r, mode, difficulty: settings.difficulty, riddle: r.riddle };
         apiSubmitRun(payload)
@@ -194,23 +200,33 @@ export default function App() {
             onResult?.(high);
           });
       } else {
-        const merged = mergeRunIntoStats(stats, r);
-        setStats(merged);
-        saveStats(merged);
+        if (r.riddle) {
+          const mergedRiddle = mergeRunIntoStats(riddleStats, r);
+          const wallet = { ...stats, totalCoins: stats.totalCoins + r.coins };
+          setRiddleStats(mergedRiddle);
+          setStats(wallet);
+          saveRiddleStats(mergedRiddle);
+          saveStats(wallet);
+        } else {
+          const merged = mergeRunIntoStats(stats, r);
+          setStats(merged);
+          saveStats(merged);
+        }
         onResult?.(high);
       }
     },
-    [user, stats, mode, settings.difficulty, applyProfile, toast],
+    [user, stats, riddleStats, mode, settings.difficulty, applyProfile, toast],
   );
 
   const handleGameOver = useCallback(
     (r: RunResult) => {
+      const records = r.riddle ? riddleStats : stats;
       setResult(r);
-      setIsHighScore(r.score > stats.bestScore && r.score > 0);
+      setIsHighScore(r.score > records.bestScore && r.score > 0);
       setScreen('gameover');
       saveRun(r, setIsHighScore);
     },
-    [stats.bestScore, saveRun],
+    [stats, riddleStats, saveRun],
   );
 
   // Quitting/restarting mid-run still saves the stats earned this game and uses
@@ -466,6 +482,7 @@ export default function App() {
         return (
           <MainMenu
             stats={stats}
+            riddleStats={riddleStats}
             difficulty={settings.difficulty}
             character={character}
             username={username || (signedIn ? 'Survivor' : 'Guest')}
@@ -492,6 +509,7 @@ export default function App() {
     result,
     isHighScore,
     stats,
+    riddleStats,
     signedIn,
     username,
     storeReturn,

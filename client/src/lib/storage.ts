@@ -5,6 +5,7 @@ import type { GameStats, HighScore, Settings, Upgrades } from '../types';
 
 const KEYS = {
   stats: 'ztr.stats',
+  riddleStats: 'ztr.riddleStats',
   upgrades: 'ztr.upgrades',
   upgradeGames: 'ztr.upgradeGames',
   settings: 'ztr.settings',
@@ -86,6 +87,8 @@ export function saveJSON<T>(key: string, value: T, store?: Storage): void {
 
 export const loadStats = (store?: Storage) => loadJSON(KEYS.stats, DEFAULT_STATS, store);
 export const saveStats = (v: GameStats, store?: Storage) => saveJSON(KEYS.stats, v, store);
+export const loadRiddleStats = (store?: Storage) => loadJSON(KEYS.riddleStats, DEFAULT_STATS, store);
+export const saveRiddleStats = (v: GameStats, store?: Storage) => saveJSON(KEYS.riddleStats, v, store);
 
 export const loadUpgrades = (store?: Storage) => loadJSON(KEYS.upgrades, DEFAULT_UPGRADES, store);
 export const saveUpgrades = (v: Upgrades, store?: Storage) => saveJSON(KEYS.upgrades, v, store);

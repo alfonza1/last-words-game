@@ -14,6 +14,7 @@ export interface Profile {
   guestId: string; // = the account's Firebase uid
   name: string;
   stats: GameStats;
+  riddleStats: GameStats;
   upgrades: Upgrades;
   upgradeGames: number;
   powerups: Record<string, number>;

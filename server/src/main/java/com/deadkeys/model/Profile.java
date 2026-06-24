@@ -11,7 +11,10 @@ public class Profile {
   /** Account id (Firebase uid). Field name kept for client compatibility. */
   public String guestId;
   public String name;
+  /** Typing-mode records plus the shared coin wallet. */
   public Stats stats = new Stats();
+  /** Records earned specifically while playing Riddle Mode. */
+  public Stats riddleStats = new Stats();
   public Upgrades upgrades = new Upgrades();
   public int upgradeGames = 0; // games remaining before upgrades expire
   /** Consumable powerup charges bought in the store (key -> count). */

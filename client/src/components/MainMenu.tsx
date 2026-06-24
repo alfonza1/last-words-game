@@ -6,6 +6,7 @@ import { CharacterAvatar } from './CharacterAvatar';
 
 interface Props {
   stats: GameStats;
+  riddleStats: GameStats;
   difficulty: Difficulty;
   character: CharacterLoadout;
   username: string;
@@ -25,6 +26,7 @@ const DIFF_BLURB: Record<Difficulty, string> = {
 
 export function MainMenu({
   stats,
+  riddleStats,
   difficulty,
   character,
   username,
@@ -142,23 +144,48 @@ export function MainMenu({
         </button>
 
         {/* Records */}
-        <div className="rounded-xl border border-white/10 bg-ink-800/70 p-4">
-          <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-neon-green">Records</h3>
-          <dl className="space-y-1.5 text-sm">
-            <Row k="Best Score" v={stats.bestScore.toLocaleString()} />
-            <Row k="Longest Survival" v={formatTime(stats.longestSurvivalMs)} />
-            <Row k="Highest WPM" v={stats.highestWpm} />
-            <Row k="Best Accuracy" v={`${stats.bestAccuracy}%`} />
-            <Row k="Total Kills" v={stats.totalKills} />
-            <Row k="Bosses Defeated" v={stats.bossesDefeated} />
-            <Row k="Longest Streak" v={stats.longestStreak} />
-            <Row k="Coins" v={stats.totalCoins} />
-          </dl>
-        </div>
+        <Records stats={stats} riddleStats={riddleStats} riddleMode={riddleMode} />
       </div>
 
       <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT · ONE WORD AT A TIME</p>
       <AdBanner />
+    </div>
+  );
+}
+
+function Records({
+  stats,
+  riddleStats,
+  riddleMode,
+}: {
+  stats: GameStats;
+  riddleStats: GameStats;
+  riddleMode: boolean;
+}) {
+  const selected = riddleMode ? riddleStats : stats;
+  return (
+    <div
+      className={`rounded-xl border bg-ink-800/70 p-4 transition-colors ${
+        riddleMode ? 'border-neon-pink/25' : 'border-white/10'
+      }`}
+    >
+      <h3 className={`mb-3 text-sm font-bold uppercase tracking-widest ${riddleMode ? 'text-neon-pink' : 'text-neon-green'}`}>
+        {riddleMode ? 'Riddle Records' : 'Typing Records'}
+      </h3>
+      <dl className="space-y-1.5 text-sm">
+        <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
+        <Row k="Longest Survival" v={formatTime(selected.longestSurvivalMs)} />
+        {riddleMode ? (
+          <Row k="Riddle Runs" v={selected.gamesPlayed} />
+        ) : (
+          <Row k="Highest WPM" v={selected.highestWpm} />
+        )}
+        <Row k="Best Accuracy" v={`${selected.bestAccuracy}%`} />
+        <Row k={riddleMode ? 'Riddle Kills' : 'Total Kills'} v={selected.totalKills} />
+        <Row k="Bosses Defeated" v={selected.bossesDefeated} />
+        <Row k={riddleMode ? 'Best Solve Streak' : 'Longest Streak'} v={selected.longestStreak} />
+        <Row k={riddleMode ? 'Coins Earned' : 'Coins'} v={selected.totalCoins} />
+      </dl>
     </div>
   );
 }

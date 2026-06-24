@@ -61,7 +61,7 @@ public class ProfileService {
   /** The current account's profile (created on first sign-in), grant applied. */
   public Profile getOrCreate(String uid, String name) {
     Profile p = store.ensureProfile(uid, name);
-    boolean changed = normalizeCharacter(p);
+    boolean changed = normalizeProfile(p);
     if (!p.granted) {
       maybeGrant(p);
       changed = changed || p.granted;
@@ -73,8 +73,12 @@ public class ProfileService {
   /** Merge a finished (or abandoned) run into the profile + leaderboard. */
   public boolean applyRun(Profile profile, RunResult run) {
     RunResult safe = clamp(run);
-    boolean isHighScore = safe.score() > profile.stats.bestScore && safe.score() > 0;
-    mergeStats(profile.stats, safe);
+    normalizeProfile(profile);
+    Stats recordStats = safe.riddle() ? profile.riddleStats : profile.stats;
+    boolean isHighScore = safe.score() > recordStats.bestScore && safe.score() > 0;
+    mergeStats(recordStats, safe);
+    // Coins are one shared wallet even though the record panels are separate.
+    if (safe.riddle()) profile.stats.totalCoins += safe.coins();
     consumeUpgradeLife(profile);
     // One leaderboard row per player — only updated on a new personal best.
     store.upsertLeaderboard(profile.guestId, new LeaderboardEntry(
@@ -194,7 +198,7 @@ public class ProfileService {
   public void buyCosmetic(Profile profile, String key) {
     CharacterCatalog.Def def = CharacterCatalog.find(key);
     if (def == null) throw new BadRequestException("unknown cosmetic");
-    normalizeCharacter(profile);
+    normalizeProfile(profile);
     if (profile.cosmetics.contains(key)) return;
     if (profile.stats.totalCoins < def.cost()) throw new BadRequestException("not enough coins");
     profile.stats.totalCoins -= def.cost();
@@ -211,7 +215,7 @@ public class ProfileService {
       String hairColor,
       String outfit,
       String accessory) {
-    normalizeCharacter(profile);
+    normalizeProfile(profile);
     if (!CharacterCatalog.SKIN_TONES.contains(skinTone)) throw new BadRequestException("unknown skin tone");
     if (!CharacterCatalog.HAIR_STYLES.contains(hair)) throw new BadRequestException("unknown hair style");
     if (!CharacterCatalog.HAIR_COLORS.contains(hairColor)) throw new BadRequestException("unknown hair color");
@@ -272,9 +276,17 @@ public class ProfileService {
     profile.granted = true;
   }
 
-  /** Backfill character defaults for profiles saved before cosmetics existed. */
-  private static boolean normalizeCharacter(Profile profile) {
+  /** Backfill fields for profiles saved before newer profile features existed. */
+  private static boolean normalizeProfile(Profile profile) {
     boolean changed = false;
+    if (profile.stats == null) {
+      profile.stats = new Stats();
+      changed = true;
+    }
+    if (profile.riddleStats == null) {
+      profile.riddleStats = new Stats();
+      changed = true;
+    }
     if (profile.cosmetics == null) {
       profile.cosmetics = new ArrayList<>();
       changed = true;
