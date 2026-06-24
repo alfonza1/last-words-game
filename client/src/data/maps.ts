@@ -90,13 +90,14 @@ export const MAPS: MapTheme[] = [
   {
     id: 'forest',
     name: 'Bleeding Forest',
-    description: 'Crimson mist between endless skeletal trees.',
+    description: 'Enter the heartwood cathedral, where ancient roots drink from a river that never runs dry.',
     cost: 900,
     palette: {
-      skyTop: '#1a0707', skyHorizon: '#3a0d0d', ground1: '#240e0e', ground2: '#0c0303',
-      fog: '180,60,60', moon: '#ff6f5e', glow: 'rgba(255,50,50,0.45)', accent: '#ff3860',
+      skyTop: '#050204', skyHorizon: '#3b0711', ground1: '#21080d', ground2: '#080204',
+      fog: '170,22,52', moon: '#f3d1c4', glow: 'rgba(255,28,62,0.46)', accent: '#ff244f',
     },
-    features: { ...NONE, tombstones: true, deadTrees: true },
+    // Entirely bespoke: heartwood cathedral, blood river, ward arches, and root shrine.
+    features: { ...NONE },
   },
   {
     id: 'arena',

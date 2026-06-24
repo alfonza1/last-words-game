@@ -85,6 +85,11 @@ export function MapSelect({
                     Boss Rush Exclusive
                   </span>
                 )}
+                {m.id === 'forest' && (
+                  <span className="absolute right-2 top-2 rounded border border-neon-pink/60 bg-black/70 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-neon-pink shadow-[0_0_12px_rgba(255,36,79,0.35)]">
+                    Premium Map
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-1 flex-col p-3">
