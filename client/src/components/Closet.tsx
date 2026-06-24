@@ -55,7 +55,7 @@ export function Closet({
 
   return (
     <div className="crt relative mx-auto grid h-full w-full max-w-6xl overflow-y-auto p-5 lg:grid-cols-[340px_1fr] lg:gap-5">
-      <section className="relative flex min-h-[470px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-4">
+      <section className="relative flex min-h-[620px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-4 lg:min-h-[470px]">
         <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-neon-cyan/10 to-transparent" />
         <div className="relative flex items-center gap-3">
           <button
