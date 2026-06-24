@@ -57,6 +57,7 @@ export function drawGame(
   drawSurvivor(ctx, s, character, time);
 
   drawGroundFog(ctx, s, theme, time);
+  if (theme.id === 'forest') drawBleedingForestAtmosphere(ctx, s, time);
   if (theme.features.snow) drawSnow(ctx, s, time);
   if (theme.features.embers) drawEmbers(ctx, s, theme, time);
   drawFloating(ctx, s);
@@ -105,7 +106,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
 
   // Stars (two layers — distant + brighter twinkles). Dead City replaces
   // these with a low, light-polluted storm ceiling.
-  if (theme.id !== 'city' && theme.id !== 'inferno') {
+  if (theme.id !== 'city' && theme.id !== 'inferno' && theme.id !== 'forest') {
     for (let i = 0; i < 90; i++) {
       const sx = rand(i) * w;
       const sy = rand(i + 99) * hy * 0.95;
@@ -117,7 +118,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   }
 
   // Occasional shooting star streaking across.
-  if (theme.id !== 'city' && theme.id !== 'inferno') {
+  if (theme.id !== 'city' && theme.id !== 'inferno' && theme.id !== 'forest') {
     const period = 5200;
     const phase = (time % period) / period;
     if (phase < 0.16) {
@@ -150,6 +151,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
 
   if (theme.id === 'city') drawDeadCitySky(ctx, s, time, hy);
   if (theme.id === 'inferno') drawInfernoSky(ctx, s, time, hy);
+  if (theme.id === 'forest') drawBleedingForestSky(ctx, s, time, hy);
 
   // Aurora for the tundra
   if (theme.id === 'tundra') {
@@ -173,7 +175,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   }
 
   // Moon. Dead City has its own occluded moon inside the storm layer.
-  if (theme.id !== 'city' && theme.id !== 'inferno') {
+  if (theme.id !== 'city' && theme.id !== 'inferno' && theme.id !== 'forest') {
     const mx = w * 0.82;
     const my = hy * 0.45;
     const mr = Math.min(60, h * 0.09);
@@ -246,7 +248,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   }
 
   // Path toward the bunker
-  ctx.fillStyle = 'rgba(40,55,40,0.25)';
+  ctx.fillStyle = theme.id === 'forest' ? 'rgba(48,5,13,0.36)' : 'rgba(40,55,40,0.25)';
   ctx.beginPath();
   ctx.moveTo(w / 2 - 30, hy);
   ctx.lineTo(w / 2 + 30, hy);
@@ -441,6 +443,100 @@ function drawInfernoSky(ctx: CanvasRenderingContext2D, s: GameState, time: numbe
     const y = (rand(i + 1390) * horizon + time * 0.009 * (0.5 + rand(i))) % horizon;
     const size = 1 + rand(i + 1430) * 1.8;
     ctx.fillRect(x, y, size, size);
+  }
+}
+
+function drawBleedingForestSky(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const moonX = w * 0.76;
+  const moonY = horizon * 0.45;
+  const moonR = Math.min(66, h * 0.095);
+  const pulse = 0.88 + Math.sin(time * 0.0009) * 0.06;
+
+  // A pale eclipse burns behind the canopy. Its red rim breathes slowly enough
+  // to feel alive without becoming a gameplay flash.
+  const halo = ctx.createRadialGradient(moonX, moonY, moonR * 0.5, moonX, moonY, moonR * 3.6 * pulse);
+  halo.addColorStop(0, 'rgba(255,42,72,0.42)');
+  halo.addColorStop(0.34, 'rgba(190,10,38,0.17)');
+  halo.addColorStop(1, 'rgba(75,0,15,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(moonX - moonR * 4, moonY - moonR * 4, moonR * 8, moonR * 8);
+
+  ctx.fillStyle = '#efd7cd';
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#120308';
+  ctx.beginPath();
+  ctx.arc(moonX - moonR * 0.2, moonY - moonR * 0.07, moonR * 0.88, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = `rgba(255,45,75,${0.6 + Math.sin(time * 0.0011) * 0.12})`;
+  ctx.shadowColor = '#ff244f';
+  ctx.shadowBlur = 18;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonR * 1.01, -1.45, 1.58);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Long crimson cloud veils move at different depths.
+  for (let layer = 0; layer < 4; layer++) {
+    const drift = (time * (0.002 + layer * 0.0007) + layer * 180) % (w + 420);
+    const y = horizon * (0.14 + layer * 0.19);
+    ctx.fillStyle = `rgba(${24 + layer * 8},${2 + layer},${8 + layer * 3},${0.7 - layer * 0.08})`;
+    ctx.beginPath();
+    ctx.moveTo(-230, y + 26);
+    for (let x = -230; x <= w + 230; x += 48) {
+      const wave = Math.sin((x + drift) * 0.012 + layer * 1.7) * (8 + layer * 3);
+      const noise = (rand(Math.floor((x + drift) / 48) + layer * 43) - 0.5) * 16;
+      ctx.lineTo(x, y + wave + noise);
+    }
+    ctx.lineTo(w + 230, y + 56);
+    ctx.lineTo(-230, y + 56);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // A few distant crows cross the eclipse in a loose, repeating formation.
+  ctx.strokeStyle = 'rgba(4,1,3,0.88)';
+  ctx.lineWidth = Math.max(1, w / 850);
+  for (let i = 0; i < 7; i++) {
+    const travel = ((time * (0.006 + i * 0.0005) + i * 137) % (w + 180)) - 90;
+    const birdY = horizon * (0.18 + rand(i + 1810) * 0.46);
+    const wing = 3 + rand(i + 1820) * 4;
+    ctx.beginPath();
+    ctx.moveTo(travel - wing * 2, birdY);
+    ctx.quadraticCurveTo(travel - wing, birdY - wing, travel, birdY);
+    ctx.quadraticCurveTo(travel + wing, birdY - wing, travel + wing * 2, birdY);
+    ctx.stroke();
+  }
+
+  // Branches intrude from above, making the sky feel enclosed before the
+  // foreground forest is drawn.
+  ctx.strokeStyle = '#080104';
+  ctx.lineCap = 'round';
+  for (const side of [-1, 1] as const) {
+    ctx.lineWidth = Math.max(7, w * 0.009);
+    ctx.beginPath();
+    ctx.moveTo(side < 0 ? -20 : w + 20, horizon * 0.08);
+    ctx.bezierCurveTo(
+      w * (side < 0 ? 0.09 : 0.91),
+      horizon * 0.02,
+      w * (side < 0 ? 0.15 : 0.85),
+      horizon * 0.42,
+      w * (side < 0 ? 0.28 : 0.72),
+      horizon * 0.5,
+    );
+    ctx.stroke();
+    ctx.lineWidth = Math.max(2, w * 0.003);
+    for (let twig = 0; twig < 4; twig++) {
+      const baseX = w * (side < 0 ? 0.08 + twig * 0.05 : 0.92 - twig * 0.05);
+      const baseY = horizon * (0.17 + twig * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(baseX, baseY);
+      ctx.lineTo(baseX + side * w * 0.08, baseY + (twig % 2 ? 18 : -15));
+      ctx.stroke();
+    }
   }
 }
 
@@ -1433,6 +1529,387 @@ function drawInfernoScenery(ctx: CanvasRenderingContext2D, s: GameState, time: n
   }
 }
 
+function drawBleedingForestScenery(
+  ctx: CanvasRenderingContext2D,
+  s: GameState,
+  time: number,
+  horizon: number,
+) {
+  const { width: w, height: h } = s;
+  const scale = Math.max(0.72, Math.min(1.5, w / 960));
+  const baseY = h - 60;
+  const heartBase = horizon + h * 0.16;
+
+  // Rich black loam and old red leaf litter replace the generic ground plane.
+  const earth = ctx.createLinearGradient(0, horizon, 0, h);
+  earth.addColorStop(0, '#19050a');
+  earth.addColorStop(0.48, '#100307');
+  earth.addColorStop(1, '#050103');
+  ctx.fillStyle = earth;
+  ctx.fillRect(0, horizon, w, h - horizon);
+
+  // The distant forest is layered from wine-red haze into near-black trunks.
+  for (let layer = 0; layer < 3; layer++) {
+    const count = 15 + layer * 5;
+    const color = layer === 0 ? '#230710' : layer === 1 ? '#15040a' : '#0b0206';
+    for (let i = 0; i < count; i++) {
+      const seed = layer * 100 + i;
+      const x = ((i + 0.35 + rand(seed + 1900) * 0.45) / count) * w;
+      const depth = layer * 0.035 + rand(seed + 1910) * 0.04;
+      const treeBase = horizon + h * depth;
+      const height = h * (0.12 + layer * 0.055 + rand(seed + 1920) * 0.09);
+      drawBleedingTree(ctx, x, treeBase, height, seed, color, layer === 2 ? 0.9 : 0.7, false);
+    }
+  }
+
+  // A reflective blood-sap river leads directly to the Heartwood Cathedral.
+  const river = ctx.createLinearGradient(0, horizon, 0, baseY);
+  river.addColorStop(0, 'rgba(78,6,18,0.6)');
+  river.addColorStop(0.55, 'rgba(126,8,28,0.54)');
+  river.addColorStop(1, 'rgba(45,3,12,0.72)');
+  ctx.fillStyle = river;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.485, heartBase);
+  ctx.bezierCurveTo(w * 0.47, h * 0.48, w * 0.4, h * 0.7, w * 0.29, baseY);
+  ctx.lineTo(w * 0.73, baseY);
+  ctx.bezierCurveTo(w * 0.61, h * 0.7, w * 0.53, h * 0.48, w * 0.515, heartBase);
+  ctx.closePath();
+  ctx.fill();
+
+  // Slow highlights travel down the current, never rapidly flashing.
+  ctx.strokeStyle = `rgba(255,50,74,${0.18 + Math.sin(time * 0.001) * 0.04})`;
+  ctx.lineWidth = 1.4;
+  for (let ribbon = 0; ribbon < 6; ribbon++) {
+    const startY = heartBase + 12 + ribbon * (baseY - heartBase) / 7;
+    const widthAtDepth = 8 + ribbon * w * 0.025;
+    const center = w * 0.5 + Math.sin(ribbon * 1.7) * w * 0.035;
+    ctx.beginPath();
+    ctx.moveTo(center - widthAtDepth, startY);
+    ctx.bezierCurveTo(
+      center + Math.sin(time * 0.0004 + ribbon) * 14,
+      startY + 22,
+      center - 20,
+      startY + 42,
+      center + widthAtDepth * 1.25,
+      startY + 62,
+    );
+    ctx.stroke();
+  }
+
+  drawHeartwoodCathedral(ctx, w * 0.5, heartBase, h * 0.35, time, scale);
+
+  // Repeating antler-and-bone wards make the route feel like an old procession.
+  for (let row = 0; row < 4; row++) {
+    const depth = 0.18 + row * 0.17;
+    const y = horizon + depth * (baseY - horizon);
+    const halfWidth = w * (0.07 + depth * 0.3);
+    const archScale = scale * (0.5 + depth * 0.75);
+    drawForestWardArch(ctx, w / 2, y, halfWidth, archScale, row, time);
+  }
+
+  // Massive foreground sentinels frame the combat lane without covering it.
+  const sentinels = [
+    { x: w * 0.04, y: baseY - h * 0.03, height: h * 0.44, seed: 2051 },
+    { x: w * 0.96, y: baseY - h * 0.08, height: h * 0.5, seed: 2077 },
+    { x: w * 0.14, y: horizon + h * 0.38, height: h * 0.3, seed: 2099 },
+    { x: w * 0.86, y: horizon + h * 0.31, height: h * 0.28, seed: 2111 },
+  ];
+  for (const tree of sentinels) {
+    drawBleedingTree(ctx, tree.x, tree.y, tree.height, tree.seed, '#070104', 1, true);
+  }
+
+  // Exposed roots vein through the earth and softly catch the crimson light.
+  for (let i = 0; i < 17; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const startX = w / 2 + side * w * (0.07 + rand(i + 2130) * 0.24);
+    const startY = horizon + h * (0.1 + rand(i + 2140) * 0.65);
+    ctx.strokeStyle = i % 4 === 0 ? 'rgba(160,18,38,0.42)' : 'rgba(35,6,12,0.72)';
+    ctx.lineWidth = 1.2 + rand(i + 2150) * 2.2;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.bezierCurveTo(
+      startX + side * 28,
+      startY + 18,
+      startX - side * 15,
+      startY + 45,
+      startX + side * (42 + rand(i + 2160) * 50),
+      startY + 70,
+    );
+    ctx.stroke();
+  }
+
+  // Watchers remain at the extreme edges; they blink independently and slowly.
+  for (let i = 0; i < 5; i++) {
+    const side = i % 2 === 0 ? 0.035 : 0.965;
+    const eyeX = side * w + (rand(i + 2180) - 0.5) * 26;
+    const eyeY = horizon + h * (0.2 + rand(i + 2190) * 0.5);
+    const awake = Math.sin(time * 0.0009 + i * 2.3) > -0.52;
+    if (!awake) continue;
+    ctx.fillStyle = 'rgba(255,44,72,0.72)';
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 7;
+    ctx.beginPath();
+    ctx.ellipse(eyeX - 4, eyeY, 2.2, 1.2, -0.15, 0, Math.PI * 2);
+    ctx.ellipse(eyeX + 4, eyeY, 2.2, 1.2, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawBleedingTree(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  baseY: number,
+  height: number,
+  seed: number,
+  color: string,
+  alpha: number,
+  bleeding: boolean,
+) {
+  const trunk = Math.max(4, height * (0.055 + rand(seed) * 0.025));
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = 'round';
+
+  // Split trunk.
+  ctx.strokeStyle = color;
+  ctx.lineWidth = trunk;
+  ctx.beginPath();
+  ctx.moveTo(x, baseY);
+  ctx.bezierCurveTo(
+    x + (rand(seed + 1) - 0.5) * height * 0.12,
+    baseY - height * 0.28,
+    x + (rand(seed + 2) - 0.5) * height * 0.1,
+    baseY - height * 0.7,
+    x + (rand(seed + 3) - 0.5) * height * 0.08,
+    baseY - height,
+  );
+  ctx.stroke();
+
+  // Gnarled limbs, with smaller hooked twigs on each side.
+  for (let limbIndex = 0; limbIndex < 6; limbIndex++) {
+    const side = limbIndex % 2 === 0 ? -1 : 1;
+    const attachY = baseY - height * (0.36 + limbIndex * 0.085);
+    const attachX = x + (rand(seed + limbIndex + 10) - 0.5) * trunk;
+    const reach = height * (0.2 + rand(seed + limbIndex + 20) * 0.16);
+    const endX = attachX + side * reach;
+    const endY = attachY - height * (0.08 + rand(seed + limbIndex + 30) * 0.15);
+    ctx.lineWidth = Math.max(1.5, trunk * (0.42 - limbIndex * 0.025));
+    ctx.beginPath();
+    ctx.moveTo(attachX, attachY);
+    ctx.quadraticCurveTo(attachX + side * reach * 0.42, attachY - reach * 0.18, endX, endY);
+    ctx.stroke();
+
+    ctx.lineWidth = Math.max(1, trunk * 0.16);
+    for (let twig = 0; twig < 2; twig++) {
+      const t = 0.52 + twig * 0.24;
+      const twigX = attachX + (endX - attachX) * t;
+      const twigY = attachY + (endY - attachY) * t;
+      ctx.beginPath();
+      ctx.moveTo(twigX, twigY);
+      ctx.lineTo(twigX + side * reach * 0.16, twigY + (twig === 0 ? -1 : 1) * reach * 0.12);
+      ctx.stroke();
+    }
+  }
+
+  // Buttress roots.
+  ctx.lineWidth = Math.max(2, trunk * 0.35);
+  for (let root = 0; root < 5; root++) {
+    const spread = (root - 2) * height * 0.09;
+    ctx.beginPath();
+    ctx.moveTo(x, baseY - 4);
+    ctx.quadraticCurveTo(x + spread * 0.35, baseY + 3, x + spread, baseY + 12 + rand(seed + root + 60) * 9);
+    ctx.stroke();
+  }
+
+  if (bleeding) {
+    ctx.strokeStyle = 'rgba(190,18,43,0.66)';
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 5;
+    ctx.lineWidth = Math.max(1, trunk * 0.11);
+    for (let drip = 0; drip < 3; drip++) {
+      const dripX = x + (drip - 1) * trunk * 0.23;
+      const dripTop = baseY - height * (0.48 + drip * 0.11);
+      const dripLength = height * (0.08 + rand(seed + drip + 80) * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(dripX, dripTop);
+      ctx.bezierCurveTo(dripX + 2, dripTop + dripLength * 0.35, dripX - 2, dripTop + dripLength * 0.72, dripX, dripTop + dripLength);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+}
+
+function drawHeartwoodCathedral(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  baseY: number,
+  height: number,
+  time: number,
+  scale: number,
+) {
+  const trunkWidth = height * 0.23;
+
+  // Vast roots spread out from the horizon like cathedral foundations.
+  ctx.strokeStyle = '#080104';
+  ctx.lineCap = 'round';
+  for (let root = 0; root < 9; root++) {
+    const side = root < 4 ? -1 : root > 4 ? 1 : 0;
+    const spread = (root - 4) * height * 0.12;
+    ctx.lineWidth = Math.max(5, height * (0.045 - Math.abs(root - 4) * 0.0035));
+    ctx.beginPath();
+    ctx.moveTo(x + side * trunkWidth * 0.22, baseY - 4);
+    ctx.bezierCurveTo(
+      x + spread * 0.3,
+      baseY + height * 0.03,
+      x + spread * 0.72,
+      baseY + height * 0.12,
+      x + spread,
+      baseY + height * 0.2,
+    );
+    ctx.stroke();
+  }
+
+  // Two fused trunks leave a tall wound at the center.
+  const bark = ctx.createLinearGradient(x - trunkWidth, 0, x + trunkWidth, 0);
+  bark.addColorStop(0, '#050103');
+  bark.addColorStop(0.48, '#210710');
+  bark.addColorStop(0.62, '#0b0206');
+  bark.addColorStop(1, '#030102');
+  ctx.fillStyle = bark;
+  ctx.strokeStyle = '#2a0812';
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.moveTo(x - trunkWidth * 0.58, baseY + 8);
+  ctx.bezierCurveTo(x - trunkWidth * 0.72, baseY - height * 0.38, x - trunkWidth * 0.36, baseY - height * 0.72, x - trunkWidth * 0.12, baseY - height);
+  ctx.bezierCurveTo(x - trunkWidth * 0.04, baseY - height * 0.72, x - trunkWidth * 0.13, baseY - height * 0.38, x - trunkWidth * 0.17, baseY - height * 0.08);
+  ctx.lineTo(x + trunkWidth * 0.16, baseY - height * 0.08);
+  ctx.bezierCurveTo(x + trunkWidth * 0.1, baseY - height * 0.42, x + trunkWidth * 0.08, baseY - height * 0.74, x + trunkWidth * 0.19, baseY - height);
+  ctx.bezierCurveTo(x + trunkWidth * 0.48, baseY - height * 0.72, x + trunkWidth * 0.74, baseY - height * 0.38, x + trunkWidth * 0.6, baseY + 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // The wound is the visual heart of the map.
+  const heartY = baseY - height * 0.42;
+  const heartPulse = 0.82 + Math.sin(time * 0.0011) * 0.08;
+  const woundGlow = ctx.createRadialGradient(x, heartY, 2, x, heartY, trunkWidth * 1.15 * heartPulse);
+  woundGlow.addColorStop(0, 'rgba(255,105,115,0.78)');
+  woundGlow.addColorStop(0.32, 'rgba(230,24,55,0.46)');
+  woundGlow.addColorStop(1, 'rgba(105,2,22,0)');
+  ctx.fillStyle = woundGlow;
+  ctx.fillRect(x - trunkWidth * 1.4, heartY - trunkWidth * 1.4, trunkWidth * 2.8, trunkWidth * 2.8);
+  ctx.fillStyle = '#3d0715';
+  ctx.strokeStyle = '#ff3157';
+  ctx.shadowColor = '#ff244f';
+  ctx.shadowBlur = 14;
+  ctx.lineWidth = 1.7 * scale;
+  ctx.beginPath();
+  ctx.ellipse(x, heartY, trunkWidth * 0.15, height * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Sap trails descend from the wound into the river.
+  ctx.strokeStyle = 'rgba(223,20,49,0.8)';
+  ctx.lineWidth = 2 * scale;
+  for (const offset of [-0.07, 0, 0.08]) {
+    ctx.beginPath();
+    ctx.moveTo(x + trunkWidth * offset, heartY + height * 0.1);
+    ctx.bezierCurveTo(
+      x + trunkWidth * (offset + 0.07),
+      heartY + height * 0.24,
+      x + trunkWidth * (offset - 0.05),
+      baseY - height * 0.12,
+      x + trunkWidth * offset,
+      baseY + 6,
+    );
+    ctx.stroke();
+  }
+
+  // A broad crown of hooked branches forms the cathedral vault.
+  ctx.strokeStyle = '#070104';
+  for (let branch = 0; branch < 12; branch++) {
+    const side = branch % 2 === 0 ? -1 : 1;
+    const tier = Math.floor(branch / 2);
+    const startY = baseY - height * (0.58 + tier * 0.065);
+    const reach = height * (0.3 + tier * 0.045);
+    ctx.lineWidth = Math.max(2.5, height * (0.035 - tier * 0.0028));
+    ctx.beginPath();
+    ctx.moveTo(x + side * trunkWidth * 0.12, startY);
+    ctx.bezierCurveTo(
+      x + side * reach * 0.28,
+      startY - height * 0.12,
+      x + side * reach * 0.75,
+      startY - height * (0.07 + tier * 0.018),
+      x + side * reach,
+      startY - height * 0.19,
+    );
+    ctx.stroke();
+  }
+}
+
+function drawForestWardArch(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  baseY: number,
+  halfWidth: number,
+  scale: number,
+  seed: number,
+  time: number,
+) {
+  const archHeight = (28 + seed * 9) * scale;
+  const bone = seed % 2 === 0 ? '#6b5b55' : '#554943';
+  ctx.strokeStyle = bone;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(1.3, 2.4 * scale);
+
+  for (const side of [-1, 1] as const) {
+    const x = centerX + side * halfWidth;
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.quadraticCurveTo(x - side * halfWidth * 0.04, baseY - archHeight * 0.8, centerX + side * halfWidth * 0.3, baseY - archHeight);
+    ctx.stroke();
+
+    // Antler tines.
+    for (let tine = 0; tine < 3; tine++) {
+      const tineY = baseY - archHeight * (0.35 + tine * 0.2);
+      ctx.beginPath();
+      ctx.moveTo(x - side * tine * halfWidth * 0.16, tineY);
+      ctx.lineTo(x - side * halfWidth * (0.13 + tine * 0.06), tineY - 8 * scale);
+      ctx.stroke();
+    }
+  }
+
+  // Joined crown turns the paired antlers into a complete ritual gateway.
+  ctx.strokeStyle = bone;
+  ctx.lineWidth = Math.max(1.1, 1.8 * scale);
+  ctx.beginPath();
+  ctx.moveTo(centerX - halfWidth * 0.3, baseY - archHeight);
+  ctx.quadraticCurveTo(centerX, baseY - archHeight - 9 * scale, centerX + halfWidth * 0.3, baseY - archHeight);
+  ctx.stroke();
+
+  // Suspended ward lantern, made from a small cage and a slow ember.
+  const sway = Math.sin(time * 0.0007 + seed) * 2.5 * scale;
+  const lanternY = baseY - archHeight + 10 * scale;
+  ctx.strokeStyle = '#3b2928';
+  ctx.lineWidth = Math.max(1, scale);
+  ctx.beginPath();
+  ctx.moveTo(centerX, baseY - archHeight);
+  ctx.lineTo(centerX + sway, lanternY);
+  ctx.stroke();
+  const glow = ctx.createRadialGradient(centerX + sway, lanternY + 5 * scale, 1, centerX + sway, lanternY + 5 * scale, 18 * scale);
+  glow.addColorStop(0, 'rgba(255,52,78,0.32)');
+  glow.addColorStop(1, 'rgba(255,30,55,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(centerX + sway - 20 * scale, lanternY - 15 * scale, 40 * scale, 40 * scale);
+  ctx.strokeStyle = '#7b5960';
+  ctx.strokeRect(centerX + sway - 4 * scale, lanternY, 8 * scale, 11 * scale);
+  ctx.fillStyle = 'rgba(255,47,74,0.7)';
+  ctx.fillRect(centerX + sway - 1.5 * scale, lanternY + 4 * scale, 3 * scale, 4 * scale);
+}
+
 /** Distinctive, recognizable set-dressing per map theme. */
 function drawThemeScenery(
   ctx: CanvasRenderingContext2D,
@@ -1830,35 +2307,6 @@ function drawThemeScenery(
     return;
   }
 
-  if (theme.id === 'forest') {
-    // Dense pine treeline along the horizon.
-    ctx.fillStyle = '#0a0303';
-    for (let i = 0; i < 26; i++) {
-      const tx = (i / 26) * w + (rand(i) - 0.5) * 18;
-      const th = 26 + rand(i + 5) * 40;
-      ctx.beginPath();
-      ctx.moveTo(tx, hy + 4);
-      ctx.lineTo(tx - 10, hy + 4);
-      ctx.lineTo(tx, hy - th);
-      ctx.lineTo(tx + 10, hy + 4);
-      ctx.closePath();
-      ctx.fill();
-    }
-    // Glowing eyes peering from the dark edges.
-    for (let i = 0; i < 6; i++) {
-      const side = i % 2 === 0 ? 0.06 : 0.94;
-      const ex = side * w + (rand(i) - 0.5) * 30;
-      const ey = hy + 40 + rand(i + 3) * (h - hy - 120);
-      const blink = Math.sin(time * 0.002 + i * 2) > -0.3 ? 1 : 0.1;
-      ctx.fillStyle = `rgba(255,40,40,${0.8 * blink})`;
-      ctx.beginPath();
-      ctx.arc(ex - 4, ey, 2.2, 0, Math.PI * 2);
-      ctx.arc(ex + 4, ey, 2.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    return;
-  }
-
   if (theme.id === 'lab') {
     drawArea67Scenery(ctx, s, time, hy);
     return;
@@ -2169,6 +2617,151 @@ function drawThemeScenery(
     return;
   }
 
+  if (theme.id === 'forest') {
+    drawBleedingForestScenery(ctx, s, time, hy);
+    const baseY = h - 60;
+
+    // The survivor holds a warded hunter's shrine swallowed by living roots.
+    const soil = ctx.createLinearGradient(0, baseY, 0, h);
+    soil.addColorStop(0, '#16050a');
+    soil.addColorStop(1, '#040102');
+    ctx.fillStyle = soil;
+    ctx.fillRect(0, baseY, w, 60);
+
+    // A woven root wall follows the collision line.
+    ctx.strokeStyle = '#220711';
+    ctx.lineCap = 'round';
+    for (let strand = 0; strand < 4; strand++) {
+      ctx.lineWidth = 7 - strand;
+      ctx.beginPath();
+      ctx.moveTo(-20, baseY + 5 + strand * 11);
+      for (let x = -20; x <= w + 20; x += 38) {
+        ctx.quadraticCurveTo(
+          x + 19,
+          baseY - 5 + strand * 12 + Math.sin(x * 0.025 + strand) * 7,
+          x + 38,
+          baseY + 5 + strand * 11,
+        );
+      }
+      ctx.stroke();
+    }
+
+    // Carved ward stones break up the wall and make the boundary readable.
+    for (let x = 18; x < w; x += 64) {
+      const stoneH = 18 + rand(x + 2210) * 13;
+      ctx.fillStyle = x % 128 < 64 ? '#21171a' : '#181013';
+      ctx.beginPath();
+      ctx.moveTo(x - 13, baseY + 25);
+      ctx.lineTo(x - 10, baseY + 5);
+      ctx.lineTo(x - 4, baseY - stoneH);
+      ctx.lineTo(x + 9, baseY - stoneH + 4);
+      ctx.lineTo(x + 13, baseY + 25);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(102,62,67,0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      if (x % 192 < 64) {
+        ctx.strokeStyle = 'rgba(255,36,79,0.48)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x - 4, baseY - stoneH + 8);
+        ctx.lineTo(x + 4, baseY - stoneH + 14);
+        ctx.lineTo(x - 3, baseY - stoneH + 20);
+        ctx.stroke();
+      }
+    }
+
+    // A continuous sap ward replaces the generic neon collision stripe.
+    const ward = ctx.createLinearGradient(0, baseY, w, baseY);
+    ward.addColorStop(0, 'rgba(255,36,79,0.18)');
+    ward.addColorStop(0.5, 'rgba(255,61,92,0.82)');
+    ward.addColorStop(1, 'rgba(255,36,79,0.18)');
+    ctx.strokeStyle = ward;
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY);
+    for (let x = 0; x <= w; x += 28) {
+      ctx.lineTo(x, baseY + Math.sin(x * 0.065) * 2);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const cx = w / 2;
+    const shrineY = baseY + 8;
+
+    // Hollow stump bunker with a protective antler crest.
+    ctx.fillStyle = '#090204';
+    ctx.beginPath();
+    ctx.moveTo(cx - 48, baseY + 42);
+    ctx.quadraticCurveTo(cx - 45, baseY - 17, cx - 25, baseY - 24);
+    ctx.quadraticCurveTo(cx, baseY - 36, cx + 25, baseY - 24);
+    ctx.quadraticCurveTo(cx + 45, baseY - 17, cx + 48, baseY + 42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#3c101a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#19050a';
+    ctx.beginPath();
+    ctx.arc(cx, shrineY + 4, 25, Math.PI, 0);
+    ctx.lineTo(cx + 25, baseY + 35);
+    ctx.lineTo(cx - 25, baseY + 35);
+    ctx.closePath();
+    ctx.fill();
+
+    // The ward sigil breathes softly and echoes the distant Heartwood wound.
+    const sigilAlpha = 0.55 + Math.sin(time * 0.001) * 0.09;
+    ctx.strokeStyle = `rgba(255,48,82,${sigilAlpha})`;
+    ctx.fillStyle = `rgba(255,48,82,${sigilAlpha})`;
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(cx, shrineY + 3, 14, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, shrineY - 10);
+    ctx.lineTo(cx + 10, shrineY + 10);
+    ctx.lineTo(cx - 11, shrineY);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, shrineY + 3, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Antler crest and two steady ritual lamps.
+    ctx.strokeStyle = '#725d57';
+    ctx.lineWidth = 2;
+    for (const side of [-1, 1] as const) {
+      ctx.beginPath();
+      ctx.moveTo(cx + side * 22, baseY - 20);
+      ctx.quadraticCurveTo(cx + side * 42, baseY - 43, cx + side * 37, baseY - 62);
+      ctx.moveTo(cx + side * 34, baseY - 39);
+      ctx.lineTo(cx + side * 51, baseY - 48);
+      ctx.moveTo(cx + side * 38, baseY - 50);
+      ctx.lineTo(cx + side * 50, baseY - 65);
+      ctx.stroke();
+
+      const lampX = cx + side * 58;
+      const lampGlow = ctx.createRadialGradient(lampX, baseY - 12, 1, lampX, baseY - 12, 28);
+      lampGlow.addColorStop(0, 'rgba(255,55,82,0.34)');
+      lampGlow.addColorStop(1, 'rgba(255,30,55,0)');
+      ctx.fillStyle = lampGlow;
+      ctx.fillRect(lampX - 30, baseY - 42, 60, 60);
+      ctx.fillStyle = '#ff3157';
+      ctx.beginPath();
+      ctx.arc(lampX, baseY - 12, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return;
+  }
+
   if (theme.id === 'inferno') {
     drawInfernoScenery(ctx, s, time, hy);
     return;
@@ -2225,6 +2818,10 @@ function drawGrave(ctx: CanvasRenderingContext2D, x: number, y: number, sc: numb
 function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, time: number) {
   const { width: w, height: h } = s;
   const baseY = h - 60;
+
+  // Bleeding Forest's root shrine is part of its bespoke environment pass so
+  // its roots and ward stones interlock with the surrounding scenery.
+  if (theme.id === 'forest') return;
 
   if (theme.id === 'city') {
     // The final checkpoint: concrete blast wall, shutter, hazard paint, and
@@ -2839,6 +3436,65 @@ function drawGroundFog(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTh
     ctx.closePath();
     ctx.fill();
   }
+  ctx.restore();
+}
+
+function drawBleedingForestAtmosphere(ctx: CanvasRenderingContext2D, s: GameState, time: number) {
+  const { width: w, height: h } = s;
+  ctx.save();
+
+  // Thin red mist ribbons cross the lower field at different speeds.
+  for (let layer = 0; layer < 3; layer++) {
+    const y = h * (0.56 + layer * 0.11);
+    const drift = (time * (0.004 + layer * 0.002)) % (w + 260);
+    const mist = ctx.createLinearGradient(0, y - 35, 0, y + 45);
+    mist.addColorStop(0, 'rgba(165,14,42,0)');
+    mist.addColorStop(0.58, `rgba(165,14,42,${0.035 + layer * 0.015})`);
+    mist.addColorStop(1, 'rgba(95,5,25,0)');
+    ctx.fillStyle = mist;
+    ctx.beginPath();
+    for (let x = -260; x <= w + 260; x += 36) {
+      const waveY = y + Math.sin((x + drift) * 0.016 + layer) * (8 + layer * 3);
+      if (x === -260) ctx.moveTo(x, waveY);
+      else ctx.lineTo(x, waveY);
+    }
+    ctx.lineTo(w + 260, y + 55);
+    ctx.lineTo(-260, y + 55);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Sparse falling leaves and ash-like bark fragments add premium motion while
+  // remaining translucent enough not to hide words, zombies, or hit effects.
+  for (let i = 0; i < 42; i++) {
+    const fallSpeed = 0.008 + rand(i + 2300) * 0.017;
+    const y = (rand(i + 2310) * h + time * fallSpeed) % h;
+    const x = (rand(i + 2320) * w + Math.sin(time * 0.0005 + i) * (12 + rand(i) * 20)) % w;
+    const size = 1.5 + rand(i + 2330) * 2.8;
+    const rotation = time * 0.001 + i;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.fillStyle = i % 5 === 0 ? 'rgba(255,63,88,0.48)' : 'rgba(112,22,39,0.42)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, size * 1.8, size * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Firefly-like spores gather near the blood river and blink slowly.
+  for (let i = 0; i < 24; i++) {
+    const x = w * (0.34 + rand(i + 2340) * 0.32) + Math.sin(time * 0.0007 + i) * 13;
+    const y = h * (0.28 + rand(i + 2350) * 0.53) + Math.cos(time * 0.0005 + i * 1.4) * 11;
+    const alpha = 0.16 + Math.abs(Math.sin(time * 0.0012 + i * 0.8)) * 0.3;
+    ctx.fillStyle = `rgba(255,67,91,${alpha})`;
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.arc(x, y, 1.1 + rand(i + 2360), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
   ctx.restore();
 }
 
