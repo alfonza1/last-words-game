@@ -111,7 +111,7 @@ export function Closet({
       </section>
 
         <section className="space-y-5 pb-8">
-          <div className="flex items-center justify-end gap-3 rounded-xl border border-white/10 bg-ink-800/65 p-3">
+          <div className="flex justify-end">
             <button
               onClick={onOpenStore}
               className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-neon-pink hover:bg-neon-pink/20"
@@ -232,6 +232,11 @@ function CosmeticPicker({
                 </span>
               </div>
               <p className="mt-1 text-[10px] leading-snug text-white/65">{item.description}</p>
+              {item.outfitReactive && (
+                <span className="mt-1.5 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-neon-cyan">
+                  ◈ Outfit-reactive
+                </span>
+              )}
             </button>
           );
         })}

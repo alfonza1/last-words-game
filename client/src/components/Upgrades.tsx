@@ -15,7 +15,6 @@ interface Props {
   gamesLeft: number;
   /** Owned consumable powerup charges (key -> count). */
   powerups: Record<string, number>;
-  character: CharacterLoadout;
   ownedCosmetics: string[];
   /** Whether the player is signed in (required to purchase). */
   signedIn: boolean;
@@ -36,7 +35,6 @@ export function Upgrades({
   stats,
   gamesLeft,
   powerups,
-  character,
   ownedCosmetics,
   signedIn,
   onBuy,
@@ -66,7 +64,6 @@ export function Upgrades({
   };
   const gearCard = (item: CosmeticDef) => {
     const isOwned = owned.has(item.key);
-    const equipped = character[item.slot] === item.key;
     const affordable = coins >= item.cost;
     const preview: CharacterLoadout = { ...DEFAULT_CHARACTER, [item.slot]: item.key };
     const rarityColor =
@@ -109,7 +106,7 @@ export function Upgrades({
                 : 'border-neon-pink/60 bg-neon-pink/10 text-neon-pink hover:bg-neon-pink/20'
           }`}
         >
-          {equipped ? 'EQUIPPED' : isOwned ? 'OWNED · EQUIP IN CLOSET' : `${item.cost.toLocaleString()} 🪙`}
+          {isOwned ? 'OWNED' : `${item.cost.toLocaleString()} 🪙`}
         </button>
       </div>
     );

@@ -88,7 +88,7 @@ export function MainMenu({
             </div>
             <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">
               {riddleMode
-                ? 'Solve short riddles to fire a multi-kill volley — zombies move slower to match.'
+                ? 'Solve short riddles to fire a multi-kill volley.'
                 : 'Type the falling words — each completed word fires one shot.'}
             </p>
           </div>

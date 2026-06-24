@@ -110,19 +110,40 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
 
 function Hair({ style, color }: { style: string; color: string }) {
   if (style === 'bald') return null;
-  if (style === 'buzz') return <path d="M82 61 Q87 25 110 25 Q133 25 138 61 Q110 48 82 61Z" fill={color} />;
+  const sheen = 'rgba(255,255,255,0.16)';
+
+  if (style === 'buzz') {
+    return (
+      <g>
+        <path d="M80 59 Q82 30 110 28 Q138 30 140 59 Q121 48 110 48 Q99 48 80 59Z" fill={color} />
+        <path d="M92 40 Q110 34 128 40" fill="none" stroke={sheen} strokeWidth="3" strokeLinecap="round" />
+      </g>
+    );
+  }
   if (style === 'mohawk') {
-    return <path d="M101 34 L105 10 L112 31 L119 5 L122 35 Q111 29 101 34Z" fill={color} stroke="#050708" />;
+    return (
+      <g>
+        <path d="M100 47 L103 13 Q110 3 117 13 L120 47 Q110 40 100 47Z" fill={color} stroke="#050708" strokeWidth="1.5" />
+        <path d="M110 9 L110 44" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
+      </g>
+    );
   }
   if (style === 'ponytail') {
     return (
-      <>
-        <path d="M82 58 Q88 23 111 24 Q134 25 139 61 Q112 47 82 58Z" fill={color} />
-        <path d="M135 45 Q158 60 140 99 Q145 66 128 54Z" fill={color} />
-      </>
+      <g>
+        <path d="M80 58 Q82 28 110 26 Q138 28 140 58 Q120 46 110 46 Q100 46 80 58Z" fill={color} />
+        <path d="M133 44 Q166 62 151 106 Q158 92 156 76 Q154 56 137 50Z" fill={color} />
+        <path d="M95 40 Q110 34 126 40" fill="none" stroke={sheen} strokeWidth="3" strokeLinecap="round" />
+      </g>
     );
   }
-  return <path d="M80 59 Q84 25 111 23 Q139 26 141 58 L126 47 L119 35 Q100 52 80 59Z" fill={color} />;
+  // undercut — volume on top with a side sweep, tight sides
+  return (
+    <g>
+      <path d="M82 56 Q80 26 112 25 Q142 27 141 56 L131 49 Q128 33 110 33 Q94 34 90 52Z" fill={color} stroke="#050708" strokeWidth="1" />
+      <path d="M101 34 Q119 35 129 49" fill="none" stroke={sheen} strokeWidth="3" strokeLinecap="round" />
+    </g>
+  );
 }
 
 function Accessory({ type, glow }: { type: string; glow: string }) {
