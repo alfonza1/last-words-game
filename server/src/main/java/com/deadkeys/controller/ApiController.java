@@ -12,10 +12,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -127,9 +129,13 @@ public class ApiController {
   }
 
   @GetMapping("/api/leaderboard")
-  public Object getLeaderboard(@RequestParam(defaultValue = "20") int limit) {
+  public ResponseEntity<Object> getLeaderboard(@RequestParam(defaultValue = "20") int limit) {
     int safeLimit = Math.min(MAX_LEADERBOARD_LIMIT, limit <= 0 ? DEFAULT_LEADERBOARD_LIMIT : limit);
-    return json("leaderboard", store.topLeaderboard(safeLimit));
+    // Public, slow-changing data: let browsers/CDN serve it from cache for a short
+    // window (and keep serving the stale copy briefly while revalidating) to cut load.
+    return ResponseEntity.ok()
+        .cacheControl(CacheControl.maxAge(Duration.ofSeconds(30)).cachePublic().staleWhileRevalidate(Duration.ofSeconds(60)))
+        .body(json("leaderboard", store.topLeaderboard(safeLimit)));
   }
 
   // --- helpers ---------------------------------------------------------------
