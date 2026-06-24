@@ -425,11 +425,9 @@ export default function App() {
           <Closet
             character={character}
             ownedCosmetics={cosmetics}
-            stats={stats}
             signedIn={signedIn}
             onEquip={equipCharacter}
             onOpenStore={() => setScreen('upgrades')}
-            onRequireSignIn={() => requireSignIn('Sign in to buy survivor gear and save your Closet.')}
             onBack={() => setScreen('menu')}
           />
         );
