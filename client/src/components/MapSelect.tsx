@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import type { Difficulty, GameMode } from '../types';
-import { MAPS, isMapOwned } from '../data/maps';
+import { MAPS, isMapOwned, type MapTheme } from '../data/maps';
 
 interface Props {
   mode: GameMode;
@@ -31,6 +32,7 @@ export function MapSelect({
   onDeploy,
   onBack,
 }: Props) {
+  const [pendingMap, setPendingMap] = useState<MapTheme | null>(null);
   // Mode/difficulty-exclusive maps only appear where they're playable.
   const playable = MAPS.filter(
     (m) => (!m.nightmareOnly || difficulty === 'nightmare') && (!m.bossRushOnly || mode === 'bossrush'),
@@ -85,11 +87,6 @@ export function MapSelect({
                     Boss Rush Exclusive
                   </span>
                 )}
-                {m.id === 'forest' && (
-                  <span className="absolute right-2 top-2 rounded border border-neon-pink/60 bg-black/70 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-neon-pink shadow-[0_0_12px_rgba(255,36,79,0.35)]">
-                    Premium Map
-                  </span>
-                )}
               </div>
 
               <div className="flex flex-1 flex-col p-3">
@@ -114,7 +111,7 @@ export function MapSelect({
                   </button>
                 ) : (
                   <button
-                    onClick={() => (signedIn ? onBuyMap(m.id) : onRequireSignIn())}
+                    onClick={() => (signedIn ? setPendingMap(m) : onRequireSignIn())}
                     className="mt-auto w-full rounded-md border border-neon-amber/60 px-3 py-1.5 text-xs font-bold text-neon-amber hover:bg-neon-amber/10"
                   >
                     {m.cost.toLocaleString()} 🪙
@@ -131,6 +128,35 @@ export function MapSelect({
           ▶ Deploy
         </button>
       </div>
+
+      {pendingMap && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-neon-green/40 bg-ink-800 p-5 text-center shadow-neon">
+            <h3 className="text-lg font-black tracking-wide text-neon-green">CONFIRM PURCHASE</h3>
+            <p className="mt-2 text-sm text-white/70">
+              Buy <span className="font-bold text-white">{pendingMap.name}</span> for{' '}
+              <span className="font-bold text-neon-amber">{pendingMap.cost.toLocaleString()} 🪙</span>?
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setPendingMap(null)}
+                className="flex-1 rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/70 hover:border-white/40"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onBuyMap(pendingMap.id);
+                  setPendingMap(null);
+                }}
+                className="flex-1 rounded-lg border border-neon-green bg-neon-green/10 px-4 py-2 text-sm font-bold text-neon-green hover:bg-neon-green/20"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

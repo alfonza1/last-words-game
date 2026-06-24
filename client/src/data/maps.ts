@@ -77,17 +77,6 @@ export const MAPS: MapTheme[] = [
     features: { ...NONE },
   },
   {
-    id: 'lab',
-    name: 'Area 67',
-    description: 'A desert black site where the runway ends at something buried too deep.',
-    cost: 600,
-    palette: {
-      skyTop: '#030711', skyHorizon: '#1d2330', ground1: '#29271f', ground2: '#090a0b',
-      fog: '128,160,140', moon: '#d9dfc7', glow: 'rgba(170,205,170,0.28)', accent: '#9dff4f',
-    },
-    features: { ...NONE },
-  },
-  {
     id: 'forest',
     name: 'Bleeding Forest',
     description: 'Enter the heartwood cathedral, where ancient roots drink from a river that never runs dry.',
@@ -97,6 +86,17 @@ export const MAPS: MapTheme[] = [
       fog: '170,22,52', moon: '#f3d1c4', glow: 'rgba(255,28,62,0.46)', accent: '#ff244f',
     },
     // Entirely bespoke: heartwood cathedral, blood river, ward arches, and root shrine.
+    features: { ...NONE },
+  },
+  {
+    id: 'lab',
+    name: 'Area 67',
+    description: 'A desert black site where the runway ends at something buried too deep.',
+    cost: 600,
+    palette: {
+      skyTop: '#030711', skyHorizon: '#1d2330', ground1: '#29271f', ground2: '#090a0b',
+      fog: '128,160,140', moon: '#d9dfc7', glow: 'rgba(170,205,170,0.28)', accent: '#9dff4f',
+    },
     features: { ...NONE },
   },
   {
