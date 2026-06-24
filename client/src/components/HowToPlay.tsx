@@ -51,7 +51,7 @@ function Card({
   children: ReactNode;
 }) {
   return (
-    <section className={`h-full rounded-xl border border-white/10 bg-ink-800/65 p-4 ${className}`}>
+    <section className={`h-full min-h-0 overflow-y-auto rounded-xl border border-white/10 bg-ink-800/65 p-4 ${className}`}>
       <h2 className="mb-3 text-sm font-black uppercase tracking-[0.22em]" style={{ color }}>
         {title}
       </h2>

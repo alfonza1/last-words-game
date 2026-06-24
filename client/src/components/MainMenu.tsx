@@ -139,7 +139,7 @@ export function MainMenu({
                     activeStyle === s ? STYLE_META[s].active : 'text-white/55 hover:text-white/90'
                   }`}
                 >
-                  {STYLE_META[s].icon} {STYLE_META[s].label}
+                  {STYLE_META[s].icon} {STYLE_META[s].label} Defense
                 </button>
               ))}
             </div>
@@ -148,7 +148,7 @@ export function MainMenu({
 
           {/* Modes + nav */}
           <div className="space-y-3">
-            <button className="menu-btn shadow-neon" onClick={() => onStart('survival')}>
+            <button className="menu-btn text-base" onClick={() => onStart('survival')}>
               <span className="mr-3 inline-block w-6 text-center">▶</span>Start Survival
             </button>
             <button className="menu-btn text-base" onClick={() => onStart('bossrush')}>
