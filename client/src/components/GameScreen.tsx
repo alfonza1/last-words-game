@@ -20,6 +20,7 @@ export interface RunResult {
   streak: number;
   coins: number;
   missedWords: Record<string, number>;
+  riddle: boolean;
 }
 
 interface Props {
@@ -451,5 +452,6 @@ function toResult(s: GameState): RunResult {
     streak: s.bestStreak,
     coins: s.coins,
     missedWords: s.missedWords,
+    riddle: s.riddleMode,
   };
 }

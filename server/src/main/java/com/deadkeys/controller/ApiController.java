@@ -155,7 +155,9 @@ public class ApiController {
     // window (and keep serving the stale copy briefly while revalidating) to cut load.
     return ResponseEntity.ok()
         .cacheControl(CacheControl.maxAge(Duration.ofSeconds(30)).cachePublic().staleWhileRevalidate(Duration.ofSeconds(60)))
-        .body(json("leaderboard", store.topLeaderboard(safeLimit)));
+        .body(json(
+            "typers", store.topLeaderboard(false, safeLimit),
+            "riddlers", store.topLeaderboard(true, safeLimit)));
   }
 
   // --- helpers ---------------------------------------------------------------

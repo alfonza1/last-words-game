@@ -182,7 +182,7 @@ export default function App() {
     (r: RunResult, onResult?: (high: boolean) => void) => {
       const high = r.score > stats.bestScore && r.score > 0;
       if (user) {
-        const payload: RunPayload = { ...r, mode, difficulty: settings.difficulty };
+        const payload: RunPayload = { ...r, mode, difficulty: settings.difficulty, riddle: r.riddle };
         apiSubmitRun(payload)
           .then(({ profile, isHighScore }) => {
             applyProfile(profile);
@@ -416,7 +416,6 @@ export default function App() {
             stats={stats}
             gamesLeft={upgradeGames}
             powerups={powerups}
-            character={character}
             ownedCosmetics={cosmetics}
             signedIn={signedIn}
             onBuy={buyUpgrade}

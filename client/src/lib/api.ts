@@ -35,6 +35,7 @@ export interface RunPayload {
   missedWords: Record<string, number>;
   mode: string;
   difficulty: string;
+  riddle: boolean;
 }
 
 export interface LeaderboardEntry {
@@ -46,7 +47,13 @@ export interface LeaderboardEntry {
   accuracy: number;
   mode: string;
   difficulty: string;
+  riddle: boolean;
   at: number;
+}
+
+export interface Leaderboards {
+  typers: LeaderboardEntry[];
+  riddlers: LeaderboardEntry[];
 }
 
 /** Authorization header with a fresh Firebase ID token. Throws if signed out. */
@@ -146,7 +153,6 @@ export async function checkoutCoinPack(packId: string): Promise<{ url: string }>
   return apost('/billing/checkout', { packId });
 }
 
-export async function getLeaderboard(limit = 20): Promise<LeaderboardEntry[]> {
-  const { leaderboard } = await jget<{ leaderboard: LeaderboardEntry[] }>(`/leaderboard?limit=${limit}`);
-  return leaderboard;
+export async function getLeaderboard(limit = 20): Promise<Leaderboards> {
+  return jget<Leaderboards>(`/leaderboard?limit=${limit}`);
 }

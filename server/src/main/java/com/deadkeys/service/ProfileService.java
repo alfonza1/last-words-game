@@ -79,7 +79,7 @@ public class ProfileService {
     // One leaderboard row per player — only updated on a new personal best.
     store.upsertLeaderboard(profile.guestId, new LeaderboardEntry(
         null, profile.name, safe.score(), safe.wave(), safe.wpm(),
-        safe.accuracy(), safe.mode(), safe.difficulty(), 0));
+        safe.accuracy(), safe.mode(), safe.difficulty(), safe.riddle(), 0));
     store.save(profile);
     log.info("run applied uid={} score={} wave={} kills={} coins+={} highScore={}",
         profile.guestId, safe.score(), safe.wave(), safe.kills(), safe.coins(), isHighScore);
@@ -110,7 +110,7 @@ public class ProfileService {
         clampInt(r.bossesDefeated(), MAX_BOSSES),
         clampInt(r.streak(), MAX_STREAK),
         clampInt(r.coins(), MAX_COINS),
-        r.missedWords(), r.mode(), r.difficulty());
+        r.missedWords(), r.mode(), r.difficulty(), r.riddle());
   }
 
   private static int clampInt(int v, int max) {

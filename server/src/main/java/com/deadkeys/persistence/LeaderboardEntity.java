@@ -1,23 +1,25 @@
 package com.deadkeys.persistence;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 /** One submitted run on the global leaderboard. */
 @Entity
-@Table(name = "leaderboard")
+@Table(name = "leaderboard", uniqueConstraints = @UniqueConstraint(columnNames = {"ownerId", "riddle"}))
 public class LeaderboardEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   public Long id;
 
-  /** Account uid that owns this entry — one row per player (their best run). */
-  @Column(unique = true)
+  /** Account uid — one row per player PER board (their best typing run and best riddle run). */
   public String ownerId;
+
+  /** Which board this entry belongs to: true = Riddlers, false = Typers. */
+  public boolean riddle;
 
   public String name;
   public int score;
