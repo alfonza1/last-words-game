@@ -110,7 +110,7 @@ export function Closet({
         </div>
       </section>
 
-        <section className="space-y-5 pb-8">
+        <section className="space-y-5">
           <div className="flex justify-end">
             <button
               onClick={onOpenStore}
