@@ -14,7 +14,7 @@ public final class CharacterCatalog {
 
   public static final List<Def> DEFS = List.of(
       new Def("outfit-field", OUTFIT, 0),
-      new Def("outfit-hoodie", OUTFIT, 0),
+      new Def("outfit-hoodie", OUTFIT, 800),
       new Def("outfit-raider", OUTFIT, 1_500),
       new Def("outfit-hazmat", OUTFIT, 2_000),
       new Def("outfit-neon", OUTFIT, 2_600),
@@ -28,7 +28,7 @@ public final class CharacterCatalog {
       new Def("accessory-crown", ACCESSORY, 2_000));
 
   public static final List<String> DEFAULT_OWNED =
-      List.of("outfit-field", "outfit-hoodie", "accessory-none");
+      List.of("outfit-field", "accessory-none");
 
   public static final Set<String> SKIN_TONES =
       Set.of("porcelain", "warm", "tan", "brown", "deep", "undead");

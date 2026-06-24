@@ -21,9 +21,9 @@ public class Profile {
   public Map<String, Integer> powerups = new LinkedHashMap<>();
   /** Map theme ids the player owns. The graveyard is always free. */
   public List<String> maps = new ArrayList<>(List.of("graveyard"));
-  /** Character cosmetic ids the player owns (two outfits are free). */
+  /** Character cosmetic ids the player owns by default or has purchased. */
   public List<String> cosmetics = new ArrayList<>(
-      List.of("outfit-field", "outfit-hoodie", "accessory-none"));
+      List.of("outfit-field", "accessory-none"));
   /** The survivor appearance shown in menus and during runs. */
   public CharacterLoadout character = new CharacterLoadout();
   /** Epoch millis of the last username change (username is limited to once/week). */

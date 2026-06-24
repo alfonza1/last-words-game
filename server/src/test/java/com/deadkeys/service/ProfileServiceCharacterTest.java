@@ -35,6 +35,15 @@ class ProfileServiceCharacterTest {
   }
 
   @Test
+  void signalHoodieMustBePurchased() {
+    service.buyCosmetic(profile, "outfit-hoodie");
+
+    assertEquals(3_200, profile.stats.totalCoins);
+    assertTrue(profile.cosmetics.contains("outfit-hoodie"));
+    verify(store).save(profile);
+  }
+
+  @Test
   void ownedCosmeticsCanBeEquippedWithFreeAppearanceChoices() {
     profile.cosmetics.add("outfit-neon");
     profile.cosmetics.add("accessory-goggles");

@@ -28,7 +28,7 @@ export const DEFAULT_CHARACTER: CharacterLoadout = {
   accessory: 'accessory-none',
 };
 
-export const DEFAULT_COSMETICS = ['outfit-field', 'outfit-hoodie', 'accessory-none'];
+export const DEFAULT_COSMETICS = ['outfit-field', 'accessory-none'];
 
 export const SKIN_TONES = [
   { key: 'porcelain', label: 'Porcelain', color: '#f3c8ad' },
@@ -70,7 +70,7 @@ export const COSMETICS: CosmeticDef[] = [
     slot: 'outfit',
     name: 'Signal Hoodie',
     description: 'A clean black hoodie with a bright dead-signal mark.',
-    cost: 0,
+    cost: 800,
     rarity: 'standard',
   },
   {
