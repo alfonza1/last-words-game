@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Difficulty, GameMode, GameStats, Screen, Settings, UpgradeKey, Upgrades } from './types';
 import {
   DEFAULT_STATS,
@@ -26,16 +26,22 @@ import { getMap } from './data/maps';
 import { audio } from './lib/audio';
 import { useAuth } from './lib/auth';
 import { useToast } from './lib/toast';
-import { SignIn } from './components/SignIn';
 import { MainMenu } from './components/MainMenu';
-import { MapSelect } from './components/MapSelect';
-import { Leaderboard } from './components/Leaderboard';
-import { GameScreen, type RunResult } from './components/GameScreen';
-import { GameOver } from './components/GameOver';
-import { Upgrades as UpgradesScreen } from './components/Upgrades';
-import { HowToPlay } from './components/HowToPlay';
-import { SettingsPanel } from './components/SettingsPanel';
 import { ServerDown } from './components/ServerDown';
+import type { RunResult } from './components/GameScreen';
+
+// Screens are code-split: each chunk is fetched on first navigation to that
+// screen, not at app load. MainMenu (first paint) and the tiny ServerDown gate
+// stay eager. GameScreen also pulls in the game engine/renderer, so deferring it
+// keeps that weight out of the initial load entirely.
+const SignIn = lazy(() => import('./components/SignIn').then((m) => ({ default: m.SignIn })));
+const MapSelect = lazy(() => import('./components/MapSelect').then((m) => ({ default: m.MapSelect })));
+const Leaderboard = lazy(() => import('./components/Leaderboard').then((m) => ({ default: m.Leaderboard })));
+const GameScreen = lazy(() => import('./components/GameScreen').then((m) => ({ default: m.GameScreen })));
+const GameOver = lazy(() => import('./components/GameOver').then((m) => ({ default: m.GameOver })));
+const UpgradesScreen = lazy(() => import('./components/Upgrades').then((m) => ({ default: m.Upgrades })));
+const HowToPlay = lazy(() => import('./components/HowToPlay').then((m) => ({ default: m.HowToPlay })));
+const SettingsPanel = lazy(() => import('./components/SettingsPanel').then((m) => ({ default: m.SettingsPanel })));
 
 const REWARD_COINS = 50; // bonus for an optional rewarded ad (server is authoritative)
 
@@ -479,7 +485,7 @@ export default function App() {
         </div>
       )}
 
-      {content}
+      <Suspense fallback={<ScreenLoader />}>{content}</Suspense>
 
       {confirmSignOut && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
@@ -506,6 +512,15 @@ export default function App() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Brief fallback shown while a code-split screen chunk loads. */
+function ScreenLoader() {
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <div className="animate-pulse text-sm font-bold tracking-widest text-neon-green/70">LOADING…</div>
     </div>
   );
 }
