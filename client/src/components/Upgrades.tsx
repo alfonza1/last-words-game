@@ -3,7 +3,7 @@ import type { CharacterLoadout, GameStats, UpgradeKey, Upgrades as UpgradesType 
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from '../data/upgrades';
 import { POWERUP_DEFS } from '../data/powerups';
 import { COIN_PACKS } from '../data/coinPacks';
-import { COSMETICS } from '../data/cosmetics';
+import { COSMETICS, DEFAULT_CHARACTER, type CosmeticDef, type CosmeticSlot } from '../data/cosmetics';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -49,6 +49,13 @@ export function Upgrades({
   const coins = stats.totalCoins;
   const anyOwned = UPGRADE_DEFS.some((d) => upgrades[d.key] > 0);
   const active = gamesLeft > 0 && anyOwned;
+  const owned = new Set(ownedCosmetics);
+  const gearFor = (slot: CosmeticSlot) =>
+    COSMETICS.filter((item) => item.slot === slot && item.cost > 0).sort((a, b) => {
+      const equippedDelta = Number(character[slot] === b.key) - Number(character[slot] === a.key);
+      if (equippedDelta !== 0) return equippedDelta;
+      return Number(owned.has(b.key)) - Number(owned.has(a.key));
+    });
 
   // Purchases require an explicit confirm so nobody buys by accident / spam-clicks.
   const [pending, setPending] = useState<Pending | null>(null);
@@ -60,6 +67,52 @@ export function Upgrades({
     else if (p.kind === 'powerup') onBuyPowerup(p.id);
     else if (p.kind === 'cosmetic') onBuyCosmetic(p.id);
     else onBuyCoinPack(p.id);
+  };
+  const gearCard = (item: CosmeticDef) => {
+    const isOwned = owned.has(item.key);
+    const equipped = character[item.slot] === item.key;
+    const affordable = coins >= item.cost;
+    const preview: CharacterLoadout = { ...DEFAULT_CHARACTER, [item.slot]: item.key };
+    const rarityColor =
+      item.rarity === 'legendary'
+        ? 'border-neon-amber/60'
+        : item.rarity === 'epic'
+          ? 'border-neon-pink/50'
+          : 'border-neon-cyan/35';
+    const titleColor = item.slot === 'outfit' ? 'text-neon-pink' : 'text-neon-cyan';
+    return (
+      <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-3 ${rarityColor}`}>
+        <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/45">
+          {item.rarity}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="h-28 w-24 flex-none overflow-hidden rounded-lg border border-white/15 bg-black/35">
+            <CharacterAvatar character={preview} armed={false} className="h-32 w-full -translate-y-1" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className={`text-sm font-black ${titleColor}`}>{item.name}</h3>
+            <p className="mt-1 text-[11px] leading-snug text-white/65">{item.description}</p>
+          </div>
+        </div>
+        <button
+          disabled={isOwned || (signedIn && !affordable)}
+          onClick={() =>
+            signedIn
+              ? setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })
+              : onRequireSignIn()
+          }
+          className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black ${
+            isOwned
+              ? 'border-neon-cyan/45 bg-neon-cyan/10 text-neon-cyan'
+              : signedIn && !affordable
+                ? 'cursor-not-allowed border-white/15 text-white/45'
+                : 'border-neon-pink/60 bg-neon-pink/10 text-neon-pink hover:bg-neon-pink/20'
+          }`}
+        >
+          {equipped ? 'EQUIPPED' : isOwned ? 'OWNED · EQUIP IN CLOSET' : `${item.cost.toLocaleString()} 🪙`}
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -76,19 +129,6 @@ export function Upgrades({
           🪙 {coins.toLocaleString()} coins
         </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-white/50">
-          Spend coins from runs. Upgrades are temporary — each purchase lasts {UPGRADE_LIFESPAN} games.
-        </p>
-        <span
-          className={`rounded-md border px-3 py-1 text-xs font-bold ${
-            active ? 'border-neon-green/50 text-neon-green' : 'border-white/15 text-white/40'
-          }`}
-        >
-          {active ? `Active · ${gamesLeft} game${gamesLeft === 1 ? '' : 's'} left` : 'No active upgrades'}
-        </span>
-      </div>
-
       {!signedIn && (
         <button
           onClick={onRequireSignIn}
@@ -98,59 +138,7 @@ export function Upgrades({
         </button>
       )}
 
-      <h2 className="mt-1 text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
-      <p className="-mt-2 text-xs text-white/40">
-        Permanent outfits and accessories. Equip owned items from the Closet.
-      </p>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {COSMETICS.filter((item) => item.cost > 0).map((item) => {
-          const owned = ownedCosmetics.includes(item.key);
-          const affordable = coins >= item.cost;
-          const preview: CharacterLoadout = { ...character, [item.slot]: item.key };
-          const rarityColor =
-            item.rarity === 'legendary'
-              ? 'border-neon-amber/60'
-              : item.rarity === 'epic'
-                ? 'border-neon-pink/50'
-                : 'border-neon-cyan/35';
-          return (
-            <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-3 ${rarityColor}`}>
-              <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/30">
-                {item.rarity}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="h-28 w-24 flex-none overflow-hidden rounded-lg border border-white/10 bg-black/35">
-                  <CharacterAvatar character={preview} armed={false} className="h-32 w-full -translate-y-1" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-bold text-neon-pink">{item.name}</h3>
-                  <p className="mt-1 text-[10px] leading-snug text-white/45">{item.description}</p>
-                  <div className="mt-1 text-[9px] uppercase tracking-widest text-white/30">{item.slot}</div>
-                </div>
-              </div>
-              <button
-                disabled={owned || (signedIn && !affordable)}
-                onClick={() =>
-                  signedIn
-                    ? setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })
-                    : onRequireSignIn()
-                }
-                className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black ${
-                  owned
-                    ? 'border-neon-green/35 text-neon-green'
-                    : signedIn && !affordable
-                      ? 'cursor-not-allowed border-white/10 text-white/25'
-                      : 'border-neon-pink/60 bg-neon-pink/10 text-neon-pink hover:bg-neon-pink/20'
-                }`}
-              >
-                {owned ? 'OWNED · EQUIP IN CLOSET' : `${item.cost} 🪙`}
-              </button>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Coin packs (real money) — top of the store */}
+      {/* Coin packs stay at the top so currency purchases are easy to find. */}
       <h2 className="text-sm font-bold uppercase tracking-widest text-neon-amber">Coin Packs</h2>
       <p className="-mt-2 text-xs text-white/40">Top up instantly. Secure checkout via Stripe.</p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -180,6 +168,17 @@ export function Upgrades({
           </div>
         ))}
       </div>
+
+      <h2 className="mt-1 text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
+      <p className="-mt-2 text-xs text-white/55">
+        Clothes give no advantage and are cosmetic only. Permanent outfits and accessories. Equip owned items from the Closet.
+      </p>
+
+      <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Outfits</h3>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('outfit').map(gearCard)}</div>
+
+      <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-cyan">Accessories</h3>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('accessory').map(gearCard)}</div>
 
       {/* Consumable powerups */}
       <h2 className="mt-1 text-sm font-bold uppercase tracking-widest text-neon-cyan">Powerups</h2>
@@ -221,8 +220,20 @@ export function Upgrades({
         })}
       </div>
 
-      {/* Permanent-ish upgrades */}
+      {/* Temporary upgrades */}
       <h2 className="mt-2 text-sm font-bold uppercase tracking-widest text-neon-cyan">Upgrades</h2>
+      <div className="-mt-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-white/50">
+          Spend coins from runs. Upgrades are temporary — each purchase lasts {UPGRADE_LIFESPAN} games.
+        </p>
+        <span
+          className={`rounded-md border px-3 py-1 text-xs font-bold ${
+            active ? 'border-neon-cyan/50 text-neon-cyan' : 'border-white/20 text-white/55'
+          }`}
+        >
+          {active ? `Active · ${gamesLeft} game${gamesLeft === 1 ? '' : 's'} left` : 'No active upgrades'}
+        </span>
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {UPGRADE_DEFS.map((def) => {
           const level = upgrades[def.key];

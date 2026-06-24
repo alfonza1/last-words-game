@@ -76,7 +76,7 @@ export const COSMETICS: CosmeticDef[] = [
     slot: 'outfit',
     name: 'Road Raider',
     description: 'Scrap armor, warning paint, and no interest in subtlety.',
-    cost: 450,
+    cost: 750,
     rarity: 'rare',
   },
   {
@@ -84,7 +84,7 @@ export const COSMETICS: CosmeticDef[] = [
     slot: 'outfit',
     name: 'Containment Tech',
     description: 'Area 67 response gear with sealed neon seams.',
-    cost: 650,
+    cost: 1000,
     rarity: 'rare',
   },
   {
@@ -92,7 +92,7 @@ export const COSMETICS: CosmeticDef[] = [
     slot: 'outfit',
     name: 'Dead City Runner',
     description: 'Street armor wired with cyan and magenta light.',
-    cost: 800,
+    cost: 1300,
     rarity: 'epic',
   },
   {
@@ -100,7 +100,7 @@ export const COSMETICS: CosmeticDef[] = [
     slot: 'outfit',
     name: 'Grave Warden',
     description: 'A long armored coat made for the last watch.',
-    cost: 1100,
+    cost: 1800,
     rarity: 'epic',
   },
   {
@@ -108,7 +108,7 @@ export const COSMETICS: CosmeticDef[] = [
     slot: 'outfit',
     name: 'Ashbound',
     description: 'Black ritual plate carrying a living ember seam.',
-    cost: 1400,
+    cost: 2400,
     rarity: 'legendary',
   },
   {

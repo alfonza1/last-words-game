@@ -29,7 +29,7 @@ class ProfileServiceCharacterTest {
   void buyingCosmeticDeductsCoinsAndAddsOwnership() {
     service.buyCosmetic(profile, "outfit-neon");
 
-    assertEquals(1_200, profile.stats.totalCoins);
+    assertEquals(700, profile.stats.totalCoins);
     assertTrue(profile.cosmetics.contains("outfit-neon"));
     verify(store).save(profile);
   }
