@@ -35,6 +35,7 @@ import { GameOver } from './components/GameOver';
 import { Upgrades as UpgradesScreen } from './components/Upgrades';
 import { HowToPlay } from './components/HowToPlay';
 import { SettingsPanel } from './components/SettingsPanel';
+import { ServerDown } from './components/ServerDown';
 
 const REWARD_COINS = 50; // bonus for an optional rewarded ad (server is authoritative)
 
@@ -451,17 +452,18 @@ export default function App() {
     );
   }
 
+  // A signed-in player's progress lives on our servers. If we couldn't load it,
+  // don't show a half-empty menu or let them play/spend into nothing — gate on a
+  // clear "we're offline" screen they can retry from (guests never hit this).
+  if (!serverOk) {
+    return <ServerDown onPlayOffline={() => void signOut()} />;
+  }
+
   const accountLabel = signedIn ? username || user?.email || 'Player' : 'Guest';
   const showChip = screen !== 'game' && screen !== 'signin';
 
   return (
     <div className="h-full w-full">
-      {!serverOk && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-50 bg-neon-red/20 py-1 text-center text-xs text-neon-red">
-          Backend offline — progress won’t be saved.
-        </div>
-      )}
-
       {showChip && (
         <div className="absolute right-3 top-3 z-40 flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs">
           <span className="max-w-[140px] truncate text-white/60">{accountLabel}</span>
@@ -483,9 +485,7 @@ export default function App() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-sm rounded-xl border border-neon-green/40 bg-ink-800 p-5 text-center shadow-neon">
             <h3 className="text-lg font-black tracking-wide text-neon-green">SIGN OUT?</h3>
-            <p className="mt-2 text-sm text-white/70">
-              You’ll go back to playing as a guest. Your account progress stays saved.
-            </p>
+            <p className="mt-2 text-sm text-white/70">You’ll go back to playing as a guest.</p>
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => setConfirmSignOut(false)}
