@@ -1,5 +1,6 @@
 package com.deadkeys.persistence;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,6 +20,7 @@ public class LeaderboardEntity {
   public String ownerId;
 
   /** Which board this entry belongs to: true = Riddlers, false = Typers. */
+  @Column(nullable = false, columnDefinition = "boolean default false")
   public boolean riddle;
 
   public String name;
