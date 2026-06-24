@@ -1,5 +1,5 @@
 import type { Difficulty, GameMode } from '../types';
-import { MAPS, isMapOwned, type MapTheme } from '../data/maps';
+import { MAPS, isMapOwned } from '../data/maps';
 
 interface Props {
   mode: GameMode;
@@ -58,6 +58,7 @@ export function MapSelect({
         {maps.map((m) => {
           const owned = isMapOwned(m, ownedMaps);
           const selected = selectedMapId === m.id;
+          const p = m.palette;
           return (
             <div
               key={m.id}
@@ -65,17 +66,26 @@ export function MapSelect({
                 selected ? 'border-neon-green shadow-neon' : 'border-white/10'
               }`}
             >
-              <MapPreview map={m} />
-              {m.nightmareOnly && (
-                <span className="absolute right-2 top-2 rounded bg-neon-red/80 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-white">
-                  Nightmare Exclusive
-                </span>
-              )}
-              {m.bossRushOnly && (
-                <span className="absolute right-2 top-2 rounded bg-neon-amber/80 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-black">
-                  Boss Rush Exclusive
-                </span>
-              )}
+              {/* Theme preview swatch */}
+              <div
+                className="h-20 w-full flex-none"
+                style={{ background: `linear-gradient(160deg, ${p.skyTop}, ${p.skyHorizon} 55%, ${p.ground2})` }}
+              >
+                <div className="flex h-full items-end justify-between p-2">
+                  <span className="h-4 w-4 rounded-full" style={{ background: p.moon, boxShadow: `0 0 12px ${p.moon}` }} />
+                  <span className="h-2 w-12 rounded-full" style={{ background: p.accent }} />
+                </div>
+                {m.nightmareOnly && (
+                  <span className="absolute right-2 top-2 rounded bg-neon-red/80 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-white">
+                    Nightmare Exclusive
+                  </span>
+                )}
+                {m.bossRushOnly && (
+                  <span className="absolute right-2 top-2 rounded bg-neon-amber/80 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-black">
+                    Boss Rush Exclusive
+                  </span>
+                )}
+              </div>
 
               <div className="flex flex-1 flex-col p-3">
                 <div className="flex items-center justify-between">
@@ -116,66 +126,6 @@ export function MapSelect({
           ▶ Deploy
         </button>
       </div>
-    </div>
-  );
-}
-
-function MapPreview({ map }: { map: MapTheme }) {
-  const p = map.palette;
-  if (map.id !== 'city') {
-    return (
-      <div
-        className="h-20 w-full flex-none"
-        style={{ background: `linear-gradient(160deg, ${p.skyTop}, ${p.skyHorizon} 55%, ${p.ground2})` }}
-      >
-        <div className="flex h-full items-end justify-between p-2">
-          <span className="h-4 w-4 rounded-full" style={{ background: p.moon, boxShadow: `0 0 12px ${p.moon}` }} />
-          <span className="h-2 w-12 rounded-full" style={{ background: p.accent }} />
-        </div>
-      </div>
-    );
-  }
-
-  const towers = [
-    { left: '0%', width: '14%', height: '62%' },
-    { left: '12%', width: '15%', height: '78%' },
-    { left: '25%', width: '13%', height: '50%' },
-    { left: '63%', width: '13%', height: '56%' },
-    { left: '74%', width: '15%', height: '82%' },
-    { left: '87%', width: '14%', height: '68%' },
-  ];
-  return (
-    <div
-      className="relative h-20 w-full flex-none overflow-hidden"
-      style={{ background: `linear-gradient(180deg, ${p.skyTop}, ${p.skyHorizon} 48%, ${p.ground2})` }}
-    >
-      <span className="absolute left-[59%] top-2 h-8 w-8 rounded-full bg-[#b7d8cf]/45 shadow-[0_0_18px_rgba(80,240,210,0.35)]" />
-      <span className="absolute inset-x-0 top-[38%] h-3 bg-[#071014]/80 blur-[2px]" />
-      {towers.map((tower, i) => (
-        <span
-          key={tower.left}
-          className="absolute bottom-[39%] border-t border-neon-cyan/20 bg-[#071014]"
-          style={tower}
-        >
-          <span
-            className={`absolute inset-x-1 top-2 h-[2px] ${i % 3 === 0 ? 'bg-neon-red/55' : 'bg-neon-cyan/45'}`}
-          />
-          <span className="absolute left-1 top-4 h-[2px] w-1/3 bg-neon-cyan/25" />
-        </span>
-      ))}
-      <span
-        className="absolute bottom-0 left-[17%] h-[48%] w-[66%] bg-[#080d10]"
-        style={{ clipPath: 'polygon(42% 0, 58% 0, 100% 100%, 0 100%)' }}
-      />
-      <span
-        className="absolute bottom-0 left-1/2 h-[45%] w-px -translate-x-1/2 bg-neon-amber/65"
-        style={{ transform: 'translateX(-50%) rotate(3deg)' }}
-      />
-      <span className="absolute left-2 top-2 border border-neon-cyan/60 bg-black/40 px-1 text-[7px] font-black tracking-wider text-neon-cyan">
-        EVAC 09
-      </span>
-      <span className="absolute bottom-1 right-2 h-1.5 w-8 bg-neon-red/35 blur-[1px]" />
-      <span className="absolute inset-x-0 bottom-0 h-px bg-neon-cyan/40" />
     </div>
   );
 }
