@@ -142,6 +142,29 @@ describe('live WPM', () => {
   });
 });
 
+describe('Nightmare rewards', () => {
+  it('awards twice the normal kill score and coins', () => {
+    const normal = makeEngine();
+    const nightmare = new GameEngine({
+      mode: 'survival',
+      difficulty: 'nightmare',
+      upgrades: DEFAULT_UPGRADES,
+      settings: { ...DEFAULT_SETTINGS, difficulty: 'nightmare' },
+      width: 960,
+      height: 600,
+      seed: 1,
+    });
+    normal.state.zombies = [zombie({ y: 400 })];
+    nightmare.state.zombies = [zombie({ y: 400 })];
+
+    normal.handleInput(firstWord(normal) + ' ');
+    nightmare.handleInput(firstWord(nightmare) + ' ');
+
+    expect(nightmare.state.score).toBe(normal.state.score * 2);
+    expect(nightmare.state.coins).toBe(normal.state.coins * 2);
+  });
+});
+
 describe('upgrades', () => {
   it('applies the max-health upgrade to starting health', () => {
     const base = new GameEngine({

@@ -19,6 +19,7 @@ export interface DifficultyConfig {
   strict: boolean;
   wordLengthBias: number; // shifts the word tier upward
   coinMult: number; // multiplies coins earned (harder = richer)
+  scoreMult: number; // multiplies points earned
   /**
    * Riddle Mode: zombies killed per solved riddle. Tuned so kills/min ≈ typing
    * at ~40 WPM: N ≈ (avg riddle solve time) / (1.5s per word). Harder difficulties
@@ -49,6 +50,7 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     strict: false,
     wordLengthBias: -1,
     coinMult: 1,
+    scoreMult: 1,
     riddleKills: 5,
   },
   normal: {
@@ -66,6 +68,7 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     strict: false,
     wordLengthBias: 0,
     coinMult: 1,
+    scoreMult: 1,
     riddleKills: 8,
   },
   nightmare: {
@@ -83,6 +86,7 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     strict: true,
     wordLengthBias: 2,
     coinMult: 2, // Nightmare pays double
+    scoreMult: 2, // Nightmare scores double
     riddleKills: 12,
   },
 };

@@ -22,12 +22,12 @@ const DIFF_BLURB: Record<'typing' | 'riddles', Record<Difficulty, string>> = {
   typing: {
     easy: 'Short words with a relaxed horde.',
     normal: 'Words and numbers against the full outbreak.',
-    nightmare: 'Exact-case words, numbers, and symbols. Earn 2× coins.',
+    nightmare: 'Exact-case words, numbers, and symbols. Earn 2× coins and points.',
   },
   riddles: {
     easy: 'Straightforward clues with extra time to solve.',
     normal: 'Sharper clues and a faster approaching horde.',
-    nightmare: 'The hardest clues under maximum pressure. Earn 2× coins.',
+    nightmare: 'The hardest clues under maximum pressure. Earn 2× coins and points.',
   },
 };
 

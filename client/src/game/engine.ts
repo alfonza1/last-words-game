@@ -541,9 +541,10 @@ export class GameEngine {
     s.kills += 1;
 
     const comboBonus = 1 + Math.min(1.5, s.combo * 0.02);
-    const score = Math.round(z.reward.score * comboBonus);
+    const difficulty = getDifficultyConfig(s.difficulty);
+    const score = Math.round(z.reward.score * comboBonus * difficulty.scoreMult);
     s.score += score;
-    const coinMult = coinMultiplier(s.upgrades) * getDifficultyConfig(s.difficulty).coinMult;
+    const coinMult = coinMultiplier(s.upgrades) * difficulty.coinMult;
     s.coins += Math.round(z.reward.coins * coinMult);
     s.xp += z.reward.xp;
 
@@ -583,7 +584,7 @@ export class GameEngine {
 
     // Headshot bonus.
     if (isHeadshot(word.replace(/\s+/g, '').length, clearedMs)) {
-      const bonus = 50;
+      const bonus = 50 * getDifficultyConfig(s.difficulty).scoreMult;
       s.score += bonus;
       this.addFloating(s.width / 2, s.height * 0.4, 'HEADSHOT', '#ff2bd6', 26);
     }
