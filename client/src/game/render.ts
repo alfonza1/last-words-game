@@ -434,13 +434,14 @@ function drawThemeScenery(
       ctx.closePath();
       ctx.fill();
 
-      // Mostly dead windows; a few emergency circuits and fires still pulse.
+      // Mostly dead windows; only a tiny number of failing circuits flicker,
+      // and they do it slowly enough to feel atmospheric rather than strobing.
       const colW = Math.max(8, bw / 8);
       for (let wy = buildingTop + 27; wy < -5; wy += 12) {
         for (let wx = left + 6; wx < left + bw - 6; wx += colW) {
           const power = rand((i + 1) * 900 + wx * 0.7 + wy);
           if (power > 0.83) {
-            const flicker = power > 0.94 ? Math.sin(time * 0.012 + wx) > -0.25 : true;
+            const flicker = power > 0.975 ? Math.sin(time * 0.0018 + wx * 0.2) > -0.65 : true;
             ctx.fillStyle = flicker ? `rgba(${emergency},0.72)` : 'rgba(15,35,38,0.55)';
           } else {
             ctx.fillStyle = 'rgba(17,34,39,0.72)';
@@ -480,29 +481,6 @@ function drawThemeScenery(
         ctx.fill();
       }
       ctx.restore();
-    }
-
-    // Failing evacuation signs are the last recognizable human signal.
-    const signs = [
-      { x: w * 0.2, y: hzn * 0.25, c: '#20f2c2', label: 'EVAC 09' },
-      { x: w * 0.8, y: hzn * 0.12, c: '#ff4938', label: 'NO SIGNAL' },
-    ];
-    for (const sign of signs) {
-      const flicker = Math.sin(time * 0.009 + sign.x) > -0.72 ? 1 : 0.18;
-      const signW = 82 * sceneScale;
-      const signH = 24 * sceneScale;
-      ctx.globalAlpha = flicker;
-      ctx.strokeStyle = sign.c;
-      ctx.lineWidth = 2;
-      ctx.shadowColor = sign.c;
-      ctx.shadowBlur = 12;
-      ctx.strokeRect(sign.x - signW / 2, sign.y, signW, signH);
-      ctx.fillStyle = sign.c;
-      ctx.font = `700 ${9 * sceneScale}px "JetBrains Mono", monospace`;
-      ctx.textAlign = 'center';
-      ctx.fillText(sign.label, sign.x, sign.y + signH * 0.68);
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha = 1;
     }
 
     // Wet evacuation boulevard in deep perspective.
@@ -559,23 +537,27 @@ function drawThemeScenery(
     for (let x = -34; x < 36; x += 14) ctx.fillRect(x, -9, 8, 6);
     ctx.restore();
 
-    // Headlights from a vehicle that never made it to the checkpoint.
-    const headlightY = hzn + h * 0.17;
-    for (const hx of [w * 0.365, w * 0.395]) {
-      const beam = ctx.createLinearGradient(hx, headlightY, hx, headlightY + h * 0.22);
+    // Headlight beams begin at the bus's front fascia and project toward the
+    // player. The bulbs themselves are drawn over the bus below.
+    const busX = w * 0.38;
+    const busY = hzn + h * 0.17;
+    const busHeadlightY = busY + 7 * sceneScale;
+    for (const hx of [busX - 20 * sceneScale, busX + 20 * sceneScale]) {
+      const beam = ctx.createLinearGradient(hx, busHeadlightY, hx, busHeadlightY + h * 0.22);
       beam.addColorStop(0, 'rgba(255,215,145,0.18)');
       beam.addColorStop(1, 'rgba(255,190,100,0)');
       ctx.fillStyle = beam;
       ctx.beginPath();
-      ctx.moveTo(hx - 2, headlightY);
-      ctx.lineTo(hx + 2, headlightY);
-      ctx.lineTo(hx + 45, headlightY + h * 0.22);
-      ctx.lineTo(hx - 45, headlightY + h * 0.22);
+      ctx.moveTo(hx - 2, busHeadlightY);
+      ctx.lineTo(hx + 2, busHeadlightY);
+      ctx.lineTo(hx + 45, busHeadlightY + h * 0.22);
+      ctx.lineTo(hx - 45, busHeadlightY + h * 0.22);
       ctx.closePath();
       ctx.fill();
     }
 
-    // Most street lamps are dead; three unstable sodium lights define depth.
+    // Most street lamps are dead. The survivors stay steadily lit rather than
+    // flashing, so the road has a fixed readable lighting pattern.
     for (let r = 0; r < 3; r++) {
       const v = 0.26 + r * 0.23;
       const ly = hzn + v * (h - hzn);
@@ -592,7 +574,7 @@ function drawThemeScenery(
       ctx.lineTo(lx, poleTop);
       ctx.lineTo(headX, poleTop + (r === 2 ? 7 : 0));
       ctx.stroke();
-      const alive = Math.sin(time * 0.011 + r * 2.3) > -0.45;
+      const alive = r !== 1;
       if (alive) {
         const lamp = ctx.createRadialGradient(headX, poleTop, 1, headX, poleTop, 44 * scale);
         lamp.addColorStop(0, 'rgba(255,181,76,0.48)');
@@ -606,7 +588,7 @@ function drawThemeScenery(
 
     // Abandoned evacuation bus blocks one lane near the horizon.
     ctx.save();
-    ctx.translate(w * 0.38, hzn + h * 0.17);
+    ctx.translate(busX, busY);
     ctx.rotate(-0.045);
     ctx.scale(sceneScale, sceneScale);
     ctx.fillStyle = '#172126';
@@ -622,6 +604,14 @@ function drawThemeScenery(
     ctx.fill();
     ctx.fillStyle = 'rgba(255,60,40,0.65)';
     ctx.fillRect(29, 0, 3, 5);
+    ctx.fillStyle = '#ffe0a0';
+    ctx.shadowColor = '#ffc66d';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(-20, 7, 2.8, 0, Math.PI * 2);
+    ctx.arc(20, 7, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
     ctx.restore();
 
     // A crashed emergency vehicle and quarantine barricades sit near the
@@ -640,12 +630,13 @@ function drawThemeScenery(
     ctx.lineTo(21, -9);
     ctx.closePath();
     ctx.fill();
-    const policePulse = Math.sin(time * 0.014) > 0;
-    ctx.fillStyle = policePulse ? '#ff4938' : '#20f2c2';
-    ctx.shadowColor = ctx.fillStyle as string;
-    ctx.shadowBlur = 14;
-    ctx.fillRect(-7, -23, 14, 3);
+    ctx.fillStyle = '#ff4938';
+    ctx.shadowColor = '#ff4938';
+    ctx.shadowBlur = 10;
+    ctx.fillRect(-7, -23, 6, 3);
     ctx.shadowBlur = 0;
+    ctx.fillStyle = '#132328';
+    ctx.fillRect(1, -23, 6, 3);
     ctx.restore();
 
     for (const side of [-1, 1] as const) {
