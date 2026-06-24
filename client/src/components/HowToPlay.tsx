@@ -12,9 +12,6 @@ const DEFENSE: [string, string][] = [
   ['Math Defense', 'Solve the arithmetic, then press SPACE. Harder math each difficulty; a solve fires 3 / 4 / 6 shots.'],
   ['Trivia Defense', 'Answer the question, then press SPACE. Tougher questions each difficulty; a solve fires 3 / 5 / 8 shots.'],
   ['Even by Design', 'Volley sizes are tuned so every style clears about the same zombies per minute as typing — pick what you enjoy.'],
-  ['Forgiving Answers', 'Puzzle answers ignore case, spaces, and a leading “a/an/the”; accepted synonyms also count.'],
-  ['Recover from Mistakes', 'Incorrect text stays in the input so you can backspace and fix it. Nightmare mistakes fully reset your streak.'],
-  ['Hold the Line', 'Zombies damage the base when they arrive. A boss reaching it ends the run instantly.'],
 ];
 
 const ZOMBIES: [string, string][] = [
@@ -98,7 +95,7 @@ export function HowToPlay({ onBack }: Props) {
       <div className="grid grid-cols-4 gap-2 xl:hidden">
         {[
           ['defense', 'Defense'],
-          ['rules', 'Rules'],
+          ['rules', 'Controls'],
           ['zombies', 'Zombies'],
           ['powerups', 'Powerups'],
         ].map(([key, label]) => (
@@ -141,28 +138,29 @@ export function HowToPlay({ onBack }: Props) {
         </Card>
 
         <Card
-          title="Modes, Difficulty & Controls"
+          title="Controls"
           color="#00f0ff"
           className={`${visible('rules')} xl:block`}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-cyan">Difficulty</h3>
+              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-green">Typing Defense</h3>
               <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
-                <li><span className="font-bold text-white">Easy</span><span className="text-white/60"> — words only, 120 health.</span></li>
-                <li><span className="font-bold text-white">Normal</span><span className="text-white/60"> — words and numbers, 100 health.</span></li>
-                <li>
-                  <span className="font-bold text-neon-pink">Nightmare</span>
-                  <span className="text-white/60"> — exact-case words, numbers, and symbols, 80 health, and 2× coins and points.</span>
-                </li>
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> — fire at the nearest zombie.</span></li>
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — pause (the horde freezes).</span></li>
               </ul>
             </div>
             <div>
-              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-amber">Controls</h3>
+              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-pink">Riddle · Math · Trivia</h3>
               <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
-                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> — submit a word or puzzle answer.</span></li>
-                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — pause, resume, restart, or quit.</span></li>
-                <li><span className="text-white/60">Owned consumables appear in-game. Type their command to spend one charge.</span></li>
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> or </span><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">ENTER</kbd><span className="text-white/60"> — submit your answer (fires a volley).</span></li>
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — opens the menu, but the horde keeps advancing — no safe pause.</span></li>
+              </ul>
+            </div>
+            <div className="sm:col-span-2">
+              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-amber">All modes</h3>
+              <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
+                <li><span className="text-white/60">Owned consumables appear in-game — type their command (e.g. “grenade”) to spend one charge.</span></li>
               </ul>
             </div>
           </div>
