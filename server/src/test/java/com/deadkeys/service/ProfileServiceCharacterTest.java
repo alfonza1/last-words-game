@@ -22,14 +22,14 @@ class ProfileServiceCharacterTest {
     store = mock(ProfileStore.class);
     service = new ProfileService(store, "", 0, 50);
     profile = new Profile("uid-1", "tester");
-    profile.stats.totalCoins = 2_000;
+    profile.stats.totalCoins = 4_000;
   }
 
   @Test
   void buyingCosmeticDeductsCoinsAndAddsOwnership() {
-    service.buyCosmetic(profile, "outfit-neon");
+    service.buyCosmetic(profile, "outfit-neon"); // costs 2600
 
-    assertEquals(700, profile.stats.totalCoins);
+    assertEquals(1_400, profile.stats.totalCoins);
     assertTrue(profile.cosmetics.contains("outfit-neon"));
     verify(store).save(profile);
   }

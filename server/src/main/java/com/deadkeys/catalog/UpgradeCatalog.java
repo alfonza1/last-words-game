@@ -12,14 +12,14 @@ public final class UpgradeCatalog {
   public record Def(String key, int maxLevel, int baseCost, double costGrowth) {}
 
   public static final List<Def> DEFS = List.of(
-      new Def("maxHealth", 5, 120, 1.6),
-      new Def("startShield", 3, 200, 1.8),
-      new Def("slowWaves", 3, 150, 1.7),
-      new Def("shotgunRadius", 4, 140, 1.6),
-      new Def("slowMoDuration", 4, 160, 1.6),
-      new Def("bossDamage", 3, 220, 1.9),
-      new Def("bonusCoins", 5, 130, 1.5),
-      new Def("powerupChance", 4, 180, 1.7));
+      new Def("maxHealth", 5, 240, 1.6),
+      new Def("startShield", 3, 400, 1.8),
+      new Def("slowWaves", 3, 300, 1.7),
+      new Def("shotgunRadius", 4, 280, 1.6),
+      new Def("slowMoDuration", 4, 320, 1.6),
+      new Def("bossDamage", 3, 440, 1.9),
+      new Def("bonusCoins", 5, 260, 1.5),
+      new Def("powerupChance", 4, 360, 1.7));
 
   public static Def find(String key) {
     return DEFS.stream().filter(d -> d.key().equals(key)).findFirst().orElse(null);

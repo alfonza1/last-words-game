@@ -15,17 +15,17 @@ public final class CharacterCatalog {
   public static final List<Def> DEFS = List.of(
       new Def("outfit-field", OUTFIT, 0),
       new Def("outfit-hoodie", OUTFIT, 0),
-      new Def("outfit-raider", OUTFIT, 750),
-      new Def("outfit-hazmat", OUTFIT, 1_000),
-      new Def("outfit-neon", OUTFIT, 1_300),
-      new Def("outfit-warden", OUTFIT, 1_800),
-      new Def("outfit-inferno", OUTFIT, 2_400),
+      new Def("outfit-raider", OUTFIT, 1_500),
+      new Def("outfit-hazmat", OUTFIT, 2_000),
+      new Def("outfit-neon", OUTFIT, 2_600),
+      new Def("outfit-warden", OUTFIT, 3_600),
+      new Def("outfit-inferno", OUTFIT, 4_800),
       new Def("accessory-none", ACCESSORY, 0),
-      new Def("accessory-cap", ACCESSORY, 180),
-      new Def("accessory-headphones", ACCESSORY, 300),
-      new Def("accessory-goggles", ACCESSORY, 420),
-      new Def("accessory-mask", ACCESSORY, 600),
-      new Def("accessory-crown", ACCESSORY, 1_000));
+      new Def("accessory-cap", ACCESSORY, 360),
+      new Def("accessory-headphones", ACCESSORY, 600),
+      new Def("accessory-goggles", ACCESSORY, 840),
+      new Def("accessory-mask", ACCESSORY, 1_200),
+      new Def("accessory-crown", ACCESSORY, 2_000));
 
   public static final List<String> DEFAULT_OWNED =
       List.of("outfit-field", "outfit-hoodie", "accessory-none");
