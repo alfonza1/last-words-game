@@ -114,16 +114,16 @@ export function Upgrades({
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-4xl flex-col gap-4 overflow-y-auto p-6">
-      <div className="flex items-center gap-3">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <button
           onClick={onBack}
-          className="rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
+          className="justify-self-start rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
         >
           ← Back
         </button>
-        <h1 className="text-3xl font-black tracking-wide text-neon-green">STORE</h1>
-        <div className="ml-auto rounded-lg border border-neon-amber/40 bg-black/50 px-4 py-2 font-bold text-neon-amber">
-          🪙 {coins.toLocaleString()} coins
+        <h1 className="text-center text-2xl font-black tracking-wide text-neon-green sm:text-3xl">STORE</h1>
+        <div className="justify-self-end rounded-lg border border-neon-amber/40 bg-black/50 px-2 py-2 text-xs font-bold text-neon-amber sm:px-4 sm:text-base">
+          🪙 {coins.toLocaleString()} <span className="hidden sm:inline">coins</span>
         </div>
       </div>
       {!signedIn && (
