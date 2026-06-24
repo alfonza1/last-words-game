@@ -79,13 +79,13 @@ export const MAPS: MapTheme[] = [
   {
     id: 'lab',
     name: 'Area 67',
-    description: 'A classified containment site gone dark.',
+    description: 'A desert black site where the runway ends at something buried too deep.',
     cost: 600,
     palette: {
-      skyTop: '#021410', skyHorizon: '#0a2e2a', ground1: '#0c2220', ground2: '#03100e',
-      fog: '70,230,200', moon: '#aeffee', glow: 'rgba(0,255,200,0.3)', accent: '#00ffc8',
+      skyTop: '#030711', skyHorizon: '#1d2330', ground1: '#29271f', ground2: '#090a0b',
+      fog: '128,160,140', moon: '#d9dfc7', glow: 'rgba(170,205,170,0.28)', accent: '#9dff4f',
     },
-    features: { ...NONE, hazard: true },
+    features: { ...NONE },
   },
   {
     id: 'forest',

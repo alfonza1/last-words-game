@@ -220,7 +220,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   ctx.fillRect(0, hy, w, h - hy);
 
   // Lab grid floor
-  if (theme.id === 'lab') {
+  if (theme.id === 'lab-legacy') {
     ctx.strokeStyle = `rgba(0,255,200,0.08)`;
     ctx.lineWidth = 1;
     for (let i = -8; i <= 8; i++) {
@@ -362,6 +362,319 @@ function drawDeadCitySky(ctx: CanvasRenderingContext2D, s: GameState, time: numb
     ctx.lineTo(w * 0.24, horizon * 0.92);
     ctx.stroke();
     ctx.shadowBlur = 0;
+  }
+}
+
+function drawArea67Scenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const scale = Math.max(0.78, Math.min(1.5, w / 960));
+
+  // Nevada-like mountain basin surrounding the installation.
+  ctx.fillStyle = '#11151a';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 8);
+  for (let x = 0; x <= w; x += Math.max(38, w / 20)) {
+    const ridge = horizon - h * (0.035 + rand(x + 810) * 0.11);
+    ctx.lineTo(x, ridge);
+  }
+  ctx.lineTo(w, horizon + 16);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#181b1c';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 10);
+  for (let x = 0; x <= w; x += Math.max(52, w / 14)) {
+    const ridge = horizon - h * (0.01 + rand(x + 840) * 0.065);
+    ctx.lineTo(x, ridge);
+  }
+  ctx.lineTo(w, horizon + 18);
+  ctx.closePath();
+  ctx.fill();
+
+  // Hard-packed desert apron.
+  const desert = ctx.createLinearGradient(0, horizon, 0, h);
+  desert.addColorStop(0, '#302e25');
+  desert.addColorStop(0.46, '#1b1b17');
+  desert.addColorStop(1, '#080a0a');
+  ctx.fillStyle = desert;
+  ctx.fillRect(0, horizon, w, h - horizon);
+
+  // Half-buried command bunker centered beneath the mountain.
+  const vaultX = w / 2;
+  const vaultW = Math.min(w * 0.3, 310);
+  const vaultTop = horizon - h * 0.045;
+  ctx.fillStyle = '#151b1c';
+  ctx.beginPath();
+  ctx.moveTo(vaultX - vaultW * 0.62, horizon + 14);
+  ctx.lineTo(vaultX - vaultW * 0.46, vaultTop);
+  ctx.lineTo(vaultX + vaultW * 0.46, vaultTop);
+  ctx.lineTo(vaultX + vaultW * 0.62, horizon + 14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#394342';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#080d0e';
+  ctx.fillRect(vaultX - vaultW * 0.28, vaultTop + 9, vaultW * 0.56, h * 0.095);
+  ctx.strokeStyle = 'rgba(157,255,79,0.42)';
+  ctx.strokeRect(vaultX - vaultW * 0.28, vaultTop + 9, vaultW * 0.56, h * 0.095);
+  ctx.fillStyle = '#222c2b';
+  for (let y = vaultTop + 15; y < vaultTop + h * 0.095; y += 8) {
+    ctx.fillRect(vaultX - vaultW * 0.25, y, vaultW * 0.5, 3);
+  }
+  ctx.fillStyle = 'rgba(157,255,79,0.65)';
+  ctx.font = `700 ${8 * scale}px "JetBrains Mono", monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('SUBLEVEL 7', vaultX, vaultTop + 6);
+
+  // Hangars flank the runway. The right bay is cracked open around a recovered craft.
+  const drawHangar = (x: number, width: number, open: boolean) => {
+    const y = horizon - h * 0.005;
+    const hh = h * 0.11;
+    ctx.fillStyle = '#202526';
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x + width * 0.08, y + 10);
+    ctx.quadraticCurveTo(x + width / 2, y - 10, x + width * 0.92, y + 10);
+    ctx.lineTo(x + width, y + hh);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#47504e';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = open ? '#030707' : '#141a1b';
+    ctx.fillRect(x + width * 0.09, y + 18, width * 0.82, hh - 18);
+    if (!open) {
+      ctx.strokeStyle = 'rgba(95,110,105,0.55)';
+      for (let sx = x + width * 0.18; sx < x + width * 0.9; sx += width * 0.14) {
+        ctx.beginPath();
+        ctx.moveTo(sx, y + 20);
+        ctx.lineTo(sx, y + hh);
+        ctx.stroke();
+      }
+    } else {
+      const craftX = x + width * 0.52;
+      const craftY = y + hh * 0.64;
+      const glow = ctx.createRadialGradient(craftX, craftY, 2, craftX, craftY, width * 0.35);
+      glow.addColorStop(0, 'rgba(157,255,79,0.2)');
+      glow.addColorStop(1, 'rgba(157,255,79,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(x, y, width, hh);
+      ctx.fillStyle = '#7f9188';
+      ctx.beginPath();
+      ctx.ellipse(craftX, craftY, width * 0.24, 7 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#b7c9bd';
+      ctx.beginPath();
+      ctx.ellipse(craftX, craftY - 5 * scale, width * 0.09, 7 * scale, 0, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(157,255,79,0.75)';
+      for (const lx of [-0.12, 0, 0.12]) {
+        ctx.beginPath();
+        ctx.arc(craftX + width * lx, craftY + 1, 1.7 * scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.fillStyle = 'rgba(255,190,70,0.65)';
+    ctx.fillRect(x + 5, y + hh - 4, 4, 4);
+    ctx.fillRect(x + width - 9, y + hh - 4, 4, 4);
+  };
+  drawHangar(w * 0.035, w * 0.25, false);
+  drawHangar(w * 0.715, w * 0.25, true);
+
+  // Runway drives the eye toward the underground vault.
+  const runway = ctx.createLinearGradient(0, horizon, 0, h);
+  runway.addColorStop(0, '#181d1c');
+  runway.addColorStop(1, '#050707');
+  ctx.fillStyle = runway;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.445, horizon);
+  ctx.lineTo(w * 0.555, horizon);
+  ctx.lineTo(w * 0.88, h);
+  ctx.lineTo(w * 0.12, h);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(190,205,180,0.36)';
+  ctx.lineWidth = 2;
+  for (const side of [-1, 1] as const) {
+    ctx.beginPath();
+    ctx.moveTo(w / 2 + side * w * 0.055, horizon);
+    ctx.lineTo(w / 2 + side * w * 0.38, h);
+    ctx.stroke();
+  }
+
+  // Runway threshold bars and the installation number.
+  ctx.fillStyle = 'rgba(218,224,202,0.35)';
+  for (const side of [-1, 1] as const) {
+    for (let stripe = 0; stripe < 4; stripe++) {
+      const x = w / 2 + side * (w * 0.09 + stripe * 13 * scale);
+      ctx.fillRect(x - 4 * scale, h - 120, 8 * scale, 52);
+    }
+  }
+  ctx.save();
+  ctx.translate(w / 2, h * 0.7);
+  ctx.scale(1, 0.48);
+  ctx.fillStyle = 'rgba(218,224,202,0.24)';
+  ctx.font = `900 ${72 * scale}px "JetBrains Mono", monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('67', 0, 0);
+  ctx.restore();
+
+  // Fixed runway lights: deliberately sparse and non-flashing.
+  for (let row = 0; row < 7; row++) {
+    const v = (row + 0.8) / 7.8;
+    const y = horizon + v * (h - horizon);
+    const half = w * (0.055 + v * 0.325);
+    const r = 1.2 + v * 2.1;
+    for (const side of [-1, 1] as const) {
+      const x = w / 2 + side * half;
+      const on = (row + (side > 0 ? 1 : 0)) % 4 !== 2;
+      ctx.fillStyle = on ? 'rgba(180,255,130,0.78)' : 'rgba(55,70,58,0.5)';
+      if (on) {
+        ctx.shadowColor = '#9dff4f';
+        ctx.shadowBlur = 7;
+      }
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  // Radar dishes watch the sky from both sides.
+  const drawRadar = (x: number, y: number, size: number, phase: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.strokeStyle = '#56615d';
+    ctx.lineWidth = 2 * size;
+    ctx.beginPath();
+    ctx.moveTo(-8 * size, 18 * size);
+    ctx.lineTo(0, 0);
+    ctx.lineTo(8 * size, 18 * size);
+    ctx.stroke();
+    ctx.rotate(Math.sin(time * 0.00035 + phase) * 0.45);
+    ctx.strokeStyle = '#87938c';
+    ctx.lineWidth = 2 * size;
+    ctx.beginPath();
+    ctx.arc(0, 0, 17 * size, -0.1, Math.PI + 0.1);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(12 * size, -12 * size);
+    ctx.stroke();
+    ctx.fillStyle = '#9dff4f';
+    ctx.beginPath();
+    ctx.arc(12 * size, -12 * size, 2 * size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+  drawRadar(w * 0.31, horizon + 32, 0.72 * scale, 0);
+  drawRadar(w * 0.67, horizon + 25, 0.62 * scale, 2);
+
+  // Perimeter fencing stays at the sides so zombies remain readable.
+  for (const side of [-1, 1] as const) {
+    const innerTop = w / 2 + side * w * 0.31;
+    const innerBottom = w / 2 + side * w * 0.49;
+    ctx.strokeStyle = 'rgba(105,125,116,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(innerTop, horizon + 26);
+    ctx.lineTo(innerBottom, h - 64);
+    ctx.stroke();
+    for (let post = 0; post < 6; post++) {
+      const v = post / 5;
+      const px = innerTop + (innerBottom - innerTop) * v;
+      const py = horizon + 26 + (h - 64 - (horizon + 26)) * v;
+      const ph = 18 + v * 35;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px, py - ph);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px, py - ph);
+      ctx.lineTo(px - side * 8, py - ph - 5);
+      ctx.stroke();
+    }
+  }
+
+  // Two guard towers cast slow, opposing searchlights.
+  for (const tower of [{ x: w * 0.1, phase: 0 }, { x: w * 0.9, phase: Math.PI }]) {
+    const ty = horizon + h * 0.24;
+    const sweepX = tower.x + Math.sin(time * 0.00045 + tower.phase) * w * 0.16;
+    const beam = ctx.createLinearGradient(tower.x, ty - 58, sweepX, h - 70);
+    beam.addColorStop(0, 'rgba(225,235,190,0.13)');
+    beam.addColorStop(1, 'rgba(225,235,190,0)');
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(tower.x - 3, ty - 55);
+    ctx.lineTo(tower.x + 3, ty - 55);
+    ctx.lineTo(sweepX + 55, h - 70);
+    ctx.lineTo(sweepX - 55, h - 70);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#313a38';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(tower.x - 16, ty - 70, 32, 18);
+    ctx.beginPath();
+    ctx.moveTo(tower.x - 12, ty - 52);
+    ctx.lineTo(tower.x - 19, ty);
+    ctx.moveTo(tower.x + 12, ty - 52);
+    ctx.lineTo(tower.x + 19, ty);
+    ctx.stroke();
+  }
+
+  // Derelict military utility truck near the fence.
+  ctx.save();
+  ctx.translate(w * 0.79, h - 125);
+  ctx.rotate(-0.07);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#30372c';
+  ctx.fillRect(-30, -9, 60, 20);
+  ctx.fillStyle = '#3f4939';
+  ctx.fillRect(-27, -21, 26, 13);
+  ctx.fillStyle = 'rgba(80,105,95,0.35)';
+  ctx.fillRect(-23, -18, 17, 7);
+  ctx.fillStyle = '#090b09';
+  ctx.beginPath();
+  ctx.arc(-20, 12, 7, 0, Math.PI * 2);
+  ctx.arc(21, 12, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(220,205,120,0.45)';
+  ctx.font = '700 6px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('USAF', 13, 3);
+  ctx.restore();
+
+  // Sparse scrub, rocks, and luminous tracks around the runway margins.
+  for (let i = 0; i < 16; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.29 + rand(i + 900) * 0.19);
+    const y = horizon + 65 + rand(i + 910) * (h - horizon - 145);
+    const size = 2 + rand(i + 920) * 7;
+    ctx.fillStyle = '#27281f';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 1.8, size, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = 'rgba(157,255,79,0.2)';
+  ctx.lineWidth = 1.5;
+  for (let step = 0; step < 5; step++) {
+    const fx = w * 0.23 + step * 12 * scale;
+    const fy = h * 0.58 + step * 18;
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, 3 * scale, 7 * scale, -0.25, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Windblown dust catches moonlight near the ground.
+  for (let i = 0; i < 36; i++) {
+    const x = (rand(i + 950) * (w + 100) + time * 0.012) % (w + 100) - 50;
+    const y = horizon + rand(i + 960) * (h - horizon - 65);
+    ctx.fillStyle = `rgba(180,175,135,${0.05 + rand(i + 970) * 0.08})`;
+    ctx.fillRect(x, y, 1.5, 1.5);
   }
 }
 
@@ -792,6 +1105,11 @@ function drawThemeScenery(
   }
 
   if (theme.id === 'lab') {
+    drawArea67Scenery(ctx, s, time, hy);
+    return;
+  }
+
+  if (theme.id === 'lab-legacy') {
     // Back wall + a row of blinking monitor/server lights.
     ctx.fillStyle = 'rgba(0,40,36,0.45)';
     ctx.fillRect(0, hy, w, 24);
@@ -1350,6 +1668,67 @@ function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, 
       ctx.globalAlpha = 1;
       ctx.shadowBlur = 0;
     }
+    return;
+  }
+
+  if (theme.id === 'lab') {
+    // Mobile blast barricade protecting the runway control point.
+    const concrete = ctx.createLinearGradient(0, baseY, 0, h);
+    concrete.addColorStop(0, '#363a34');
+    concrete.addColorStop(1, '#121513');
+    ctx.fillStyle = concrete;
+    ctx.fillRect(0, baseY, w, 60);
+
+    ctx.strokeStyle = 'rgba(157,255,79,0.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY);
+    ctx.lineTo(w, baseY);
+    ctx.stroke();
+
+    // Modular concrete Jersey barriers.
+    ctx.fillStyle = '#4a4c43';
+    for (let x = -12; x < w + 70; x += 76) {
+      ctx.beginPath();
+      ctx.moveTo(x, h);
+      ctx.lineTo(x + 10, baseY + 10);
+      ctx.lineTo(x + 58, baseY + 10);
+      ctx.lineTo(x + 70, h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#20231f';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    const cx = w / 2;
+    ctx.fillStyle = '#0b1010';
+    ctx.fillRect(cx - 42, baseY - 8, 84, 37);
+    ctx.strokeStyle = '#6c766d';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 42, baseY - 8, 84, 37);
+    ctx.fillStyle = '#16201b';
+    ctx.fillRect(cx - 34, baseY - 2, 68, 19);
+    ctx.fillStyle = '#9dff4f';
+    ctx.shadowColor = '#9dff4f';
+    ctx.shadowBlur = 12;
+    ctx.fillRect(cx - 24, baseY + 4, 29, 3);
+    ctx.fillRect(cx - 24, baseY + 10, 18, 3);
+    ctx.beginPath();
+    ctx.arc(cx + 23, baseY + 8, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = '#56615b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx, baseY - 8);
+    ctx.lineTo(cx, baseY - 31);
+    ctx.stroke();
+    ctx.fillStyle = '#9dff4f';
+    ctx.beginPath();
+    ctx.arc(cx, baseY - 33, 5, 0, Math.PI * 2);
+    ctx.fill();
     return;
   }
 
