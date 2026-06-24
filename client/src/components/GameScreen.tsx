@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Difficulty, GameMode, GameState, Settings, Upgrades } from '../types';
+import type { CharacterLoadout, Difficulty, GameMode, GameState, Settings, Upgrades } from '../types';
 import { GameEngine } from '../game/engine';
 import { drawGame } from '../game/render';
 import { getMap } from '../data/maps';
@@ -29,6 +29,7 @@ interface Props {
   powerups: Record<string, number>;
   upgradesActive: boolean;
   settings: Settings;
+  character: CharacterLoadout;
   onGameOver: (result: RunResult) => void;
   onUsePowerup: (key: string) => void;
   /** Quit/restart pass the partial run so its stats still save. */
@@ -46,6 +47,7 @@ export function GameScreen({
   powerups,
   upgradesActive,
   settings,
+  character,
   onGameOver,
   onUsePowerup,
   onQuit,
@@ -208,7 +210,7 @@ export function GameScreen({
 
     // Draw is best-effort — never let a render error break the loop.
     try {
-      drawGame(ctx, engine.state, theme);
+      drawGame(ctx, engine.state, theme, character);
     } catch (err) {
       console.error('[dk] draw error', err);
     }

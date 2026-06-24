@@ -3,9 +3,10 @@
 // frame: a themed post-apocalyptic environment with shambling zombie figures.
 // (Words to type live in the on-screen UI panels, not above zombie heads.)
 // ---------------------------------------------------------------------------
-import type { GameState, Zombie } from '../types';
+import type { CharacterLoadout, GameState, Zombie } from '../types';
 import { bossHealthFraction } from './boss';
 import type { MapTheme } from '../data/maps';
+import { drawSurvivor } from './character';
 
 interface ZStyle {
   skin: string;
@@ -32,7 +33,12 @@ function rand(i: number): number {
   return x - Math.floor(x);
 }
 
-export function drawGame(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme) {
+export function drawGame(
+  ctx: CanvasRenderingContext2D,
+  s: GameState,
+  theme: MapTheme,
+  character: CharacterLoadout,
+) {
   const { width: w, height: h } = s;
   const time = performance.now();
   ctx.clearRect(0, 0, w, h);
@@ -48,6 +54,7 @@ export function drawGame(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
 
   const ordered = [...s.zombies].sort((a, b) => a.y - b.y);
   for (const z of ordered) drawZombie(ctx, z, s, time);
+  drawSurvivor(ctx, s, character, time);
 
   drawGroundFog(ctx, s, theme, time);
   if (theme.features.snow) drawSnow(ctx, s, time);

@@ -134,6 +134,7 @@ export class GameEngine {
       weather: 'clear',
       bossActive: false,
       bossWarning: 0,
+      survivorShot: null,
       missedWords: {},
       upgrades: opts.upgrades,
       settings: opts.settings,
@@ -283,6 +284,10 @@ export class GameEngine {
     s.shake = Math.max(0, s.shake - dt * 60);
     s.flash = Math.max(0, s.flash - dt * 4);
     s.bossWarning = Math.max(0, s.bossWarning - dt);
+    if (s.survivorShot) {
+      s.survivorShot.life -= dt;
+      if (s.survivorShot.life <= 0) s.survivorShot = null;
+    }
 
     this.updateFloating(dt);
     this.updateEvents(dt);
@@ -433,6 +438,7 @@ export class GameEngine {
     const minY = s.height * MIN_TARGET_FRAC;
     const target = s.zombies.filter((z) => z.y >= minY).sort((a, b) => b.y - a.y)[0];
     if (!target) return; // nothing visible to shoot yet — the shot misses
+    s.survivorShot = { x: target.x, y: target.y, life: 0.18, ttl: 0.18 };
     let dmg = SHOT_DAMAGE * damageMultiplier(s.powerups);
     if (target.isBoss) dmg += bossDamageBonus(s.upgrades);
     target.hp -= dmg;

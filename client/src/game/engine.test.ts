@@ -63,6 +63,7 @@ describe('word queue is independent of zombies', () => {
     expect(e.state.zombies).not.toContain(near); // nearest died
     expect(e.state.wordQueue).toHaveLength(5);
     expect(e.state.input).toBe('');
+    expect(e.state.survivorShot).toMatchObject({ x: near.x, y: near.y });
   });
 
   it('does not shoot zombies still above the play field (must be visible first)', () => {

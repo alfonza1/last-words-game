@@ -190,6 +190,8 @@ export interface GameState {
   weather: Weather;
   bossActive: boolean;
   bossWarning: number; // seconds remaining of the warning overlay
+  /** Brief visual trace from the survivor to the zombie targeted by a completed word. */
+  survivorShot: { x: number; y: number; life: number; ttl: number } | null;
 
   missedWords: Record<string, number>;
   upgrades: Upgrades;

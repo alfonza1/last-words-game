@@ -365,6 +365,7 @@ export default function App() {
             powerups={powerups}
             upgradesActive={upgradeGames > 0}
             settings={settings}
+            character={character}
             onGameOver={handleGameOver}
             onUsePowerup={onUsePowerup}
             onQuit={(r) => endRun(r, () => setScreen('menu'))}
