@@ -669,6 +669,316 @@ function drawArea67Scenery(ctx: CanvasRenderingContext2D, s: GameState, time: nu
   }
 }
 
+function drawFrozenOutpostScenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const scale = Math.max(0.78, Math.min(1.5, w / 960));
+
+  // A wall of glaciated mountains closes the station off from the world.
+  const rearPeaks: Array<[number, number]> = [];
+  ctx.fillStyle = '#102332';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 12);
+  for (let x = 0; x <= w; x += Math.max(45, w / 18)) {
+    const y = horizon - h * (0.08 + rand(x + 1100) * 0.16);
+    rearPeaks.push([x, y]);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(w, horizon + 14);
+  ctx.closePath();
+  ctx.fill();
+
+  // Wind-facing ridges catch moonlight while their lee sides stay blue-black.
+  ctx.fillStyle = 'rgba(195,225,240,0.38)';
+  for (const [px, py] of rearPeaks) {
+    const cap = 13 + rand(px + 1110) * 16;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - cap, py + cap * 0.8);
+    ctx.lineTo(px - cap * 0.28, py + cap * 0.55);
+    ctx.lineTo(px + cap * 0.18, py + cap);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // The ice shelf itself is layered and cracked rather than a flat snow field.
+  const shelf = ctx.createLinearGradient(0, horizon, 0, h);
+  shelf.addColorStop(0, '#264354');
+  shelf.addColorStop(0.46, '#152b38');
+  shelf.addColorStop(1, '#07131b');
+  ctx.fillStyle = shelf;
+  ctx.fillRect(0, horizon, w, h - horizon);
+
+  for (let band = 0; band < 4; band++) {
+    const y = horizon + h * (0.08 + band * 0.15);
+    ctx.fillStyle = `rgba(205,235,245,${0.04 + band * 0.015})`;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    for (let x = 0; x <= w; x += 50) {
+      ctx.lineTo(x, y + Math.sin(x * 0.015 + band) * 8 + (rand(x + band * 30) - 0.5) * 5);
+    }
+    ctx.lineTo(w, y + 22);
+    ctx.lineTo(0, y + 20);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // The station is carved into a glacier face, with only its reinforced front exposed.
+  const stationX = w / 2;
+  const stationW = Math.min(w * 0.38, 370);
+  const stationTop = horizon - h * 0.055;
+  ctx.fillStyle = '#b9d7e3';
+  ctx.beginPath();
+  ctx.moveTo(stationX - stationW * 0.68, horizon + 18);
+  ctx.quadraticCurveTo(stationX - stationW * 0.54, stationTop - 18, stationX - stationW * 0.36, stationTop - 5);
+  ctx.lineTo(stationX + stationW * 0.38, stationTop - 5);
+  ctx.quadraticCurveTo(stationX + stationW * 0.57, stationTop - 15, stationX + stationW * 0.68, horizon + 18);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#172831';
+  ctx.fillRect(stationX - stationW * 0.43, stationTop + 6, stationW * 0.86, h * 0.105);
+  ctx.strokeStyle = '#638391';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(stationX - stationW * 0.43, stationTop + 6, stationW * 0.86, h * 0.105);
+
+  // Frosted observation windows and a sealed central airlock.
+  const windowY = stationTop + 16;
+  for (const side of [-1, 1] as const) {
+    const wx = stationX + side * stationW * 0.26;
+    const windowGlow = ctx.createRadialGradient(wx, windowY + 10, 1, wx, windowY + 10, 35 * scale);
+    windowGlow.addColorStop(0, 'rgba(255,190,105,0.18)');
+    windowGlow.addColorStop(1, 'rgba(255,190,105,0)');
+    ctx.fillStyle = windowGlow;
+    ctx.fillRect(wx - 38 * scale, windowY - 20, 76 * scale, 60);
+    ctx.fillStyle = 'rgba(255,190,105,0.5)';
+    ctx.fillRect(wx - 17 * scale, windowY, 34 * scale, 15 * scale);
+    ctx.strokeStyle = 'rgba(210,240,250,0.48)';
+    ctx.strokeRect(wx - 17 * scale, windowY, 34 * scale, 15 * scale);
+  }
+
+  const doorW = 48 * scale;
+  const doorH = 48 * scale;
+  ctx.fillStyle = '#081319';
+  ctx.fillRect(stationX - doorW / 2, stationTop + 12, doorW, doorH);
+  ctx.strokeStyle = '#84f7e5';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(stationX - doorW / 2, stationTop + 12, doorW, doorH);
+  ctx.fillStyle = 'rgba(132,247,229,0.7)';
+  ctx.fillRect(stationX - 14 * scale, stationTop + 19, 28 * scale, 3);
+  ctx.font = `700 ${7 * scale}px "JetBrains Mono", monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('POLAR-12', stationX, stationTop + 34 * scale);
+
+  // A plowed service trench cuts through the drift toward the airlock.
+  const trench = ctx.createLinearGradient(0, horizon, 0, h);
+  trench.addColorStop(0, '#15242c');
+  trench.addColorStop(1, '#050c11');
+  ctx.fillStyle = trench;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.445, horizon);
+  ctx.lineTo(w * 0.555, horizon);
+  ctx.lineTo(w * 0.82, h);
+  ctx.lineTo(w * 0.18, h);
+  ctx.closePath();
+  ctx.fill();
+
+  // High snowbanks frame the lane and keep the center readable.
+  for (const side of [-1, 1] as const) {
+    const bank = ctx.createLinearGradient(0, horizon, 0, h);
+    bank.addColorStop(0, 'rgba(220,240,248,0.58)');
+    bank.addColorStop(1, 'rgba(105,155,180,0.36)');
+    ctx.fillStyle = bank;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 + side * w * 0.055, horizon);
+    ctx.lineTo(w / 2 + side * w * 0.32, h);
+    ctx.lineTo(w / 2 + side * w * 0.48, h);
+    ctx.lineTo(w / 2 + side * w * 0.13, horizon);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(225,246,252,0.38)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 + side * w * 0.055, horizon);
+    ctx.lineTo(w / 2 + side * w * 0.32, h);
+    ctx.stroke();
+  }
+
+  // Red guide poles reveal the depth of the buried road.
+  for (let row = 0; row < 5; row++) {
+    const v = (row + 0.7) / 5.7;
+    const y = horizon + v * (h - horizon);
+    const half = w * (0.07 + v * 0.3);
+    const poleH = 13 + v * 28;
+    for (const side of [-1, 1] as const) {
+      const x = w / 2 + side * half;
+      ctx.strokeStyle = '#d84848';
+      ctx.lineWidth = 2 + v;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y - poleH);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(235,245,250,0.8)';
+      ctx.fillRect(x - 2, y - poleH + 5, 4, 5);
+    }
+  }
+
+  // Collapsed geodesic radome on the left.
+  const domeX = w * 0.13;
+  const domeY = horizon + h * 0.18;
+  const domeR = 48 * scale;
+  ctx.save();
+  ctx.translate(domeX, domeY);
+  ctx.rotate(-0.13);
+  ctx.strokeStyle = 'rgba(170,220,235,0.55)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(0, 0, domeR, Math.PI, Math.PI * 2);
+  ctx.stroke();
+  for (let spoke = -2; spoke <= 2; spoke++) {
+    ctx.beginPath();
+    ctx.moveTo(spoke * domeR * 0.2, 0);
+    ctx.lineTo(spoke * domeR * 0.34, -domeR * (0.65 + Math.abs(spoke) * 0.08));
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(-domeR, 0);
+  ctx.lineTo(domeR, 0);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(190,230,242,0.12)';
+  ctx.beginPath();
+  ctx.arc(0, 0, domeR, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Surviving communications mast and slowly tracking dish on the right.
+  const mastX = w * 0.86;
+  const mastBase = horizon + h * 0.28;
+  ctx.strokeStyle = '#668491';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(mastX - 22 * scale, mastBase);
+  ctx.lineTo(mastX, horizon - h * 0.02);
+  ctx.lineTo(mastX + 22 * scale, mastBase);
+  for (let y = horizon + 12; y < mastBase; y += 24 * scale) {
+    const v = (y - horizon) / (mastBase - horizon);
+    const half = 5 + v * 14 * scale;
+    ctx.moveTo(mastX - half, y);
+    ctx.lineTo(mastX + half, y);
+  }
+  ctx.stroke();
+  ctx.save();
+  ctx.translate(mastX, horizon + 3);
+  ctx.rotate(Math.sin(time * 0.00025) * 0.28);
+  ctx.strokeStyle = '#b2d4df';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, 20 * scale, -0.15, Math.PI + 0.15);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(13 * scale, -13 * scale);
+  ctx.stroke();
+  ctx.restore();
+
+  // A cable tram hangs abandoned between the mast and glacier station.
+  const cableY = horizon + 8;
+  ctx.strokeStyle = 'rgba(115,150,165,0.5)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.58, cableY);
+  ctx.quadraticCurveTo(w * 0.72, cableY + 30, mastX, horizon + 1);
+  ctx.stroke();
+  const tramX = w * 0.7;
+  const tramY = cableY + 18;
+  ctx.fillStyle = '#17272f';
+  ctx.fillRect(tramX - 18 * scale, tramY, 36 * scale, 17 * scale);
+  ctx.strokeStyle = '#7899a6';
+  ctx.strokeRect(tramX - 18 * scale, tramY, 36 * scale, 17 * scale);
+  ctx.fillStyle = 'rgba(120,190,210,0.28)';
+  ctx.fillRect(tramX - 13 * scale, tramY + 4, 9 * scale, 6 * scale);
+  ctx.fillRect(tramX + 4 * scale, tramY + 4, 9 * scale, 6 * scale);
+
+  // A snowcat sits half-buried where its crew abandoned it.
+  ctx.save();
+  ctx.translate(w * 0.77, h - 130);
+  ctx.rotate(0.08);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#d78332';
+  ctx.fillRect(-27, -12, 54, 22);
+  ctx.fillStyle = '#263740';
+  ctx.fillRect(-21, -25, 31, 14);
+  ctx.fillStyle = 'rgba(135,200,220,0.35)';
+  ctx.fillRect(-17, -22, 21, 8);
+  ctx.fillStyle = '#10171a';
+  ctx.fillRect(-34, 7, 68, 8);
+  for (let x = -28; x <= 28; x += 8) {
+    ctx.strokeStyle = '#46545a';
+    ctx.beginPath();
+    ctx.moveTo(x, 8);
+    ctx.lineTo(x + 5, 14);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(225,242,248,0.62)';
+  ctx.beginPath();
+  ctx.ellipse(8, -26, 22, 5, -0.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Blue light leaks from deep crevasses at the edges of the shelf.
+  for (const crevasse of [
+    { x: w * 0.08, y: h * 0.5, len: h * 0.24, bend: 1 },
+    { x: w * 0.92, y: h * 0.58, len: h * 0.22, bend: -1 },
+    { x: w * 0.2, y: h * 0.73, len: h * 0.13, bend: -1 },
+  ]) {
+    ctx.strokeStyle = 'rgba(90,220,255,0.18)';
+    ctx.shadowColor = '#55cfff';
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(crevasse.x, crevasse.y);
+    ctx.lineTo(crevasse.x + crevasse.bend * 14, crevasse.y + crevasse.len * 0.32);
+    ctx.lineTo(crevasse.x - crevasse.bend * 9, crevasse.y + crevasse.len * 0.65);
+    ctx.lineTo(crevasse.x + crevasse.bend * 18, crevasse.y + crevasse.len);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Wind-sculpted drifts and exposed ice crystals add local detail.
+  for (let i = 0; i < 12; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.27 + rand(i + 1200) * 0.2);
+    const y = horizon + 60 + rand(i + 1210) * (h - horizon - 130);
+    const width = 18 + rand(i + 1220) * 46;
+    ctx.fillStyle = 'rgba(220,240,248,0.16)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, width, 5 + width * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (i % 3 === 0) {
+      ctx.fillStyle = 'rgba(145,220,245,0.38)';
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 6 * scale, y);
+      ctx.lineTo(x + 1, y - (18 + rand(i) * 24) * scale);
+      ctx.lineTo(x + 7 * scale, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Low blowing snow travels horizontally while the global snow falls vertically.
+  ctx.strokeStyle = 'rgba(225,245,252,0.12)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 36; i++) {
+    const x = (rand(i + 1250) * (w + 180) + time * 0.055) % (w + 180) - 90;
+    const y = horizon + rand(i + 1260) * (h - horizon - 65);
+    const len = 12 + rand(i + 1270) * 26;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + len, y - 3);
+    ctx.stroke();
+  }
+}
+
 /** Distinctive, recognizable set-dressing per map theme. */
 function drawThemeScenery(
   ctx: CanvasRenderingContext2D,
@@ -1349,89 +1659,7 @@ function drawThemeScenery(
   }
 
   if (theme.id === 'tundra') {
-    // Distant mountain range silhouette with snow caps.
-    ctx.fillStyle = 'rgba(40,70,95,0.6)';
-    ctx.beginPath();
-    ctx.moveTo(0, hy);
-    const peaks: Array<[number, number]> = [];
-    for (let x = 0; x <= w; x += 50) {
-      const y = hy - (28 + Math.abs(Math.sin(x * 0.011 + 2)) * 60 + rand(x) * 18);
-      peaks.push([x, y]);
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(w, hy);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = 'rgba(230,242,255,0.7)';
-    for (const [px, py] of peaks) {
-      ctx.beginPath();
-      ctx.moveTo(px, py);
-      ctx.lineTo(px - 9, py + 12);
-      ctx.lineTo(px + 9, py + 12);
-      ctx.closePath();
-      ctx.fill();
-    }
-    // Outpost hut with a warm window, on the right.
-    const hx = w * 0.8;
-    const hb = h - 70;
-    ctx.fillStyle = '#1a2a34';
-    ctx.fillRect(hx - 28, hb - 32, 56, 32);
-    ctx.fillStyle = '#0e1a22';
-    ctx.beginPath();
-    ctx.moveTo(hx - 34, hb - 32);
-    ctx.lineTo(hx, hb - 52);
-    ctx.lineTo(hx + 34, hb - 32);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = 'rgba(235,245,255,0.85)'; // snow on roof
-    ctx.fillRect(hx - 28, hb - 34, 56, 3);
-    ctx.fillStyle = 'rgba(255,200,120,0.8)'; // window glow
-    ctx.fillRect(hx - 8, hb - 22, 12, 12);
-    // Frozen lattice tower on the left.
-    const tx = w * 0.16;
-    ctx.strokeStyle = 'rgba(180,220,245,0.5)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(tx - 16, h - 64);
-    ctx.lineTo(tx, hy + 6);
-    ctx.lineTo(tx + 16, h - 64);
-    for (let yy = hy + 30; yy < h - 64; yy += 26) {
-      const t = (yy - (hy + 6)) / (h - 64 - (hy + 6));
-      const half = 4 + t * 14;
-      ctx.moveTo(tx - half, yy);
-      ctx.lineTo(tx + half, yy);
-    }
-    ctx.stroke();
-    // Snow drifts.
-    for (let i = 0; i < 7; i++) {
-      const dx = (rand(i + 11) * 0.92 + 0.04) * w;
-      const dy = hy + 60 + rand(i + 2) * (h - hy - 110);
-      const dw = 30 + rand(i) * 60;
-      ctx.fillStyle = 'rgba(225,240,255,0.18)';
-      ctx.beginPath();
-      ctx.ellipse(dx, dy, dw, dw * 0.3, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // Ice shards.
-    for (let i = 0; i < 9; i++) {
-      const ix = (rand(i + 21) * 0.9 + 0.05) * w;
-      const iy = hy + 70 + rand(i + 7) * (h - hy - 130);
-      const ih = 14 + rand(i) * 26;
-      ctx.fillStyle = 'rgba(160,215,255,0.45)';
-      ctx.beginPath();
-      ctx.moveTo(ix, iy);
-      ctx.lineTo(ix - 5, iy);
-      ctx.lineTo(ix, iy - ih);
-      ctx.lineTo(ix + 5, iy);
-      ctx.closePath();
-      ctx.fill();
-    }
-    // Snow sheen building up near the base.
-    const snowGrad = ctx.createLinearGradient(0, h - 90, 0, h);
-    snowGrad.addColorStop(0, 'rgba(220,235,255,0)');
-    snowGrad.addColorStop(1, 'rgba(220,235,255,0.25)');
-    ctx.fillStyle = snowGrad;
-    ctx.fillRect(0, h - 90, w, 90);
+    drawFrozenOutpostScenery(ctx, s, time, hy);
     return;
   }
 
@@ -1719,6 +1947,73 @@ function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, 
     ctx.fillStyle = '#9dff4f';
     ctx.beginPath();
     ctx.arc(cx, baseY - 33, 5, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+
+  if (theme.id === 'tundra') {
+    // Ice-block defensive wall with a heated emergency airlock.
+    const ice = ctx.createLinearGradient(0, baseY, 0, h);
+    ice.addColorStop(0, '#789dad');
+    ice.addColorStop(1, '#203945');
+    ctx.fillStyle = ice;
+    ctx.fillRect(0, baseY, w, 60);
+
+    for (let row = 0; row < 3; row++) {
+      const blockW = 54;
+      const blockH = 20;
+      for (let x = -blockW + (row % 2) * (blockW / 2); x < w + blockW; x += blockW) {
+        ctx.fillStyle = row % 2 === 0 ? 'rgba(185,225,238,0.34)' : 'rgba(130,185,205,0.3)';
+        ctx.fillRect(x + 1, baseY + row * blockH + 1, blockW - 2, blockH - 2);
+        ctx.strokeStyle = 'rgba(220,245,252,0.25)';
+        ctx.strokeRect(x + 1, baseY + row * blockH + 1, blockW - 2, blockH - 2);
+      }
+    }
+
+    ctx.strokeStyle = 'rgba(132,247,229,0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY);
+    ctx.lineTo(w, baseY);
+    ctx.stroke();
+
+    const cx = w / 2;
+    const warm = ctx.createRadialGradient(cx, baseY - 3, 2, cx, baseY - 3, 62);
+    warm.addColorStop(0, 'rgba(255,184,95,0.24)');
+    warm.addColorStop(1, 'rgba(255,184,95,0)');
+    ctx.fillStyle = warm;
+    ctx.fillRect(cx - 65, baseY - 66, 130, 80);
+
+    ctx.fillStyle = '#13242c';
+    ctx.fillRect(cx - 39, baseY - 8, 78, 43);
+    ctx.strokeStyle = '#9dc4d2';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 39, baseY - 8, 78, 43);
+    ctx.fillStyle = '#071218';
+    ctx.fillRect(cx - 28, baseY - 2, 56, 29);
+    ctx.strokeStyle = '#84f7e5';
+    ctx.strokeRect(cx - 28, baseY - 2, 56, 29);
+    ctx.fillStyle = 'rgba(255,184,95,0.72)';
+    ctx.fillRect(cx - 4, baseY + 4, 8, 17);
+
+    // Static locator lamp and a crust of windblown snow.
+    ctx.fillStyle = '#84f7e5';
+    ctx.shadowColor = '#84f7e5';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(cx, baseY - 18, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(235,248,252,0.65)';
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 32) {
+      const y = baseY + Math.sin(x * 0.03) * 4;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(w, baseY + 8);
+    ctx.lineTo(0, baseY + 8);
+    ctx.closePath();
     ctx.fill();
     return;
   }

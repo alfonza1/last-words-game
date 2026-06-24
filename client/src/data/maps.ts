@@ -56,13 +56,13 @@ export const MAPS: MapTheme[] = [
   {
     id: 'tundra',
     name: 'Frozen Outpost',
-    description: 'A howling blizzard under a shimmering aurora.',
+    description: 'A polar listening station swallowed by ice, silence, and the northern lights.',
     cost: 150,
     palette: {
-      skyTop: '#03101e', skyHorizon: '#0e3450', ground1: '#22323e', ground2: '#0a141c',
-      fog: '210,230,250', moon: '#eaf6ff', glow: 'rgba(150,220,255,0.4)', accent: '#8fd8ff',
+      skyTop: '#020814', skyHorizon: '#12344b', ground1: '#1b303e', ground2: '#050c12',
+      fog: '180,225,245', moon: '#edf8ff', glow: 'rgba(120,210,255,0.38)', accent: '#84f7e5',
     },
-    features: { ...NONE, snow: true, deadTrees: true },
+    features: { ...NONE, snow: true },
   },
   {
     id: 'city',
