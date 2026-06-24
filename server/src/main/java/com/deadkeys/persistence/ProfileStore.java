@@ -37,6 +37,17 @@ public class ProfileStore {
     return profiles.findById(id).map(this::deserialize).orElse(null);
   }
 
+  /**
+   * Whether {@code name} is already used by a DIFFERENT account (case-insensitive).
+   * {@code exceptId} is the caller's own uid, so keeping/recasing their own name
+   * never counts as taken.
+   */
+  @Transactional(readOnly = true)
+  public boolean isNameTaken(String name, String exceptId) {
+    return profiles.findByNameIgnoreCase(name).stream()
+        .anyMatch(e -> !e.id.equals(exceptId));
+  }
+
   /** Get the profile for this account id, creating it on first sign-in. */
   @Transactional
   public Profile ensureProfile(String id, String name) {

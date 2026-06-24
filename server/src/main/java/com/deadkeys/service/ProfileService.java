@@ -162,6 +162,11 @@ public class ProfileService {
       long days = Math.max(1, (USERNAME_COOLDOWN_MS - (now - profile.usernameChangedAt)) / (24L * 60 * 60 * 1000));
       throw new BadRequestException("You can change your username again in about " + days + " day(s).");
     }
+    // Display names must be unique (case-insensitive) so leaderboard entries are
+    // distinguishable. Recasing/keeping your own name doesn't count as taken.
+    if (store.isNameTaken(name, profile.guestId)) {
+      throw new BadRequestException("That username is already taken — please pick another.");
+    }
     profile.name = name;
     profile.usernameChangedAt = now;
     maybeGrant(profile);
