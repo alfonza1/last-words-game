@@ -52,6 +52,6 @@ class ProfileServiceRunStatsTest {
   private static RunResult run(int score, int kills, int coins, boolean riddle) {
     return new RunResult(
         score, 3, 42, 96.5, 60_000,
-        kills, 0, 4, coins, Map.of(), "survival", "normal", riddle);
+        kills, 0, 4, coins, Map.of(), "survival", "normal", riddle, riddle ? "riddles" : "typing");
   }
 }

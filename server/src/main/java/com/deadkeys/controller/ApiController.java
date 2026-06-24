@@ -157,7 +157,7 @@ public class ApiController {
         .cacheControl(CacheControl.maxAge(Duration.ofSeconds(30)).cachePublic().staleWhileRevalidate(Duration.ofSeconds(60)))
         .body(json(
             "typers", store.topLeaderboard(false, safeLimit),
-            "riddlers", store.topLeaderboard(true, safeLimit)));
+            "solvers", store.topLeaderboard(true, safeLimit)));
   }
 
   // --- helpers ---------------------------------------------------------------

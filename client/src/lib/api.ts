@@ -37,6 +37,8 @@ export interface RunPayload {
   mode: string;
   difficulty: string;
   riddle: boolean;
+  /** Play style: 'typing' | 'riddles' | 'math' | 'trivia'. */
+  style: string;
 }
 
 export interface LeaderboardEntry {
@@ -49,12 +51,13 @@ export interface LeaderboardEntry {
   mode: string;
   difficulty: string;
   riddle: boolean;
+  style: string;
   at: number;
 }
 
 export interface Leaderboards {
   typers: LeaderboardEntry[];
-  riddlers: LeaderboardEntry[];
+  solvers: LeaderboardEntry[];
 }
 
 /** Authorization header with a fresh Firebase ID token. Throws if signed out. */

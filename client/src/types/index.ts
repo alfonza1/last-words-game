@@ -179,9 +179,11 @@ export interface GameState {
   wordQueue: string[];
   input: string;
 
-  /** Riddle Mode: solve a riddle to fire a multi-kill volley. */
+  /** Puzzle Mode: solve a prompt to fire a multi-kill volley. */
   riddleMode: boolean;
-  /** The active riddle's prompt to display (answer lives in wordQueue[0]). */
+  /** Which puzzle style is active (riddles/math/trivia) when riddleMode is on. */
+  puzzleStyle: PuzzleStyle;
+  /** The active puzzle's prompt to display (answer lives in wordQueue[0]). */
   riddlePrompt: string | null;
 
   elapsedMs: number;

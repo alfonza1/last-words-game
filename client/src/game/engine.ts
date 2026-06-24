@@ -129,6 +129,7 @@ export class GameEngine {
       wordQueue: [],
       input: '',
       riddleMode: !!opts.riddleMode,
+      puzzleStyle: opts.puzzleStyle ?? 'riddles',
       riddlePrompt: null,
       elapsedMs: 0,
       correctWords: 0,

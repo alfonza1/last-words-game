@@ -93,6 +93,7 @@ public class ProfileStore {
     e.accuracy = run.accuracy();
     e.mode = run.mode();
     e.difficulty = run.difficulty();
+    e.style = run.style();
     e.at = System.currentTimeMillis();
     leaderboard.save(e);
     pruneLeaderboard(riddle);
@@ -139,7 +140,7 @@ public class ProfileStore {
 
   private LeaderboardEntry toDto(LeaderboardEntity e) {
     return new LeaderboardEntry("lb-" + e.id, e.name, e.score, e.wave, e.wpm,
-        e.accuracy, e.mode, e.difficulty, e.riddle, e.at);
+        e.accuracy, e.mode, e.difficulty, e.riddle, e.style, e.at);
   }
 
   private static String randomHandle() {

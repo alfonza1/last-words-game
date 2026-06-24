@@ -30,5 +30,7 @@ public class LeaderboardEntity {
   public double accuracy;
   public String mode;
   public String difficulty;
+  /** Play style of this run: typing / riddles / math / trivia (nullable for old rows). */
+  public String style;
   public long at;
 }
