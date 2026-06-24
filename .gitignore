@@ -56,3 +56,6 @@ desktop.ini
 # Temp tooling
 .tools/
 *.tmp
+
+# Documentation (kept local — not tracked in VCS)
+docs/
