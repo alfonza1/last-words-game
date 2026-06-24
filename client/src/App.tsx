@@ -32,6 +32,7 @@ import { audio } from './lib/audio';
 import { useAuth } from './lib/auth';
 import { useToast } from './lib/toast';
 import { MainMenu } from './components/MainMenu';
+import { CoinPackModal } from './components/CoinPackModal';
 import { ServerDown } from './components/ServerDown';
 import type { RunResult } from './components/GameScreen';
 
@@ -64,6 +65,7 @@ export default function App() {
   const [signInReason, setSignInReason] = useState<string | undefined>(undefined);
   const [signInReturn, setSignInReturn] = useState<Screen>('menu');
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [showCoinPacks, setShowCoinPacks] = useState(false);
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
 
   // Always-current screen, so requireSignIn can return you where you came from.
@@ -487,13 +489,10 @@ export default function App() {
             character={character}
             username={username || (signedIn ? 'Survivor' : 'Guest')}
             riddleMode={settings.riddleMode}
-            signedIn={signedIn}
             onStart={chooseMode}
             onNav={(scr) => (scr === 'upgrades' ? openStore('menu') : setScreen(scr))}
             onDifficulty={setDifficulty}
             onRiddleMode={(v) => persistSettings({ ...settings, riddleMode: v })}
-            onBuyCoinPack={buyCoinPack}
-            onRequireSignIn={() => requireSignIn('Sign in to securely add coins to your wallet.')}
           />
         );
     }
@@ -559,11 +558,21 @@ export default function App() {
   }
 
   const accountLabel = signedIn ? username || user?.email || 'Player' : 'Guest';
-  const showChip = screen !== 'game' && screen !== 'signin';
+  const showAccountChip = screen !== 'game' && screen !== 'signin';
+  const showWalletChip = showAccountChip && screen !== 'upgrades';
 
   return (
     <div className="h-full w-full">
-      {showChip && (
+      {showWalletChip && (
+        <button
+          onClick={() => setShowCoinPacks(true)}
+          className="absolute left-3 top-3 z-40 rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1 text-xs font-black tracking-wider text-neon-amber transition hover:bg-neon-amber/15"
+        >
+          🪙 {stats.totalCoins.toLocaleString()} COINS
+        </button>
+      )}
+
+      {showAccountChip && (
         <div className="absolute right-3 top-3 z-40 flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs">
           <span className="max-w-[140px] truncate text-white/60">{accountLabel}</span>
           {signedIn ? (
@@ -578,7 +587,18 @@ export default function App() {
         </div>
       )}
 
-      <Suspense fallback={<ScreenLoader />}>{content}</Suspense>
+      <div className={`h-full w-full ${showAccountChip ? 'pt-11' : ''}`}>
+        <Suspense fallback={<ScreenLoader />}>{content}</Suspense>
+      </div>
+
+      {showCoinPacks && showWalletChip && (
+        <CoinPackModal
+          signedIn={signedIn}
+          onBuy={buyCoinPack}
+          onRequireSignIn={() => requireSignIn('Sign in to securely add coins to your wallet.')}
+          onClose={() => setShowCoinPacks(false)}
+        />
+      )}
 
       {confirmSignOut && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
