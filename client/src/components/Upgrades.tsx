@@ -71,7 +71,9 @@ export function Upgrades({
         ? 'border-neon-amber/60'
         : item.rarity === 'epic'
           ? 'border-neon-pink/50'
-          : 'border-neon-cyan/35';
+          : item.rarity === 'rare'
+            ? 'border-neon-cyan/45'
+            : 'border-white/20';
     return (
       <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-3 ${rarityColor}`}>
         <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/45">
@@ -100,10 +102,10 @@ export function Upgrades({
           }
           className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black ${
             isOwned
-              ? 'border-neon-pink/45 bg-neon-pink/10 text-neon-pink'
+              ? 'border-neon-cyan/45 bg-neon-cyan/10 text-neon-cyan'
               : signedIn && !affordable
                 ? 'cursor-not-allowed border-white/15 text-white/45'
-                : 'border-neon-pink/60 bg-neon-pink/10 text-neon-pink hover:bg-neon-pink/20'
+                : 'border-neon-green/60 bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
           }`}
         >
           {isOwned ? 'OWNED' : `${item.cost.toLocaleString()} 🪙`}
