@@ -7,7 +7,7 @@ interface Props {
   armed?: boolean;
 }
 
-export function CharacterAvatar({ character, className = '', armed = true }: Props) {
+export function CharacterAvatar({ character, className = '', armed = false }: Props) {
   const skin = skinColor(character.skinTone);
   const hair = hairColor(character.hairColor);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];

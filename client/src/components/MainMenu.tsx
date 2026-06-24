@@ -3,12 +3,12 @@ import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
-import { cosmeticByKey } from '../data/cosmetics';
 
 interface Props {
   stats: GameStats;
   difficulty: Difficulty;
   character: CharacterLoadout;
+  username: string;
   onStart: (mode: GameMode) => void;
   onNav: (screen: 'upgrades' | 'closet' | 'howto' | 'settings' | 'leaderboard') => void;
   onDifficulty: (d: Difficulty) => void;
@@ -21,9 +21,7 @@ const DIFF_BLURB: Record<Difficulty, string> = {
   nightmare: 'Words, numbers & symbols — exact case. Earn 2× coins. Enter if you dare.',
 };
 
-export function MainMenu({ stats, difficulty, character, onStart, onNav, onDifficulty }: Props) {
-  const outfit = cosmeticByKey(character.outfit);
-  const accessory = cosmeticByKey(character.accessory);
+export function MainMenu({ stats, difficulty, character, username, onStart, onNav, onDifficulty }: Props) {
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-6 overflow-y-auto px-6 pb-10 pt-16 lg:justify-center lg:p-6">
       <div className="text-center">
@@ -67,7 +65,7 @@ export function MainMenu({ stats, difficulty, character, onStart, onNav, onDiffi
               <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
                 <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
               </button>
-              <button className="menu-btn border-neon-cyan/40 text-base text-neon-cyan" onClick={() => onNav('closet')}>
+              <button className="menu-btn text-base" onClick={() => onNav('closet')}>
                 <span className="mr-2 inline-block w-5 text-center">◈</span>Closet
               </button>
               <button className="menu-btn text-base" onClick={() => onNav('leaderboard')}>
@@ -86,18 +84,20 @@ export function MainMenu({ stats, difficulty, character, onStart, onNav, onDiffi
         {/* Equipped survivor */}
         <button
           onClick={() => onNav('closet')}
-          className="group relative min-h-[360px] overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/75 text-left transition hover:border-neon-cyan/70 hover:shadow-[0_0_28px_rgba(0,240,255,0.2)]"
+          className="group relative min-h-[360px] overflow-hidden rounded-2xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon"
         >
-          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-cyan/12 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
           <div className="absolute left-3 top-3 z-10">
-            <div className="text-[9px] font-black uppercase tracking-[0.28em] text-neon-cyan">Active survivor</div>
-            <div className="mt-1 text-sm font-bold text-white">{outfit?.name}</div>
-            <div className="text-[10px] text-white/35">{accessory?.name}</div>
+            <div className="max-w-[220px] truncate text-lg font-black tracking-wide text-white">{username}</div>
           </div>
-          <CharacterAvatar character={character} className="absolute inset-x-0 bottom-9 mx-auto h-[310px] w-[245px] transition group-hover:scale-[1.025]" />
+          <CharacterAvatar
+            character={character}
+            armed={false}
+            className="absolute inset-x-0 bottom-9 mx-auto h-[310px] w-[245px] transition group-hover:scale-[1.025]"
+          />
           <div className="absolute inset-x-4 bottom-3 flex items-center justify-between border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest">
             <span className="text-white/35">Loadout online</span>
-            <span className="font-bold text-neon-cyan">Open Closet →</span>
+            <span className="font-bold text-neon-green">Customize →</span>
           </div>
         </button>
 

@@ -57,6 +57,7 @@ export default function App() {
     [toast],
   );
   const [screen, setScreen] = useState<Screen>('menu');
+  const [storeReturn, setStoreReturn] = useState<'menu' | 'closet'>('menu');
   const [username, setUsername] = useState<string>('');
   const [signInReason, setSignInReason] = useState<string | undefined>(undefined);
   const [signInReturn, setSignInReturn] = useState<Screen>('menu');
@@ -144,6 +145,11 @@ export default function App() {
     setSignInReason(reason);
     setSignInReturn(screenRef.current === 'signin' ? 'menu' : screenRef.current);
     setScreen('signin');
+  }, []);
+
+  const openStore = useCallback((returnTo: 'menu' | 'closet') => {
+    setStoreReturn(returnTo);
+    setScreen('upgrades');
   }, []);
 
   const persistSettings = useCallback((s: Settings) => {
@@ -417,7 +423,7 @@ export default function App() {
             onBuyCosmetic={buyCosmetic}
             onBuyCoinPack={buyCoinPack}
             onRequireSignIn={() => requireSignIn('Sign in to securely buy from our store — safe checkout with Stripe.')}
-            onBack={() => setScreen('menu')}
+            onBack={() => setScreen(storeReturn)}
           />
         );
       case 'closet':
@@ -427,7 +433,7 @@ export default function App() {
             ownedCosmetics={cosmetics}
             signedIn={signedIn}
             onEquip={equipCharacter}
-            onOpenStore={() => setScreen('upgrades')}
+            onOpenStore={() => openStore('closet')}
             onBack={() => setScreen('menu')}
           />
         );
@@ -461,8 +467,9 @@ export default function App() {
             stats={stats}
             difficulty={settings.difficulty}
             character={character}
+            username={username || (signedIn ? 'Survivor' : 'Guest')}
             onStart={chooseMode}
-            onNav={(scr) => setScreen(scr)}
+            onNav={(scr) => (scr === 'upgrades' ? openStore('menu') : setScreen(scr))}
             onDifficulty={setDifficulty}
           />
         );
@@ -484,6 +491,7 @@ export default function App() {
     stats,
     signedIn,
     username,
+    storeReturn,
     signInReason,
     signInReturn,
     handleGameOver,
@@ -503,6 +511,7 @@ export default function App() {
     setDifficulty,
     setMap,
     requireSignIn,
+    openStore,
   ]);
 
   // Silence ambience whenever we are not in a game.
