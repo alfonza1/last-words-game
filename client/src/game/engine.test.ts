@@ -95,6 +95,42 @@ describe('word queue is independent of zombies', () => {
   });
 });
 
+describe('riddle mode', () => {
+  function riddleEngine() {
+    return new GameEngine({
+      mode: 'survival', difficulty: 'normal', upgrades: DEFAULT_UPGRADES,
+      settings: DEFAULT_SETTINGS, width: 960, height: 600, seed: 1, riddleMode: true,
+    });
+  }
+
+  it('exposes a prompt and hides the answer behind it', () => {
+    const e = riddleEngine();
+    expect(e.state.riddleMode).toBe(true);
+    expect(e.state.riddlePrompt).toBeTruthy();
+    expect(e.state.wordQueue[0]).toBeTruthy(); // the answer lives here
+  });
+
+  it('solving a riddle fires a volley (normal = 8 kills) and refreshes the prompt', () => {
+    const e = riddleEngine();
+    const prompt = e.state.riddlePrompt;
+    e.state.zombies = Array.from({ length: 12 }, () => zombie({ y: 400 }));
+    e.handleInput(firstWord(e) + ' '); // type the answer
+    expect(e.state.kills).toBe(8); // riddleKills for normal
+    expect(e.state.zombies).toHaveLength(4);
+    expect(e.state.input).toBe('');
+    expect(e.state.riddlePrompt).not.toBe(prompt); // next riddle queued
+  });
+
+  it('a wrong answer is a mistake and keeps the typed text', () => {
+    const e = riddleEngine();
+    e.state.zombies = [zombie({ y: 400 })];
+    e.handleInput('definitelywrong ');
+    expect(e.state.mistakes).toBe(1);
+    expect(e.state.kills).toBe(0);
+    expect(e.state.input).toBe('definitelywrong');
+  });
+});
+
 describe('live WPM', () => {
   it('rises while typing', () => {
     const e = makeEngine();

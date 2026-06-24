@@ -30,6 +30,7 @@ interface Props {
   upgradesActive: boolean;
   settings: Settings;
   character: CharacterLoadout;
+  riddleMode: boolean;
   onGameOver: (result: RunResult) => void;
   onUsePowerup: (key: string) => void;
   /** Quit/restart pass the partial run so its stats still save. */
@@ -48,6 +49,7 @@ export function GameScreen({
   upgradesActive,
   settings,
   character,
+  riddleMode,
   onGameOver,
   onUsePowerup,
   onQuit,
@@ -79,6 +81,7 @@ export function GameScreen({
       upgrades,
       powerups,
       settings,
+      riddleMode,
       width: 960,
       height: 600,
     });
@@ -246,7 +249,11 @@ export function GameScreen({
       {s.status === 'playing' && (
         <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex flex-col items-center gap-2 px-4">
           <div className="rounded-2xl border border-white/10 bg-black/55 px-5 py-2.5 backdrop-blur-sm">
-            <TypeBar s={s} opts={engine.matchOptions} input={s.input} />
+            {s.riddleMode ? (
+              <RiddlePrompt prompt={s.riddlePrompt} answerLen={s.wordQueue[0]?.length ?? 0} wrong={wrong} />
+            ) : (
+              <TypeBar s={s} opts={engine.matchOptions} input={s.input} />
+            )}
           </div>
           <EventTicker events={s.events} />
         </div>
@@ -277,14 +284,14 @@ export function GameScreen({
             spellCheck={false}
             autoComplete="off"
             autoCapitalize="off"
-            placeholder="type a word, then SPACE to fire…"
+            placeholder={riddleMode ? 'type the answer, then SPACE…' : 'type a word, then SPACE to fire…'}
             className={`w-full bg-transparent text-lg outline-none placeholder:text-neon-green/30 ${
               wrong ? 'text-neon-red' : 'text-neon-green'
             }`}
           />
         </div>
         <div className="flex gap-3 text-[11px] text-white/40">
-          <span>SPACE = fire (kills nearest)</span>
+          <span>{riddleMode ? 'SPACE = submit answer (volley fire)' : 'SPACE = fire (kills nearest)'}</span>
           <span>Esc / ⏸ = pause</span>
         </div>
       </div>
@@ -360,6 +367,24 @@ export function GameScreen({
             </>
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** Riddle Mode prompt panel — shows the riddle (not the answer) plus a length hint. */
+function RiddlePrompt({ prompt, answerLen, wrong }: { prompt: string | null; answerLen: number; wrong: boolean }) {
+  return (
+    <div className="flex w-full max-w-2xl flex-col items-center gap-1 text-center">
+      <span className="text-[10px] uppercase tracking-[0.35em] text-neon-pink">Solve to fire</span>
+      <p className={`max-w-xl text-lg font-bold leading-snug ${wrong ? 'text-neon-red' : 'text-white/90'}`}>
+        {prompt ?? '—'}
+      </p>
+      {answerLen > 0 && (
+        <span className="font-mono text-xs tracking-[0.3em] text-neon-green/70">
+          {'_ '.repeat(answerLen).trim()}
+          <span className="ml-2 text-white/35">({answerLen} letters)</span>
+        </span>
       )}
     </div>
   );

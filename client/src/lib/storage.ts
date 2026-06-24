@@ -45,6 +45,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sound: true,
   sfxVolume: 0.4,
   weapon: 'pistol',
+  riddleMode: false,
 };
 
 function getStore(store?: Storage): Storage | null {

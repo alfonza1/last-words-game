@@ -9,9 +9,11 @@ interface Props {
   difficulty: Difficulty;
   character: CharacterLoadout;
   username: string;
+  riddleMode: boolean;
   onStart: (mode: GameMode) => void;
   onNav: (screen: 'upgrades' | 'closet' | 'howto' | 'settings' | 'leaderboard') => void;
   onDifficulty: (d: Difficulty) => void;
+  onRiddleMode: (v: boolean) => void;
 }
 
 const DIFFS: Difficulty[] = ['easy', 'normal', 'nightmare'];
@@ -21,7 +23,17 @@ const DIFF_BLURB: Record<Difficulty, string> = {
   nightmare: 'Words, numbers & symbols — exact case. Earn 2× coins. Enter if you dare.',
 };
 
-export function MainMenu({ stats, difficulty, character, username, onStart, onNav, onDifficulty }: Props) {
+export function MainMenu({
+  stats,
+  difficulty,
+  character,
+  username,
+  riddleMode,
+  onStart,
+  onNav,
+  onDifficulty,
+  onRiddleMode,
+}: Props) {
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-6 overflow-y-auto px-6 pb-10 pt-16 lg:justify-center lg:p-6">
       <div className="text-center">
@@ -51,6 +63,34 @@ export function MainMenu({ stats, difficulty, character, username, onStart, onNa
             </div>
             {/* Reserve 2 lines so switching difficulty never shifts the buttons. */}
             <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">{DIFF_BLURB[difficulty]}</p>
+          </div>
+
+          {/* Play style: type the falling words, or solve riddles for a volley */}
+          <div>
+            <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Play style</div>
+            <div className="flex gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1">
+              <button
+                onClick={() => onRiddleMode(false)}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
+                  !riddleMode ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
+                }`}
+              >
+                ⌨ Type Words
+              </button>
+              <button
+                onClick={() => onRiddleMode(true)}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
+                  riddleMode ? 'bg-neon-pink/15 text-neon-pink shadow-neon' : 'text-white/55 hover:text-white/90'
+                }`}
+              >
+                🧩 Riddles
+              </button>
+            </div>
+            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">
+              {riddleMode
+                ? 'Solve short riddles to fire a multi-kill volley — zombies move slower to match.'
+                : 'Type the falling words — each completed word fires one shot.'}
+            </p>
           </div>
 
           {/* Modes + nav */}

@@ -131,6 +131,8 @@ export interface Settings {
   sound: boolean; // sound effects enabled
   sfxVolume: number; // 0..1
   weapon: WeaponType;
+  /** Riddle Mode: solve riddles (instead of typing words) to fire a multi-kill volley. */
+  riddleMode: boolean;
 }
 
 export interface HighScore {
@@ -169,6 +171,11 @@ export interface GameState {
   /** The words the player can type — independent of the zombies. */
   wordQueue: string[];
   input: string;
+
+  /** Riddle Mode: solve a riddle to fire a multi-kill volley. */
+  riddleMode: boolean;
+  /** The active riddle's prompt to display (answer lives in wordQueue[0]). */
+  riddlePrompt: string | null;
 
   elapsedMs: number;
   correctWords: number;

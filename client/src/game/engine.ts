@@ -20,6 +20,7 @@ import {
   uid,
 } from '../lib/utils';
 import {
+  RIDDLE_SPEED_MULT,
   getDifficultyConfig,
   isBossWave,
   waveSpawnInterval,
@@ -27,6 +28,7 @@ import {
   waveZombieCount,
   wordTierForWave,
 } from './difficulty';
+import { RIDDLES, type Riddle } from '../data/riddles';
 import {
   createScreamerAdd,
   createZombie,
@@ -65,6 +67,8 @@ export interface EngineOptions {
   seed?: number;
   /** Consumable powerup charges the player owns (grenade/freeze). */
   powerups?: Record<string, number>;
+  /** Riddle Mode: solve riddles to fire a multi-kill volley. */
+  riddleMode?: boolean;
 }
 
 const DOUBLE_DAMAGE_MS = 5000;
@@ -89,6 +93,9 @@ export class GameEngine {
   private wordStartMs = 0;
   private slowMoCooldown = 0;
   private recentWords: Array<{ t: number; chars: number }> = []; // rolling WPM window
+  // Riddle Mode: parallels wordQueue (which holds answers) with the full riddles,
+  // so we can show prompts and accept synonyms while reusing the typing pipeline.
+  private riddleQueue: Riddle[] = [];
 
   constructor(opts: EngineOptions) {
     this.rng = mulberry32(opts.seed ?? hashSeed(`${Date.now()}-${Math.random()}`));
@@ -117,6 +124,8 @@ export class GameEngine {
       zombies: [],
       wordQueue: [],
       input: '',
+      riddleMode: !!opts.riddleMode,
+      riddlePrompt: null,
       elapsedMs: 0,
       correctWords: 0,
       mistakes: 0,
@@ -139,8 +148,9 @@ export class GameEngine {
       upgrades: opts.upgrades,
       settings: opts.settings,
     };
-    // Fill the initial word queue.
-    for (let i = 0; i < QUEUE_SIZE; i++) this.state.wordQueue.push(this.makeWord());
+    // Fill the initial queue (words, or riddle answers in Riddle Mode).
+    for (let i = 0; i < QUEUE_SIZE; i++) this.enqueueItem();
+    this.syncRiddlePrompt();
   }
 
   /** Generate one queue word for the current difficulty + a rising tier by wave. */
@@ -154,6 +164,42 @@ export class GameEngine {
       word = generateToken(this.rng, this.state.difficulty, tier);
     }
     return word;
+  }
+
+  /** Append one item to the queue — a word, or a riddle (answer + prompt) in Riddle Mode. */
+  private enqueueItem() {
+    if (this.state.riddleMode) {
+      const riddle = this.pickRiddle();
+      this.riddleQueue.push(riddle);
+      this.state.wordQueue.push(riddle.answer);
+    } else {
+      this.state.wordQueue.push(this.makeWord());
+    }
+  }
+
+  /** Drop the consumed first item from the queue and append a fresh one. */
+  private cycleQueue() {
+    this.state.wordQueue.shift();
+    if (this.state.riddleMode) this.riddleQueue.shift();
+    this.enqueueItem();
+    this.syncRiddlePrompt();
+  }
+
+  /** Pick a riddle for the current wave's tier, avoiding answers already queued. */
+  private pickRiddle(): Riddle {
+    const cfg = getDifficultyConfig(this.state.difficulty);
+    const tier = wordTierForWave(Math.max(1, this.state.wave), cfg.wordLengthBias);
+    const pool = RIDDLES[tier];
+    let riddle = pool[Math.floor(this.rng() * pool.length)];
+    let guard = 0;
+    while (this.state.wordQueue.includes(riddle.answer) && guard++ < 8) {
+      riddle = pool[Math.floor(this.rng() * pool.length)];
+    }
+    return riddle;
+  }
+
+  private syncRiddlePrompt() {
+    this.state.riddlePrompt = this.state.riddleMode ? this.riddleQueue[0]?.prompt ?? null : null;
   }
 
   // --- Public API ---------------------------------------------------------
@@ -191,7 +237,8 @@ export class GameEngine {
     const s = this.state;
     const raw = s.input.trim();
     if (raw.length === 0) return false;
-    const opts = this.matchOptions;
+    // Riddle answers are matched case-insensitively, so don't tint red on case.
+    const opts = s.riddleMode ? { strict: false } : this.matchOptions;
     const cmdPrefix = this.activeCommands().some((c) => isPrefix(raw, c, opts));
     const first = s.wordQueue[0];
     const wordPrefix = first ? isPrefix(raw, first, opts) : false;
@@ -248,20 +295,35 @@ export class GameEngine {
       }
     }
 
-    // 2) You must type the words IN ORDER — only the first word counts. On a hit
-    // the queue shifts left and a fresh word is appended, so the order is stable
-    // and typing fast can never jump ahead to the second word.
+    // 2) Riddle Mode: solving the current riddle fires a multi-kill volley
+    // (sized so kills/min ≈ typing — see DifficultyConfig.riddleKills).
+    if (s.riddleMode) {
+      const riddle = this.riddleQueue[0];
+      if (riddle && this.riddleMatches(candidate, riddle)) {
+        const answer = riddle.answer;
+        this.cycleQueue();
+        this.fireRiddleVolley();
+        this.registerCorrect(answer);
+        s.input = '';
+        return;
+      }
+      this.registerMistake(candidate);
+      s.input = candidate;
+      return;
+    }
+
+    // 3) Type the words IN ORDER — only the first counts. On a hit the queue
+    // shifts left and a fresh word appends, so typing fast can't jump ahead.
     const first = s.wordQueue[0];
     if (first && matchesTarget(candidate, first, opts)) {
-      s.wordQueue.shift();
-      s.wordQueue.push(this.makeWord());
+      this.cycleQueue();
       this.fireAtNearest();
       this.registerCorrect(first);
       s.input = '';
       return;
     }
 
-    // 3) Otherwise it's a miss. Keep the typed text (minus the trailing space)
+    // 4) Otherwise it's a miss. Keep the typed text (minus the trailing space)
     // so the player can fix a typo instead of losing the whole word.
     this.registerMistake(candidate);
     s.input = candidate;
@@ -347,6 +409,8 @@ export class GameEngine {
     if (s.wave <= 3 && s.upgrades.slowWaves > 0) {
       speed *= 1 - Math.min(0.45, s.upgrades.slowWaves * 0.15);
     }
+    // Riddle Mode slows zombies — kills come in bursts after each solve.
+    if (s.riddleMode) speed *= RIDDLE_SPEED_MULT;
 
     const spawnY = s.height * SPAWN_FRAC; // appear just below the word panel
     const bossWave = s.mode === 'bossrush' || isBossWave(s.wave);
@@ -447,6 +511,28 @@ export class GameEngine {
       this.addFloating(target.x, target.y - target.size, `${Math.max(0, target.hp)}`, '#ff8fe6', 16);
     }
     if (target.hp <= 0) this.killZombie(target);
+  }
+
+  /** A solved riddle fires several shots at once — the small survivor's volley. */
+  private fireRiddleVolley() {
+    const shots = getDifficultyConfig(this.state.difficulty).riddleKills;
+    for (let i = 0; i < shots; i++) this.fireAtNearest();
+  }
+
+  /** Riddle answers match case-insensitively, ignore spaces/articles, accept synonyms. */
+  private riddleMatches(candidate: string, riddle: Riddle): boolean {
+    const got = this.normalizeAnswer(candidate);
+    if (got.length === 0) return false;
+    if (got === this.normalizeAnswer(riddle.answer)) return true;
+    return (riddle.accept ?? []).some((alt) => this.normalizeAnswer(alt) === got);
+  }
+
+  private normalizeAnswer(value: string): string {
+    return value
+      .trim()
+      .toLowerCase()
+      .replace(/^(a|an|the)\s+/, '')
+      .replace(/[^a-z0-9]+/g, '');
   }
 
   private killZombie(z: Zombie, silent = false) {
