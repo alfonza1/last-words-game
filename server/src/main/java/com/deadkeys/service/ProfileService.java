@@ -289,6 +289,18 @@ public class ProfileService {
       profile.character = new CharacterLoadout();
       changed = true;
     }
+    if (!CharacterCatalog.SKIN_TONES.contains(profile.character.skinTone)) {
+      profile.character.skinTone = "warm";
+      changed = true;
+    }
+    if (!CharacterCatalog.HAIR_STYLES.contains(profile.character.hair)) {
+      profile.character.hair = "undercut";
+      changed = true;
+    }
+    if (!CharacterCatalog.HAIR_COLORS.contains(profile.character.hairColor)) {
+      profile.character.hairColor = "charcoal";
+      changed = true;
+    }
     if (!profile.cosmetics.contains(profile.character.outfit)) {
       profile.character.outfit = "outfit-field";
       changed = true;
