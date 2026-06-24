@@ -240,11 +240,16 @@ export function GameScreen({
           <input
             ref={inputRef}
             value={s.input}
+            disabled={paused}
             onChange={(e) => {
+              if (paused) return; // ignore stray keystrokes while the pause overlay is up
               engine.handleInput(e.target.value);
               setTick((t) => t + 1);
             }}
-            onBlur={() => setTimeout(() => inputRef.current?.focus(), 0)}
+            // Keep focus during play, but don't fight the pause overlay for it.
+            onBlur={() => {
+              if (!paused) setTimeout(() => inputRef.current?.focus(), 0);
+            }}
             spellCheck={false}
             autoComplete="off"
             autoCapitalize="off"
