@@ -77,6 +77,11 @@ const MEDKIT_HEAL = 35; // health restored by a med kit
 // further down (so a fast typer can't snipe them the instant they appear).
 const SPAWN_FRAC = 0.24;
 const MIN_TARGET_FRAC = 0.29;
+// Vertical movement is scaled to the play-field height so a zombie takes the same
+// time to reach the base on any screen size. Without this, a shorter viewport
+// (e.g. dev tools docked at the bottom) shrinks the distance and zombies arrive
+// sooner. The difficulty speeds (px/sec) are tuned against this reference height.
+const REFERENCE_HEIGHT = 600;
 
 export class GameEngine {
   state: GameState;
@@ -358,6 +363,8 @@ export class GameEngine {
   private updateZombies(dt: number) {
     const s = this.state;
     const baseY = s.height - 70;
+    // Keep time-to-base constant across screen sizes (see REFERENCE_HEIGHT).
+    const speedScale = s.height / REFERENCE_HEIGHT;
     const survivors: Zombie[] = [];
 
     for (const z of s.zombies) {
@@ -374,7 +381,7 @@ export class GameEngine {
         }
       }
 
-      z.y += z.speed * dt;
+      z.y += z.speed * speedScale * dt;
 
       if (z.y >= baseY) {
         this.zombieReachedBase(z);
