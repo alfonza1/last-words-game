@@ -16,6 +16,9 @@ import {
   generateGuestName,
   loadGuest,
   saveGuest,
+  clearGuestProgress,
+  hasGuestProgress,
+  loadGuestProgress,
 } from './storage';
 
 /** Minimal in-memory Storage for deterministic tests. */
@@ -91,6 +94,25 @@ describe('guest profile', () => {
 
     saveGuest({ ...second, maps: [...second.maps, 'city'] }, store);
     expect(loadGuest(store).maps).toEqual(['graveyard', 'city']);
+  });
+
+  it('detects and clears transferable progress while preserving settings', () => {
+    const empty = loadGuestProgress(store);
+    expect(hasGuestProgress(empty)).toBe(false);
+
+    saveStats({ ...DEFAULT_STATS, totalCoins: 350, gamesPlayed: 2 }, store);
+    saveSettings({ ...loadSettings(store), music: false }, store);
+    saveGuest({ ...loadGuest(store), maps: ['graveyard', 'city'] }, store);
+
+    const progress = loadGuestProgress(store);
+    expect(hasGuestProgress(progress)).toBe(true);
+    expect(progress.stats.totalCoins).toBe(350);
+    expect(progress.maps).toContain('city');
+
+    clearGuestProgress(store);
+    expect(loadStats(store)).toEqual(DEFAULT_STATS);
+    expect(loadGuest(store).maps).toEqual(['graveyard']);
+    expect(loadSettings(store).music).toBe(false);
   });
 });
 

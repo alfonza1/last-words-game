@@ -3,7 +3,10 @@ import type { CharacterLoadout, Difficulty, GameMode, GameStats, Screen, Setting
 import {
   DEFAULT_STATS,
   DEFAULT_UPGRADES,
+  clearGuestProgress,
+  hasGuestProgress,
   loadGuest,
+  loadGuestProgress,
   loadRiddleStats,
   loadSettings,
   loadStats,
@@ -21,6 +24,7 @@ import {
   checkoutCoinPack as apiCheckoutCoinPack,
   claimReward as apiClaimReward,
   getProfile as apiGetProfile,
+  importGuestProgress as apiImportGuestProgress,
   equipCharacter as apiEquipCharacter,
   setUsername as apiSetUsername,
   submitRun as apiSubmitRun,
@@ -134,10 +138,21 @@ export default function App() {
     (async () => {
       try {
         if (user) {
-          const profile = await apiGetProfile();
+          const guestProgress = loadGuestProgress();
+          let profile: Profile;
+          let imported = false;
+          if (hasGuestProgress(guestProgress)) {
+            const result = await apiImportGuestProgress(guestProgress);
+            profile = result.profile;
+            imported = result.imported;
+            if (imported) clearGuestProgress();
+          } else {
+            profile = await apiGetProfile();
+          }
           if (!cancelled) {
             applyProfile(profile);
             setServerOk(true);
+            if (imported) toast.success('Guest progress transferred to your account.');
           }
         } else if (!cancelled) {
           applyGuest();

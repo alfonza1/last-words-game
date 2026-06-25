@@ -154,6 +154,76 @@ export function loadGuest(store?: Storage): GuestProfile {
   return guest;
 }
 
+export interface GuestProgressSnapshot {
+  stats: GameStats;
+  riddleStats: GameStats;
+  upgrades: Upgrades;
+  upgradeGames: number;
+  powerups: Record<string, number>;
+  maps: string[];
+  cosmetics: string[];
+  character: CharacterLoadout;
+}
+
+export function loadGuestProgress(store?: Storage): GuestProgressSnapshot {
+  const guest = loadGuest(store);
+  return {
+    stats: loadStats(store),
+    riddleStats: loadRiddleStats(store),
+    upgrades: guest.upgrades,
+    upgradeGames: guest.upgradeGames,
+    powerups: guest.powerups,
+    maps: guest.maps,
+    cosmetics: guest.cosmetics,
+    character: guest.character,
+  };
+}
+
+function hasStats(stats: GameStats): boolean {
+  return (
+    stats.bestScore > 0 ||
+    stats.longestSurvivalMs > 0 ||
+    stats.highestWpm > 0 ||
+    stats.bestAccuracy > 0 ||
+    stats.totalKills > 0 ||
+    stats.bossesDefeated > 0 ||
+    stats.longestStreak > 0 ||
+    stats.coinsEarned > 0 ||
+    stats.totalCoins > 0 ||
+    stats.gamesPlayed > 0 ||
+    Object.values(stats.missedWords ?? {}).some((count) => count > 0)
+  );
+}
+
+/** Whether there is meaningful local progress worth transferring to an account. */
+export function hasGuestProgress(progress: GuestProgressSnapshot): boolean {
+  return (
+    hasStats(progress.stats) ||
+    hasStats(progress.riddleStats) ||
+    Object.values(progress.upgrades).some((level) => level > 0) ||
+    progress.upgradeGames > 0 ||
+    Object.values(progress.powerups).some((count) => count > 0) ||
+    progress.maps.some((map) => map !== 'graveyard') ||
+    progress.cosmetics.some((key) => !DEFAULT_COSMETICS.includes(key)) ||
+    Object.entries(DEFAULT_CHARACTER).some(
+      ([key, value]) => progress.character[key as keyof CharacterLoadout] !== value,
+    )
+  );
+}
+
+/** Remove only transferred progress; device-local settings remain unchanged. */
+export function clearGuestProgress(store?: Storage): void {
+  const s = getStore(store);
+  if (!s) return;
+  try {
+    s.removeItem(KEYS.stats);
+    s.removeItem(KEYS.riddleStats);
+    s.removeItem(KEYS.guest);
+  } catch {
+    /* access blocked */
+  }
+}
+
 export const loadHighScores = (store?: Storage) => loadJSON<HighScore[]>(KEYS.highscores, [], store);
 
 export function addHighScore(score: HighScore, store?: Storage, limit = 10): HighScore[] {
