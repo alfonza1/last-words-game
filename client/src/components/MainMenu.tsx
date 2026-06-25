@@ -58,22 +58,22 @@ const DIFFS: Difficulty[] = ['easy', 'normal', 'nightmare'];
 const DIFF_BLURB: Record<Style, Record<Difficulty, string>> = {
   typing: {
     easy: 'Short words with a relaxed horde.',
-    normal: 'Words and numbers against the full outbreak.',
+    normal: 'Words and numbers against the full outbreak. Earn 1.25× coins and points.',
     nightmare: 'Exact-case words, numbers, and symbols. Earn 2× coins and points.',
   },
   riddles: {
     easy: 'Straightforward clues with extra time to solve.',
-    normal: 'Sharper clues and a faster approaching horde.',
+    normal: 'Sharper clues and a faster approaching horde. Earn 1.25× coins and points.',
     nightmare: 'The hardest clues under maximum pressure. Earn 2× coins and points.',
   },
   math: {
     easy: 'Quick addition and subtraction, relaxed horde.',
-    normal: 'Multiplication and bigger sums against the outbreak.',
+    normal: 'Multiplication and bigger sums against the outbreak. Earn 1.25× coins and points.',
     nightmare: 'Multi-step problems and division under max pressure. Earn 2× coins and points.',
   },
   trivia: {
     easy: 'Everyday questions with time to think.',
-    normal: 'Trickier questions and a faster approaching horde.',
+    normal: 'Trickier questions and a faster approaching horde. Earn 1.25× coins and points.',
     nightmare: 'Tough questions under maximum pressure. Earn 2× coins and points.',
   },
 };

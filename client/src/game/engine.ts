@@ -95,6 +95,9 @@ export class GameEngine {
   private wordStartMs = 0;
   private slowMoCooldown = 0;
   private recentWords: Array<{ t: number; chars: number }> = []; // rolling WPM window
+  // Preserve shots completed before a zombie is visible, including the damage
+  // multiplier active when each word was completed.
+  private pendingShots: Array<{ damage: number; combo: number }> = [];
   // Puzzle Mode: parallels wordQueue (which holds answers) with the full puzzles,
   // so we can show prompts and accept synonyms while reusing the typing pipeline.
   private riddleQueue: Puzzle[] = [];
@@ -149,6 +152,7 @@ export class GameEngine {
       bossActive: false,
       bossWarning: 0,
       survivorShot: null,
+      pendingShots: 0,
       missedWords: {},
       upgrades: opts.upgrades,
       settings: opts.settings,
@@ -306,7 +310,7 @@ export class GameEngine {
       if (riddle && this.riddleMatches(candidate, riddle)) {
         const answer = riddle.answer;
         this.cycleQueue();
-        this.fireRiddleVolley();
+        this.queueShots(puzzleKills(this.puzzleStyle, s.difficulty));
         this.registerCorrect(answer);
         s.input = '';
         return;
@@ -321,7 +325,7 @@ export class GameEngine {
     const first = s.wordQueue[0];
     if (first && matchesTarget(candidate, first, opts)) {
       this.cycleQueue();
-      this.fireAtNearest();
+      this.queueShots(1);
       this.registerCorrect(first);
       s.input = '';
       return;
@@ -360,6 +364,7 @@ export class GameEngine {
 
     this.updateSpawning(sdt);
     this.updateZombies(sdt);
+    if (s.status === 'playing') this.drainPendingShots();
     this.recomputeMetrics();
   }
 
@@ -498,29 +503,52 @@ export class GameEngine {
 
   // --- Hits, kills, scoring ----------------------------------------------
 
-  /** A completed word fires a shot at the nearest *visible* zombie (one hit). */
-  private fireAtNearest() {
+  /**
+   * Queue completed-word shots so fast typing is never wasted while the field is
+   * temporarily empty. Damage is captured now so an active damage boost applies
+   * to the word that earned the shot, even if the target appears later.
+   */
+  private queueShots(count: number) {
+    const damage = SHOT_DAMAGE * damageMultiplier(this.state.powerups);
+    const combo = this.state.combo;
+    for (let i = 0; i < count; i++) this.pendingShots.push({ damage, combo });
+    this.syncPendingShots();
+    this.drainPendingShots();
+  }
+
+  /** Fire every reserved shot that currently has a visible target. */
+  private drainPendingShots() {
+    while (this.pendingShots.length > 0) {
+      const shot = this.pendingShots[0];
+      if (!this.fireAtNearest(shot.damage, shot.combo)) break;
+      this.pendingShots.shift();
+    }
+    this.syncPendingShots();
+  }
+
+  private syncPendingShots() {
+    this.state.pendingShots = this.pendingShots.length;
+  }
+
+  /** Fire at the nearest visible zombie. Returns false if no target is ready. */
+  private fireAtNearest(damage: number, combo: number): boolean {
     const s = this.state;
     // Only target zombies that have entered the play field — prevents fast
-    // typers from killing zombies before they're even on screen.
+    // typers from killing zombies before they're on screen. Their shot remains
+    // queued and fires as soon as a target crosses this line.
     const minY = s.height * MIN_TARGET_FRAC;
     const target = s.zombies.filter((z) => z.y >= minY).sort((a, b) => b.y - a.y)[0];
-    if (!target) return; // nothing visible to shoot yet — the shot misses
+    if (!target) return false;
     s.survivorShot = { x: target.x, y: target.y, life: 0.18, ttl: 0.18 };
-    let dmg = SHOT_DAMAGE * damageMultiplier(s.powerups);
+    let dmg = damage;
     if (target.isBoss) dmg += bossDamageBonus(s.upgrades);
     target.hp -= dmg;
     target.hitFlash = 1;
     if (target.isBoss && target.hp > 0) {
       this.addFloating(target.x, target.y - target.size, `${Math.max(0, target.hp)}`, '#ff8fe6', 16);
     }
-    if (target.hp <= 0) this.killZombie(target);
-  }
-
-  /** A solved puzzle fires several shots at once — the small survivor's volley. */
-  private fireRiddleVolley() {
-    const shots = puzzleKills(this.puzzleStyle, this.state.difficulty);
-    for (let i = 0; i < shots; i++) this.fireAtNearest();
+    if (target.hp <= 0) this.killZombie(target, false, combo);
+    return true;
   }
 
   /** Puzzle answers match case-insensitively, ignore spaces/articles, accept synonyms. */
@@ -539,12 +567,12 @@ export class GameEngine {
       .replace(/[^a-z0-9]+/g, '');
   }
 
-  private killZombie(z: Zombie, silent = false) {
+  private killZombie(z: Zombie, silent = false, rewardCombo = this.state.combo) {
     const s = this.state;
     s.zombies = s.zombies.filter((other) => other.id !== z.id);
     s.kills += 1;
 
-    const comboBonus = 1 + Math.min(1.5, s.combo * 0.02);
+    const comboBonus = 1 + Math.min(1.5, rewardCombo * 0.02);
     const difficulty = getDifficultyConfig(s.difficulty);
     const score = Math.round(z.reward.score * comboBonus * difficulty.scoreMult);
     s.score += score;
@@ -566,7 +594,7 @@ export class GameEngine {
       s.powerups.shotgunArmed = false;
       const radius = shotgunRadius(s.upgrades);
       const nearby = s.zombies.filter((o) => !o.isBoss && distance(o.x, o.y, z.x, z.y) <= radius);
-      for (const o of nearby) this.killZombie(o, true);
+      for (const o of nearby) this.killZombie(o, true, rewardCombo);
       if (nearby.length > 0) {
         this.addFloating(z.x, z.y, `SHOTGUN x${nearby.length}`, '#ff2bd6', 22);
         s.shake = Math.max(s.shake, 16);

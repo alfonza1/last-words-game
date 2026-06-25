@@ -66,12 +66,55 @@ describe('word queue is independent of zombies', () => {
     expect(e.state.survivorShot).toMatchObject({ x: near.x, y: near.y });
   });
 
-  it('does not shoot zombies still above the play field (must be visible first)', () => {
+  it('reserves a shot until a newly spawned zombie becomes visible', () => {
     const e = makeEngine();
     e.state.zombies = [zombie({ y: 5 })]; // just spawned, off-screen at the top
     e.handleInput(firstWord(e) + ' ');
     expect(e.state.kills).toBe(0);
     expect(e.state.zombies).toHaveLength(1);
+    expect(e.state.pendingShots).toBe(1);
+
+    e.state.zombies[0].y = 400;
+    e.update(0.01);
+
+    expect(e.state.kills).toBe(1);
+    expect(e.state.pendingShots).toBe(0);
+  });
+
+  it('banks multiple fast words and spends every shot when targets appear', () => {
+    const e = makeEngine();
+    e.state.zombies = [];
+
+    e.handleInput(firstWord(e) + ' ');
+    e.handleInput(firstWord(e) + ' ');
+
+    expect(e.state.correctWords).toBe(2);
+    expect(e.state.pendingShots).toBe(2);
+    expect(e.state.score).toBe(0);
+
+    e.state.zombies = [zombie({ type: 'tank', hp: 4, maxHp: 4, y: 400 })];
+    e.update(0.01);
+
+    expect(e.state.pendingShots).toBe(0);
+    expect(e.state.kills).toBe(1);
+    expect(e.state.score).toBe(128);
+    expect(e.state.coins).toBe(6);
+  });
+
+  it('preserves the damage boost active when a reserved shot was earned', () => {
+    const e = makeEngine();
+    e.state.zombies = [];
+    e.state.powerups.doubleDamageMs = 1000;
+
+    e.handleInput(firstWord(e) + ' ');
+    expect(e.state.pendingShots).toBe(1);
+
+    e.state.powerups.doubleDamageMs = 0;
+    e.state.zombies = [zombie({ hp: 4, maxHp: 4, y: 400 })];
+    e.update(0.01);
+
+    expect(e.state.kills).toBe(1);
+    expect(e.state.pendingShots).toBe(0);
   });
 
   it('a wrong word is a mistake but keeps the typed text', () => {
@@ -155,9 +198,18 @@ describe('live WPM', () => {
   });
 });
 
-describe('Nightmare rewards', () => {
-  it('awards twice the normal kill score and coins', () => {
+describe('difficulty rewards', () => {
+  it('awards 1.25x on Normal and 2x on Nightmare', () => {
     const normal = makeEngine();
+    const easy = new GameEngine({
+      mode: 'survival',
+      difficulty: 'easy',
+      upgrades: DEFAULT_UPGRADES,
+      settings: { ...DEFAULT_SETTINGS, difficulty: 'easy' },
+      width: 960,
+      height: 600,
+      seed: 1,
+    });
     const nightmare = new GameEngine({
       mode: 'survival',
       difficulty: 'nightmare',
@@ -167,14 +219,20 @@ describe('Nightmare rewards', () => {
       height: 600,
       seed: 1,
     });
+    easy.state.zombies = [zombie({ y: 400 })];
     normal.state.zombies = [zombie({ y: 400 })];
     nightmare.state.zombies = [zombie({ y: 400 })];
 
+    easy.handleInput(firstWord(easy) + ' ');
     normal.handleInput(firstWord(normal) + ' ');
     nightmare.handleInput(firstWord(nightmare) + ' ');
 
-    expect(nightmare.state.score).toBe(normal.state.score * 2);
-    expect(nightmare.state.coins).toBe(normal.state.coins * 2);
+    expect(easy.state.score).toBe(100);
+    expect(easy.state.coins).toBe(5);
+    expect(normal.state.score).toBe(125);
+    expect(normal.state.coins).toBe(6);
+    expect(nightmare.state.score).toBe(200);
+    expect(nightmare.state.coins).toBe(10);
   });
 });
 
