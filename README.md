@@ -38,4 +38,8 @@ For protected branches and free-tier UAT/production automation, see
 For remaining accounts, credentials, dashboard settings, and unfinished
 integrations, see [`REMAINING_SETUP.md`](REMAINING_SETUP.md).
 
+For the recommended low-cost system design, API gateway decision, module
+boundaries, and future microservice criteria, see
+[`SYSTEM_ARCHITECTURE_ROADMAP.md`](SYSTEM_ARCHITECTURE_ROADMAP.md).
+
 See `client/README.md` and `server/README.md` for module details.

@@ -14,7 +14,9 @@ The repository now contains:
   `.github/workflows/deploy-production.yml`;
 - weekly Dependabot updates in `.github/dependabot.yml`; and
 - the full architecture and command guide in
-  [`CI_CD_PIPELINE.md`](CI_CD_PIPELINE.md).
+  [`CI_CD_PIPELINE.md`](CI_CD_PIPELINE.md); and
+- the low-cost application and infrastructure roadmap in
+  [`SYSTEM_ARCHITECTURE_ROADMAP.md`](SYSTEM_ARCHITECTURE_ROADMAP.md).
 
 Cloud deployment is intentionally disabled until the required accounts and
 secrets exist. Set this repository variable only after setup is complete:
