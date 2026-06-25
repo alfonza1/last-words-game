@@ -35,6 +35,11 @@ class ProfileServiceCharacterTest {
   }
 
   @Test
+  void newProfilesDefaultToBuzzHair() {
+    assertEquals("buzz", profile.character.hair);
+  }
+
+  @Test
   void signalHoodieMustBePurchased() {
     service.buyCosmetic(profile, "outfit-hoodie");
 
