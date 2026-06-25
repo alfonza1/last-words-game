@@ -56,11 +56,15 @@ public class ApiController {
     return json("profile", current(req));
   }
 
-  @PostMapping("/api/profile/import-guest")
-  public Object importGuestProgress(HttpServletRequest req, @RequestBody(required = false) GuestProgressImport guest) {
-    Profile profile = current(req);
-    boolean imported = profileService.importGuestProgress(profile, guest);
-    return json("profile", profile, "imported", imported);
+  @PostMapping("/api/profile/bootstrap")
+  public Object bootstrapProfile(HttpServletRequest req, @RequestBody(required = false) GuestProgressImport guest) {
+    String uid = currentUid(req);
+    String name = (String) req.getAttribute(FirebaseAuthFilter.NAME_ATTR);
+    ProfileService.ProfileBootstrap result = profileService.bootstrapProfile(uid, name, guest);
+    return json(
+        "profile", result.profile(),
+        "created", result.created(),
+        "imported", result.imported());
   }
 
   @PostMapping("/api/profile/run")
@@ -172,10 +176,15 @@ public class ApiController {
 
   /** The authenticated account's profile (the auth filter guarantees a uid). */
   private Profile current(HttpServletRequest req) {
-    String uid = (String) req.getAttribute(FirebaseAuthFilter.UID_ATTR);
-    if (uid == null) throw new NotFoundException("no authenticated account");
+    String uid = currentUid(req);
     String name = (String) req.getAttribute(FirebaseAuthFilter.NAME_ATTR);
     return profileService.getOrCreate(uid, name);
+  }
+
+  private String currentUid(HttpServletRequest req) {
+    String uid = (String) req.getAttribute(FirebaseAuthFilter.UID_ATTR);
+    if (uid == null) throw new NotFoundException("no authenticated account");
+    return uid;
   }
 
   private static String readString(Map<String, Object> body, String key) {

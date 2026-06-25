@@ -29,6 +29,8 @@ import java.util.LinkedHashMap;
  */
 @Service
 public class ProfileService {
+  public record ProfileBootstrap(Profile profile, boolean created, boolean imported) {}
+
   private static final Logger log = LoggerFactory.getLogger(ProfileService.class);
   private static final long USERNAME_COOLDOWN_MS = 7L * 24 * 60 * 60 * 1000; // once per week
   private static final long REWARD_COOLDOWN_MS = 20_000; // limit rewarded-ad spam
@@ -69,24 +71,34 @@ public class ProfileService {
 
   /** The current account's profile (created on first sign-in), grant applied. */
   public Profile getOrCreate(String uid, String name) {
-    Profile p = store.ensureProfile(uid, name);
+    return bootstrapProfile(uid, name, null).profile();
+  }
+
+  /**
+   * Load the account and optionally transfer local guest progress. The transfer
+   * is accepted only when this same request creates the server profile, so an
+   * existing account can never absorb unrelated device-local guest data.
+   */
+  public ProfileBootstrap bootstrapProfile(String uid, String name, GuestProgressImport guest) {
+    ProfileStore.EnsuredProfile ensured = store.ensureProfile(uid, name);
+    Profile p = ensured.profile();
     boolean changed = normalizeProfile(p);
     if (!p.granted) {
       maybeGrant(p);
       changed = changed || p.granted;
     }
+    boolean imported = false;
+    if (ensured.created() && guest != null) {
+      mergeGuestProgress(p, guest);
+      imported = true;
+      changed = true;
+    }
     if (changed) store.save(p);
-    return p;
+    return new ProfileBootstrap(p, ensured.created(), imported);
   }
 
-  /**
-   * Merge one browser's local guest progress into this account. The profile flag
-   * makes the operation idempotent; the client clears local progress only when
-   * this returns true.
-   */
-  public boolean importGuestProgress(Profile profile, GuestProgressImport guest) {
+  private void mergeGuestProgress(Profile profile, GuestProgressImport guest) {
     normalizeProfile(profile);
-    if (profile.guestProgressImported || guest == null) return false;
 
     mergeImportedStats(profile.stats, guest.stats());
     mergeImportedStats(profile.riddleStats, guest.riddleStats());
@@ -125,11 +137,9 @@ public class ProfileService {
 
     applyImportedCharacter(profile, guest.character());
     profile.guestProgressImported = true;
-    store.save(profile);
     log.info("guest progress imported uid={} games={} coins={} maps={} cosmetics={}",
         profile.guestId, profile.stats.gamesPlayed, profile.stats.totalCoins,
         profile.maps.size(), profile.cosmetics.size());
-    return true;
   }
 
   /** Merge a finished (or abandoned) run into the profile + leaderboard. */

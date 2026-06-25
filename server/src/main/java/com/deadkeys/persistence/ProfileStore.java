@@ -17,6 +17,8 @@ import java.util.Random;
  */
 @Component
 public class ProfileStore {
+  public record EnsuredProfile(Profile profile, boolean created) {}
+
   private final ProfileRepository profiles;
   private final LeaderboardRepository leaderboard;
   private final ObjectMapper mapper;
@@ -47,15 +49,15 @@ public class ProfileStore {
         .anyMatch(e -> !e.id.equals(exceptId));
   }
 
-  /** Get the profile for this account id, creating it on first sign-in. */
+  /** Get the profile for this account id, reporting whether this call created it. */
   @Transactional
-  public Profile ensureProfile(String id, String name) {
+  public EnsuredProfile ensureProfile(String id, String name) {
     Profile existing = findProfile(id);
-    if (existing != null) return existing;
+    if (existing != null) return new EnsuredProfile(existing, false);
     String handle = (name != null && !name.trim().isEmpty()) ? name.trim() : randomHandle();
     Profile p = new Profile(id, handle);
     save(p);
-    return p;
+    return new EnsuredProfile(p, true);
   }
 
   @Transactional

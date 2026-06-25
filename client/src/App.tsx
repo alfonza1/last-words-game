@@ -23,12 +23,13 @@ import {
   buyUpgrade as apiBuyUpgrade,
   checkoutCoinPack as apiCheckoutCoinPack,
   claimReward as apiClaimReward,
+  bootstrapProfile as apiBootstrapProfile,
   getProfile as apiGetProfile,
-  importGuestProgress as apiImportGuestProgress,
   equipCharacter as apiEquipCharacter,
   setUsername as apiSetUsername,
   submitRun as apiSubmitRun,
   usePowerup as apiUsePowerup,
+  ApiError,
   type Profile,
   type RunPayload,
 } from './lib/api';
@@ -139,26 +140,21 @@ export default function App() {
       try {
         if (user) {
           const guestProgress = loadGuestProgress();
+          const transferable = hasGuestProgress(guestProgress) ? guestProgress : undefined;
           let profile: Profile;
           let imported = false;
-          if (hasGuestProgress(guestProgress)) {
-            try {
-              const result = await apiImportGuestProgress(guestProgress);
-              profile = result.profile;
-              imported = result.imported;
-              if (imported) clearGuestProgress();
-            } catch {
-              // Guest transfer is optional. A staggered deployment or rejected
-              // snapshot must not prevent an otherwise healthy account load.
-              // Keep the local snapshot intact so a later visit can retry it.
-              profile = await apiGetProfile();
-              if (!cancelled) {
-                toast.error('Account loaded, but guest progress could not transfer yet. It is still saved here.');
-              }
-            }
-          } else {
+          try {
+            const result = await apiBootstrapProfile(transferable);
+            profile = result.profile;
+            imported = result.imported;
+          } catch (error) {
+            // During a staggered deployment, an older backend may not have the
+            // bootstrap route yet. Existing accounts can still load normally;
+            // local guest progress remains untouched.
+            if (!(error instanceof ApiError) || error.status !== 404) throw error;
             profile = await apiGetProfile();
           }
+          if (imported) clearGuestProgress();
           if (!cancelled) {
             applyProfile(profile);
             setServerOk(true);
@@ -177,7 +173,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading, applyProfile, applyGuest, toast.error, toast.success]);
+  }, [user, authLoading, applyProfile, applyGuest, toast.success]);
 
   // Keep the displayed username in sync with the signed-in account.
   useEffect(() => {

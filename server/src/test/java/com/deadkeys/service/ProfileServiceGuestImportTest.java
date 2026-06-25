@@ -16,8 +16,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ProfileServiceGuestImportTest {
   private ProfileStore store;
@@ -66,7 +68,13 @@ class ProfileServiceGuestImportTest {
         List.of("outfit-field", "accessory-none", "outfit-hoodie", "accessory-cap", "unknown"),
         character);
 
-    assertTrue(service.importGuestProgress(profile, guest));
+    when(store.ensureProfile("uid-1", "account-name"))
+        .thenReturn(new ProfileStore.EnsuredProfile(profile, true))
+        .thenReturn(new ProfileStore.EnsuredProfile(profile, false));
+
+    ProfileService.ProfileBootstrap first = service.bootstrapProfile("uid-1", "account-name", guest);
+    assertTrue(first.created());
+    assertTrue(first.imported());
     assertEquals("account-name", profile.name);
     assertEquals(1_200, profile.stats.bestScore);
     assertEquals(275, profile.stats.totalCoins);
@@ -84,9 +92,32 @@ class ProfileServiceGuestImportTest {
     assertEquals("outfit-hoodie", profile.character.outfit);
     assertTrue(profile.guestProgressImported);
 
-    assertFalse(service.importGuestProgress(profile, guest));
+    ProfileService.ProfileBootstrap second = service.bootstrapProfile("uid-1", "account-name", guest);
+    assertFalse(second.created());
+    assertFalse(second.imported());
     assertEquals(275, profile.stats.totalCoins);
     verify(store, times(1)).save(profile);
+  }
+
+  @Test
+  void existingAccountNeverImportsGuestProgress() {
+    profile.stats.totalCoins = 500;
+    Stats stats = new Stats();
+    stats.totalCoins = 2_000;
+    stats.gamesPlayed = 10;
+    GuestProgressImport guest = new GuestProgressImport(
+        stats, null, null, 0, null, List.of("city"), null, null);
+
+    when(store.ensureProfile("uid-1", "account-name"))
+        .thenReturn(new ProfileStore.EnsuredProfile(profile, false));
+
+    ProfileService.ProfileBootstrap result = service.bootstrapProfile("uid-1", "account-name", guest);
+
+    assertFalse(result.created());
+    assertFalse(result.imported());
+    assertEquals(500, profile.stats.totalCoins);
+    assertFalse(profile.maps.contains("city"));
+    verify(store, never()).save(profile);
   }
 
   @Test
@@ -111,7 +142,10 @@ class ProfileServiceGuestImportTest {
         List.of("not-a-cosmetic"),
         null);
 
-    assertTrue(service.importGuestProgress(profile, guest));
+    when(store.ensureProfile("uid-1", "account-name"))
+        .thenReturn(new ProfileStore.EnsuredProfile(profile, true));
+
+    assertTrue(service.bootstrapProfile("uid-1", "account-name", guest).imported());
     assertEquals(5_000_000, profile.stats.bestScore);
     assertEquals(35_000_000, profile.stats.totalCoins);
     assertEquals(100, profile.stats.bestAccuracy);

@@ -62,6 +62,22 @@ export interface Leaderboards {
   solvers: LeaderboardEntry[];
 }
 
+export interface ProfileBootstrap {
+  profile: Profile;
+  created: boolean;
+  imported: boolean;
+}
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 /** Authorization header with a fresh Firebase ID token. Throws if signed out. */
 async function authHeader(): Promise<Record<string, string>> {
   const user = auth?.currentUser;
@@ -76,20 +92,20 @@ async function apost<T>(path: string, body?: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(await errorMessage(res));
+  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
   return res.json() as Promise<T>;
 }
 
 async function aget<T>(path: string): Promise<T> {
   const res = await fetch(BASE + path, { headers: await authHeader() });
-  if (!res.ok) throw new Error(await errorMessage(res));
+  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
   return res.json() as Promise<T>;
 }
 
 /** Public GET — no auth (leaderboard is read-only public data). */
 async function jget<T>(path: string): Promise<T> {
   const res = await fetch(BASE + path);
-  if (!res.ok) throw new Error(await errorMessage(res));
+  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
   return res.json() as Promise<T>;
 }
 
@@ -110,10 +126,23 @@ export async function getProfile(): Promise<Profile> {
   return profile;
 }
 
-export async function importGuestProgress(
-  guest: GuestProgressSnapshot,
-): Promise<{ profile: Profile; imported: boolean }> {
-  return apost('/profile/import-guest', guest);
+let pendingBootstrap: { uid: string; promise: Promise<ProfileBootstrap> } | null = null;
+
+/**
+ * Load the signed-in profile in one request. The backend imports the optional
+ * guest snapshot only if this request creates the account profile. Concurrent
+ * React development-mode mounts share the same in-flight request.
+ */
+export function bootstrapProfile(guest?: GuestProgressSnapshot): Promise<ProfileBootstrap> {
+  const uid = auth?.currentUser?.uid;
+  if (!uid) return Promise.reject(new Error('Please sign in.'));
+  if (pendingBootstrap?.uid === uid) return pendingBootstrap.promise;
+
+  const promise = apost<ProfileBootstrap>('/profile/bootstrap', guest).finally(() => {
+    if (pendingBootstrap?.promise === promise) pendingBootstrap = null;
+  });
+  pendingBootstrap = { uid, promise };
+  return promise;
 }
 
 export async function submitRun(run: RunPayload): Promise<{ profile: Profile; isHighScore: boolean }> {
