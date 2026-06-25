@@ -1,4 +1,7 @@
-export const API_REQUEST_TIMEOUT_MS = 15_000;
+// A scale-from-zero Cloud Run request may wait for the Java container and its
+// database pool to initialize. Twenty seconds is tolerant without trapping the
+// player on startup indefinitely.
+export const API_REQUEST_TIMEOUT_MS = 20_000;
 
 export class RequestTimeoutError extends Error {
   constructor(public readonly timeoutMs: number) {

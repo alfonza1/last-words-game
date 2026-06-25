@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { RequestTimeoutError, withRequestTimeout } from './requestTimeout';
+import { API_REQUEST_TIMEOUT_MS, RequestTimeoutError, withRequestTimeout } from './requestTimeout';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -26,5 +26,9 @@ describe('withRequestTimeout', () => {
 
     await rejection;
     expect(signal?.aborted).toBe(true);
+  });
+
+  it('allows twenty seconds for scale-from-zero startup by default', () => {
+    expect(API_REQUEST_TIMEOUT_MS).toBe(20_000);
   });
 });
