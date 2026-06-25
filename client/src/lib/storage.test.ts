@@ -19,6 +19,7 @@ import {
   clearGuestProgress,
   hasGuestProgress,
   loadGuestProgress,
+  STORAGE_KEYS,
 } from './storage';
 
 /** Minimal in-memory Storage for deterministic tests. */
@@ -137,13 +138,11 @@ describe('mergeRunIntoStats', () => {
       bossesDefeated: 1,
       streak: 20,
       coins: 40,
-      missedWords: { run: 2 },
     });
     expect(merged.bestScore).toBe(500);
     expect(merged.totalKills).toBe(12);
     expect(merged.totalCoins).toBe(40);
     expect(merged.gamesPlayed).toBe(1);
-    expect(merged.missedWords.run).toBe(2);
 
     const again = mergeRunIntoStats(merged, {
       score: 200,
@@ -154,14 +153,27 @@ describe('mergeRunIntoStats', () => {
       bossesDefeated: 0,
       streak: 5,
       coins: 10,
-      missedWords: { run: 1, hide: 4 },
     });
     expect(again.bestScore).toBe(500); // keeps the higher
     expect(again.highestWpm).toBe(70); // new record
     expect(again.totalKills).toBe(15);
-    expect(again.missedWords.run).toBe(3);
-    expect(again.missedWords.hide).toBe(4);
     expect(again.gamesPlayed).toBe(2);
+  });
+});
+
+describe('legacy weak-word cleanup', () => {
+  it('removes retired weak-word data when stats are loaded', () => {
+    store.setItem(STORAGE_KEYS.stats, JSON.stringify({
+      ...DEFAULT_STATS,
+      bestScore: 100,
+      missedWords: { wold: 1 },
+    }));
+
+    const loaded = loadStats(store);
+
+    expect(loaded.bestScore).toBe(100);
+    expect(loaded).not.toHaveProperty('missedWords');
+    expect(JSON.parse(store.getItem(STORAGE_KEYS.stats)!)).not.toHaveProperty('missedWords');
   });
 });
 

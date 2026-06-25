@@ -122,13 +122,10 @@ describe('word queue is independent of zombies', () => {
     const e = makeEngine();
     e.state.zombies = [zombie()];
     e.state.streak = 8;
-    const target = firstWord(e);
     e.handleInput('zzqqzz ');
     expect(e.state.mistakes).toBe(1);
     expect(e.state.streak).toBeLessThan(8);
     expect(e.state.input).toBe('zzqqzz');
-    expect(e.state.missedWords).toEqual({ [target.toLowerCase()]: 1 });
-    expect(e.state.missedWords.zzqqzz).toBeUndefined();
   });
 
   it('multi-hit zombies take several shots (each word does 2 damage)', () => {
@@ -171,14 +168,11 @@ describe('riddle mode', () => {
   it('a wrong answer is a mistake and keeps the typed text', () => {
     const e = riddleEngine();
     e.state.zombies = [zombie({ y: 400 })];
-    const answer = firstWord(e);
     e.handleInput('definitelywrong ');
     expect(e.state.mistakes).toBe(1);
     expect(e.state.kills).toBe(0);
     expect(e.state.input).toBe('definitelywrong');
     expect(e.inputWrong).toBe(false);
-    expect(e.state.missedWords).toEqual({ [answer.toLowerCase()]: 1 });
-    expect(e.state.missedWords.definitelywrong).toBeUndefined();
   });
 
   it('math style fires its own (smaller) volley — normal = 4 kills', () => {

@@ -17,10 +17,6 @@ interface Props {
 }
 
 export function GameOver({ result, mode, isHighScore, rewardCoins, onWatchAd, onRestart, onMenu }: Props) {
-  const missed = Object.entries(result.missedWords)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6);
-
   const [adPhase, setAdPhase] = useState<'idle' | 'playing' | 'claimed'>('idle');
   const [earned, setEarned] = useState(0);
   const [adError, setAdError] = useState<string | null>(null);
@@ -72,19 +68,6 @@ export function GameOver({ result, mode, isHighScore, rewardCoins, onWatchAd, on
             {adPhase === 'playing' ? 'Ad playing…' : `📺 Watch ad for +${rewardCoins} coins (optional)`}
           </button>
           {adError && <span className="text-xs text-neon-red">{adError}</span>}
-        </div>
-      )}
-
-      {missed.length > 0 && (
-        <div className="w-full rounded-xl border border-white/10 bg-ink-800/70 p-4 text-left">
-          <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-neon-red">Weak Words</h3>
-          <div className="flex flex-wrap gap-2">
-            {missed.map(([word, n]) => (
-              <span key={word} className="rounded bg-black/50 px-2 py-1 text-sm text-white/70">
-                {word} <span className="text-neon-red">×{n}</span>
-              </span>
-            ))}
-          </div>
         </div>
       )}
 

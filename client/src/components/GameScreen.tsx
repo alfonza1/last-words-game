@@ -19,7 +19,6 @@ export interface RunResult {
   bossesDefeated: number;
   streak: number;
   coins: number;
-  missedWords: Record<string, number>;
   riddle: boolean;
   /** Play style of this run: 'typing' | 'riddles' | 'math' | 'trivia'. */
   style: string;
@@ -507,7 +506,6 @@ function toResult(s: GameState): RunResult {
     bossesDefeated: s.bossesDefeated,
     streak: s.bestStreak,
     coins: s.coins,
-    missedWords: s.missedWords,
     riddle: s.riddleMode,
     style: s.riddleMode ? s.puzzleStyle : 'typing',
   };

@@ -149,7 +149,6 @@ export class GameEngine {
       bossWarning: 0,
       survivorShot: null,
       shotsFired: 0,
-      missedWords: {},
       upgrades: opts.upgrades,
       settings: opts.settings,
     };
@@ -316,7 +315,7 @@ export class GameEngine {
         s.input = '';
         return;
       }
-      this.registerMistake(riddle.answer);
+      this.registerMistake();
       s.input = candidate;
       return;
     }
@@ -334,7 +333,7 @@ export class GameEngine {
 
     // 4) Otherwise it's a miss. Keep the typed text (minus the trailing space)
     // so the player can fix a typo instead of losing the whole word.
-    this.registerMistake(first);
+    this.registerMistake();
     s.input = candidate;
   }
 
@@ -632,7 +631,7 @@ export class GameEngine {
     this.checkFinishers();
   }
 
-  private registerMistake(target = '') {
+  private registerMistake() {
     const s = this.state;
     const strict = this.matchOptions.strict ?? false;
     s.mistakes += 1;
@@ -640,7 +639,6 @@ export class GameEngine {
     s.noMistakeStreak = 0;
     s.combo = 0;
     s.flash = Math.max(s.flash, 0.3);
-    this.noteMissedWord(target);
   }
 
   private checkPowerups() {
@@ -721,12 +719,6 @@ export class GameEngine {
     const span = Math.min(windowMs, Math.max(1000, this.typingElapsedMs));
     s.wpm = calcWpm(chars, span);
     s.maxWpm = Math.max(s.maxWpm, s.wpm);
-  }
-
-  private noteMissedWord(word: string) {
-    if (!word) return;
-    const w = word.toLowerCase();
-    this.state.missedWords[w] = (this.state.missedWords[w] ?? 0) + 1;
   }
 
   private addFloating(x: number, y: number, text: string, color: string, size: number) {
