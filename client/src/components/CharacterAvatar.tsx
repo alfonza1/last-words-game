@@ -150,8 +150,10 @@ function Face({ expression, glow }: { expression: string; glow: string }) {
         <path d="M92 60 L104 65 M128 60 L116 65" stroke={ink} strokeWidth="3" strokeLinecap="round" />
         <circle cx="99" cy="69" r="3" fill={ink} />
         <circle cx="121" cy="69" r="3" fill={ink} />
-        <path d="M99 82 Q110 76 121 82 L118 90 H102Z" fill="#321617" stroke={mouth} strokeWidth="1.5" />
-        <path d="M103 83 L106 88 L110 82 L114 88 L118 83" fill="none" stroke="#f4ded2" strokeWidth="1.7" />
+        <path d="M99 82 Q110 77 121 82 L119 89 Q110 92 101 89Z" fill="#321617" stroke={mouth} strokeWidth="1.5" />
+        <path d="M101 82 Q110 79 119 82 L118 86 Q110 88 102 86Z" fill="#f4ded2" />
+        <path d="M106 81 L106 87 M110 80 L110 88 M114 81 L114 87" stroke="#7b5550" strokeWidth="1" />
+        <path d="M102 88 Q110 91 118 88" fill="none" stroke="#8b2828" strokeWidth="1.2" strokeLinecap="round" />
       </g>
     );
   }

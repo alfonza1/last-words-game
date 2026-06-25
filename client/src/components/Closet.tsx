@@ -184,7 +184,7 @@ export function Closet({
           </Picker>
         </div>
 
-        <Picker title="Face Protocol">
+        <Picker title="Face Expression">
           <p className="-mt-1 mb-3 text-[10px] uppercase tracking-[0.18em] text-white/35">
             Choose the look you give the dead.
           </p>
@@ -210,6 +210,11 @@ export function Closet({
                     </span>
                   </div>
                   <p className="mt-1 text-[10px] leading-snug text-white/45">{expression.description}</p>
+                  {expression.outfitReactive && (
+                    <span className="mt-1.5 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-neon-cyan">
+                      ◈ Outfit-reactive
+                    </span>
+                  )}
                 </button>
               );
             })}

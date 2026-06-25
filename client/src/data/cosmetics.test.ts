@@ -11,5 +11,6 @@ describe('default character', () => {
     expect(DEFAULT_CHARACTER.expression).toBe('last-light');
     expect(normalizeCharacter({ hair: 'mohawk' }).expression).toBe('last-light');
     expect(EXPRESSIONS.map((expression) => expression.key)).toContain('not-yet-dead');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'not-yet-dead')?.outfitReactive).toBe(true);
   });
 });

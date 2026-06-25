@@ -20,6 +20,15 @@ export interface OutfitPalette {
   glow?: string;
 }
 
+export interface ExpressionDef {
+  key: string;
+  label: string;
+  icon: string;
+  description: string;
+  /** Expression accents follow the equipped outfit's glow color. */
+  outfitReactive?: boolean;
+}
+
 export const DEFAULT_CHARACTER: CharacterLoadout = {
   skinTone: 'warm',
   hair: 'buzz',
@@ -57,7 +66,7 @@ export const HAIR_COLORS = [
   { key: 'pink', label: 'Pink', color: '#ff4db8' },
 ] as const;
 
-export const EXPRESSIONS = [
+export const EXPRESSIONS: ExpressionDef[] = [
   {
     key: 'last-light',
     label: 'Last Light',
@@ -93,8 +102,9 @@ export const EXPRESSIONS = [
     label: 'Not Yet Dead',
     icon: '◉‿◌',
     description: 'One eye changed. You insist it is fine.',
+    outfitReactive: true,
   },
-] as const;
+];
 
 export const COSMETICS: CosmeticDef[] = [
   {
