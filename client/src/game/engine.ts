@@ -152,6 +152,7 @@ export class GameEngine {
       bossActive: false,
       bossWarning: 0,
       survivorShot: null,
+      shotsFired: 0,
       pendingShots: 0,
       missedWords: {},
       upgrades: opts.upgrades,
@@ -245,8 +246,10 @@ export class GameEngine {
     const s = this.state;
     const raw = s.input.trim();
     if (raw.length === 0) return false;
-    // Riddle answers are matched case-insensitively, so don't tint red on case.
-    const opts = s.riddleMode ? { strict: false } : this.matchOptions;
+    // Puzzle answers are not prefix-friendly (especially numeric answers), so
+    // reserve red mismatch feedback for Typing Defense only.
+    if (s.riddleMode) return false;
+    const opts = this.matchOptions;
     const cmdPrefix = this.activeCommands().some((c) => isPrefix(raw, c, opts));
     const first = s.wordQueue[0];
     const wordPrefix = first ? isPrefix(raw, first, opts) : false;
@@ -540,6 +543,7 @@ export class GameEngine {
     const target = s.zombies.filter((z) => z.y >= minY).sort((a, b) => b.y - a.y)[0];
     if (!target) return false;
     s.survivorShot = { x: target.x, y: target.y, life: 0.18, ttl: 0.18 };
+    s.shotsFired += 1;
     let dmg = damage;
     if (target.isBoss) dmg += bossDamageBonus(s.upgrades);
     target.hp -= dmg;

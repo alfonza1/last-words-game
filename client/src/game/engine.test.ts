@@ -71,6 +71,7 @@ describe('word queue is independent of zombies', () => {
     e.state.zombies = [zombie({ y: 5 })]; // just spawned, off-screen at the top
     e.handleInput(firstWord(e) + ' ');
     expect(e.state.kills).toBe(0);
+    expect(e.state.shotsFired).toBe(0);
     expect(e.state.zombies).toHaveLength(1);
     expect(e.state.pendingShots).toBe(1);
 
@@ -78,6 +79,7 @@ describe('word queue is independent of zombies', () => {
     e.update(0.01);
 
     expect(e.state.kills).toBe(1);
+    expect(e.state.shotsFired).toBe(1);
     expect(e.state.pendingShots).toBe(0);
   });
 
@@ -171,6 +173,7 @@ describe('riddle mode', () => {
     expect(e.state.mistakes).toBe(1);
     expect(e.state.kills).toBe(0);
     expect(e.state.input).toBe('definitelywrong');
+    expect(e.inputWrong).toBe(false);
   });
 
   it('math style fires its own (smaller) volley — normal = 4 kills', () => {

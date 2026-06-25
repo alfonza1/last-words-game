@@ -39,7 +39,6 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
   if (p.doubleDamageMs > 0) activePowerups.push({ label: '2x DMG', color: '#ffb300' });
   if (p.slowMotionMs > 0) activePowerups.push({ label: 'SLOW-MO', color: '#9b5de5' });
   if (p.freezeMs > 0) activePowerups.push({ label: 'FROZEN', color: '#00f0ff' });
-  if (s.pendingShots > 0) activePowerups.push({ label: `SHOTS READY x${s.pendingShots}`, color: '#ffd166' });
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-3">
