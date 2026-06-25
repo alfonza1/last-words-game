@@ -188,30 +188,30 @@ export function Closet({
           <p className="-mt-1 mb-3 text-[10px] uppercase tracking-[0.18em] text-white/35">
             Choose the look you give the dead.
           </p>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
             {EXPRESSIONS.map((expression) => {
               const active = draft.expression === expression.key;
               return (
                 <button
                   key={expression.key}
                   onClick={() => updateDraft({ expression: expression.key })}
-                  className={`group rounded-lg border p-3 text-left transition ${
+                  className={`group rounded-lg border p-2 text-left transition ${
                     active
                       ? 'border-neon-pink bg-neon-pink/10 shadow-[0_0_16px_rgba(255,43,214,0.16)]'
                       : 'border-white/10 bg-black/25 hover:border-neon-pink/50'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`text-xs font-black ${active ? 'text-neon-pink' : 'text-white/80'}`}>
+                    <span className={`text-[10px] font-black leading-tight ${active ? 'text-neon-pink' : 'text-white/80'}`}>
                       {expression.label}
                     </span>
-                    <span className={`font-mono text-sm ${active ? 'text-neon-green' : 'text-white/40'}`}>
+                    <span className={`font-mono text-xs ${active ? 'text-neon-green' : 'text-white/40'}`}>
                       {expression.icon}
                     </span>
                   </div>
-                  <p className="mt-1 text-[10px] leading-snug text-white/45">{expression.description}</p>
+                  <p className="mt-1 text-[9px] leading-snug text-white/45">{expression.description}</p>
                   {expression.outfitReactive && (
-                    <span className="mt-1.5 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-neon-cyan">
+                    <span className="mt-1 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1 py-0.5 text-[7px] font-black uppercase tracking-wider text-neon-cyan">
                       ◈ Outfit-reactive
                     </span>
                   )}

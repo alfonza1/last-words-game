@@ -3,13 +3,7 @@ import type { CharacterLoadout, GameStats, UpgradeKey, Upgrades as UpgradesType 
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, upgradeCost } from '../data/upgrades';
 import { POWERUP_DEFS } from '../data/powerups';
 import { COIN_PACKS } from '../data/coinPacks';
-import {
-  COSMETICS,
-  DEFAULT_CHARACTER,
-  EXPRESSIONS,
-  type CosmeticDef,
-  type CosmeticSlot,
-} from '../data/cosmetics';
+import { COSMETICS, DEFAULT_CHARACTER, type CosmeticDef, type CosmeticSlot } from '../data/cosmetics';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -81,13 +75,13 @@ export function Upgrades({
             ? 'border-neon-cyan/45'
             : 'border-white/20';
     return (
-      <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-2.5 ${rarityColor}`}>
+      <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-3 ${rarityColor}`}>
         <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/45">
           {item.rarity}
         </div>
-        <div className="flex items-center gap-2.5">
-          <div className="h-20 w-16 flex-none overflow-hidden rounded-lg border border-white/15 bg-black/35">
-            <CharacterAvatar character={preview} armed={false} className="h-24 w-full -translate-y-1" />
+        <div className="flex items-center gap-3">
+          <div className="h-28 w-24 flex-none overflow-hidden rounded-lg border border-white/15 bg-black/35">
+            <CharacterAvatar character={preview} armed={false} className="h-32 w-full -translate-y-1" />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-black text-neon-green">{item.name}</h3>
@@ -102,7 +96,7 @@ export function Upgrades({
         <button
           disabled={isOwned || !affordable}
           onClick={() => setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })}
-          className={`mt-2 w-full rounded-lg border px-3 py-1.5 text-[11px] font-black ${
+          className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black ${
             isOwned
               ? 'border-neon-green/60 bg-neon-green/10 text-neon-green'
               : !affordable
@@ -117,7 +111,7 @@ export function Upgrades({
   };
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4 sm:p-5">
+    <div className="crt relative mx-auto flex h-full w-full max-w-4xl flex-col gap-4 overflow-y-auto p-6">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <button
           onClick={onBack}
@@ -174,49 +168,23 @@ export function Upgrades({
       <h2 className="mt-1 text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
       <p className="-mt-2 text-xs text-white/55">Clothes give no advantage — cosmetic only.</p>
 
-      <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Face Expressions</h3>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        {EXPRESSIONS.map((expression) => {
-          const preview: CharacterLoadout = { ...DEFAULT_CHARACTER, expression: expression.key };
-          return (
-            <div
-              key={expression.key}
-              className="relative overflow-hidden rounded-xl border border-white/15 bg-ink-800/70 p-2 text-center"
-            >
-              <div className="mx-auto h-16 w-14 overflow-hidden rounded-lg border border-white/10 bg-black/35">
-                <CharacterAvatar character={preview} armed={false} className="h-20 w-full -translate-y-1" />
-              </div>
-              <h4 className="mt-1.5 text-[11px] font-black leading-tight text-neon-pink">{expression.label}</h4>
-              {expression.outfitReactive && (
-                <span className="mt-1 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1 py-0.5 text-[7px] font-black uppercase tracking-wider text-neon-cyan">
-                  ◈ Outfit-reactive
-                </span>
-              )}
-              <div className="mt-1.5 rounded-md border border-neon-green/50 bg-neon-green/10 py-1 text-[9px] font-black text-neon-green">
-                INCLUDED
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Outfits</h3>
-      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">{gearFor('outfit').map(gearCard)}</div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('outfit').map(gearCard)}</div>
 
       <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Accessories</h3>
-      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">{gearFor('accessory').map(gearCard)}</div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('accessory').map(gearCard)}</div>
 
       {/* Consumable powerups */}
       <h2 className="mt-1 text-sm font-bold uppercase tracking-widest text-neon-cyan">Powerups</h2>
       <p className="-mt-2 text-xs text-white/40">
         Bought charges are permanent until used. In a run, type the word to activate.
       </p>
-      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         {POWERUP_DEFS.map((def) => {
           const owned = powerups[def.key] ?? 0;
           const affordable = coins >= def.cost;
           return (
-            <div key={def.key} className="flex flex-col justify-between rounded-xl border border-white/10 bg-ink-800/70 p-3">
+            <div key={def.key} className="flex flex-col justify-between rounded-xl border border-white/10 bg-ink-800/70 p-4">
               <div>
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-neon-green">
@@ -256,7 +224,7 @@ export function Upgrades({
           {active ? `Active · ${gamesLeft} game${gamesLeft === 1 ? '' : 's'} left` : 'No active upgrades'}
         </span>
       </div>
-      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2">
         {UPGRADE_DEFS.map((def) => {
           const level = upgrades[def.key];
           const cost = upgradeCost(def, Math.min(level, def.maxLevel - 1));
@@ -265,7 +233,7 @@ export function Upgrades({
           return (
             <div
               key={def.key}
-              className="flex flex-col justify-between rounded-xl border border-white/10 bg-ink-800/70 p-3"
+              className="flex flex-col justify-between rounded-xl border border-white/10 bg-ink-800/70 p-4"
             >
               <div>
                 <div className="flex items-center justify-between">
