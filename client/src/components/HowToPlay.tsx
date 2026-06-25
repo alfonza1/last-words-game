@@ -1,43 +1,58 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 interface Props {
   onBack: () => void;
 }
 
-const STEPS: [string, string][] = [
-  ['Read the queue', 'Five words wait at the top of the screen — you always type the FIRST one (it’s highlighted).'],
-  ['Type it, then SPACE', 'Spell the word and hit SPACE — a shot rings out and drops the closest zombie.'],
-  ['Stay in order', 'Each hit slides the list left and adds a fresh word at the end, so the order never jumps on you.'],
-  ['Shake off typos', 'A wrong word flashes the box red and chips your accuracy, but your letters stay — just backspace and fix it.'],
-  ['Hold the line', 'Drop every zombie before it reaches the bunker. Let your health hit zero and it’s game over.'],
+type GuideSection = 'defense' | 'rules' | 'zombies' | 'powerups';
+
+const DEFENSE: [string, string][] = [
+  ['Typing Defense', 'Type the highlighted word, then press SPACE. Each completed word fires one shot at the nearest zombie.'],
+  ['Riddle Defense', 'Solve the riddle, then press SPACE. A solve fires a volley: 5 / 8 / 12 shots on Easy / Normal / Nightmare.'],
+  ['Math Defense', 'Solve the arithmetic, then press SPACE. Harder math each difficulty; a solve fires 3 / 4 / 6 shots.'],
+  ['Trivia Defense', 'Answer the question, then press SPACE. Tougher questions each difficulty; a solve fires 3 / 5 / 8 shots.'],
+  ['Even by Design', 'Volley sizes are tuned so every style clears about the same zombies per minute as typing — pick what you enjoy.'],
 ];
 
-const ZOMBIE_INFO: [string, string][] = [
-  ['Walker', 'Slow. 1 hit.'],
-  ['Runner', 'Fast — react quickly. 1 hit.'],
-  ['Crawler', 'Tiny, low to the ground. 1 hit.'],
-  ['Glitch', 'Flickering cyan horror. 1 hit.'],
-  ['Armored', 'Plated — 2 hits.'],
-  ['Screamer', 'Spawns more if not killed fast. 2 hits.'],
-  ['Tank', 'Big & slow. 3 hits.'],
-  ['Boss', 'Huge HP bar. Reaches you = instant game over.'],
+const ZOMBIES: [string, string][] = [
+  ['Walker', 'Steady pace · 1 shot'],
+  ['Runner', 'Fast and fragile · 1 shot'],
+  ['Crawler', 'Small, low target · 1 shot'],
+  ['Glitch', 'Flickering threat · 2 shots'],
+  ['Armored', 'Heavy plating · 2 shots'],
+  ['Screamer', 'Spawns two runners if left alive · 2 shots'],
+  ['Tank', 'Slow, durable, heavy base damage · 3 shots'],
+  ['Boss', 'Large health bar · reaching the base is instant defeat'],
 ];
 
-const POWERUPS: [string, string][] = [
-  ['Shotgun', 'Earned at a 10-streak → next kill blasts nearby zombies.'],
-  ['Shield', 'Earned at 15 mistake-free words → blocks one hit.'],
-  ['Double Damage', 'High WPM → your shots hit twice as hard.'],
-  ['Slow Motion', 'High accuracy → time briefly slows.'],
-  ['Headshot', 'Clear a word lightning-fast for bonus points.'],
-  ['Grenade', 'Buy in the Store → type “grenade” to clear a cluster.'],
-  ['Freeze', 'Buy in the Store → type “freeze” to freeze everything for 3s.'],
-  ['Med Kit', 'Buy in the Store → type “medkit” to restore health.'],
+const AUTO_POWERUPS: [string, string][] = [
+  ['Shotgun', 'Every 10-word streak arms the next kill to blast nearby zombies.'],
+  ['Shield', 'Every 15 mistake-free words grants one shield charge. Bosses ignore shields.'],
+  ['Double Damage', 'Maintaining at least 55 WPM can trigger 5 seconds of double shot damage.'],
+  ['Slow Motion', 'At 95% accuracy after 12 words, slow motion can trigger for 5 seconds.'],
+  ['Headshot', 'Clear a target quickly for bonus points.'],
 ];
 
-function Card({ title, color, children }: { title: string; color: string; children: ReactNode }) {
+const CONSUMABLES: [string, string][] = [
+  ['grenade', 'Clears a nearby cluster of zombies.'],
+  ['freeze', 'Stops every zombie for 3 seconds.'],
+  ['medkit', 'Restores 35 base health.'],
+];
+
+function Card({
+  title,
+  color,
+  className = '',
+  children,
+}: {
+  title: string;
+  color: string;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
-    <section className="rounded-xl border border-white/10 bg-ink-800/60 p-4">
-      <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.25em]" style={{ color }}>
+    <section className={`h-full min-h-0 overflow-y-auto rounded-xl border border-white/10 bg-ink-800/65 p-4 ${className}`}>
+      <h2 className="mb-3 text-sm font-black uppercase tracking-[0.22em]" style={{ color }}>
         {title}
       </h2>
       {children}
@@ -45,9 +60,28 @@ function Card({ title, color, children }: { title: string; color: string; childr
   );
 }
 
-export function HowToPlay({ onBack }: Props) {
+function InfoList({ items, accent }: { items: [string, string][]; accent: string }) {
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-4xl flex-col gap-5 overflow-y-auto p-6">
+    <ul className="space-y-2.5">
+      {items.map(([name, description]) => (
+        <li key={name} className="text-[13px] leading-snug sm:text-sm">
+          <span className="font-bold" style={{ color: accent }}>
+            {name}
+          </span>
+          <span className="text-white/30"> — </span>
+          <span className="text-white/65">{description}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function HowToPlay({ onBack }: Props) {
+  const [mobileSection, setMobileSection] = useState<GuideSection>('defense');
+  const visible = (section: GuideSection) => (mobileSection === section ? 'block' : 'hidden');
+
+  return (
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-hidden p-4">
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
@@ -56,72 +90,113 @@ export function HowToPlay({ onBack }: Props) {
           ← Back
         </button>
         <div>
-          <h1 className="text-3xl font-black tracking-wide text-neon-green">HOW TO PLAY</h1>
-          <p className="mt-0.5 text-sm text-white/50">Type the words. Drop the dead. Don’t let them in.</p>
+          <h1 className="text-3xl font-black tracking-wide text-neon-green sm:text-4xl">HOW TO PLAY</h1>
+          <p className="text-sm text-white/50">Choose your defense. Drop the dead. Keep the bunker standing.</p>
         </div>
       </div>
 
-      {/* Basics — numbered steps */}
-      <Card title="The Basics" color="#39ff14">
-        <ol className="space-y-2.5">
-          {STEPS.map(([title, desc], i) => (
-            <li key={title} className="flex gap-3">
-              <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full border border-neon-green/50 text-xs font-bold text-neon-green">
-                {i + 1}
-              </span>
-              <p className="text-sm leading-relaxed text-white/75">
-                <span className="font-bold text-white/95">{title}.</span>{' '}
-                <span className="text-white/60">{desc}</span>
-              </p>
-            </li>
-          ))}
-        </ol>
-      </Card>
-
-      {/* Difficulty + controls */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card title="Difficulty" color="#00f0ff">
-          <ul className="space-y-1.5 text-sm text-white/70">
-            <li><span className="font-bold text-neon-cyan">Easy</span> — words only.</li>
-            <li><span className="font-bold text-neon-cyan">Normal</span> — words + numbers.</li>
-            <li>
-              <span className="font-bold text-neon-cyan">Nightmare</span> — words, numbers &amp; symbols, exact
-              case. Earn 2× coins. Enter if you dare.
-            </li>
-          </ul>
-        </Card>
-
-        <Card title="Controls" color="#ffb300">
-          <ul className="space-y-1.5 text-sm text-white/70">
-            <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd> — fire the current word.</li>
-            <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd> / <span className="text-neon-green">⏸</span> — pause (resume / restart / quit).</li>
-            <li>Own a powerup? Type its word (<span className="text-neon-green">grenade / freeze / medkit</span>) to spend a charge.</li>
-          </ul>
-        </Card>
+      <div className="grid grid-cols-4 gap-2 xl:hidden">
+        {[
+          ['defense', 'Defense'],
+          ['rules', 'Controls'],
+          ['zombies', 'Zombies'],
+          ['powerups', 'Powerups'],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setMobileSection(key as GuideSection)}
+            className={`rounded-md border px-1 py-2 text-[9px] font-black uppercase tracking-wide ${
+              mobileSection === key
+                ? 'border-neon-green bg-neon-green/10 text-neon-green'
+                : 'border-white/15 text-white/50'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* Zombies + powerups */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card title="Zombie Types" color="#ff2bd6">
-          <ul className="space-y-1.5">
-            {ZOMBIE_INFO.map(([name, desc]) => (
-              <li key={name} className="flex gap-2 text-sm">
-                <span className="w-20 flex-none font-bold text-neon-cyan">{name}</span>
-                <span className="text-white/60">{desc}</span>
-              </li>
-            ))}
-          </ul>
+      <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-2 xl:grid-rows-2">
+        <Card
+          title="Defense Protocol"
+          color="#39ff14"
+          className={`${visible('defense')} xl:block`}
+        >
+          <InfoList items={DEFENSE} accent="#39ff14" />
         </Card>
 
-        <Card title="Powerups" color="#39ff14">
-          <ul className="space-y-1.5">
-            {POWERUPS.map(([name, desc]) => (
-              <li key={name} className="flex gap-2 text-sm">
-                <span className="w-28 flex-none font-bold text-neon-green">{name}</span>
-                <span className="text-white/60">{desc}</span>
-              </li>
+        <Card
+          title="Zombie Threats"
+          color="#ff2bd6"
+          className={`${visible('zombies')} xl:block`}
+        >
+          <div className="grid gap-x-5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-2">
+            {ZOMBIES.map(([name, description]) => (
+              <div key={name} className="text-[13px] leading-snug sm:text-sm">
+                <div className="font-bold text-neon-cyan">{name}</div>
+                <div className="text-white/60">{description}</div>
+              </div>
             ))}
-          </ul>
+          </div>
+        </Card>
+
+        <Card
+          title="Controls"
+          color="#00f0ff"
+          className={`${visible('rules')} xl:block`}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-green">Typing Defense</h3>
+              <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> — fire at the nearest zombie.</span></li>
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — pause (the horde freezes).</span></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-pink">Riddle · Math · Trivia</h3>
+              <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> or </span><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">ENTER</kbd><span className="text-white/60"> — submit your answer (fires a volley).</span></li>
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — opens the menu, but the horde keeps advancing — no safe pause.</span></li>
+              </ul>
+            </div>
+          </div>
+        </Card>
+
+        <Card
+          title="Powerups & Consumables"
+          color="#ffb300"
+          className={`${visible('powerups')} xl:block`}
+        >
+          <div className="space-y-4">
+            <div>
+              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-green">Earned in play</h3>
+              <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                {AUTO_POWERUPS.map(([name, description]) => (
+                  <div key={name} className="text-[13px] leading-snug sm:text-sm">
+                    <span className="font-bold text-neon-green">{name}</span>
+                    <span className="text-white/30"> — </span>
+                    <span className="text-white/60">{description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="mb-1 text-xs font-black uppercase tracking-widest text-neon-amber">Consumables</h3>
+              <p className="mb-2 text-[11px] leading-snug text-white/45">
+                Bought in the Store. In any mode, type the command to spend one charge.
+              </p>
+              <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                {CONSUMABLES.map(([cmd, description]) => (
+                  <div key={cmd} className="text-[13px] leading-snug sm:text-sm">
+                    <span className="font-bold text-neon-green">type “{cmd}”</span>
+                    <span className="text-white/30"> — </span>
+                    <span className="text-white/60">{description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </Card>
       </div>
     </div>

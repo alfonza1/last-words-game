@@ -9,10 +9,10 @@ public final class CoinPackCatalog {
   public record Def(String id, int coins, int priceCents) {}
 
   public static final List<Def> DEFS = List.of(
-      new Def("small", 1_000, 99),
-      new Def("medium", 6_000, 399),
-      new Def("large", 16_000, 999),
-      new Def("huge", 40_000, 1999));
+      new Def("small", 500, 99),
+      new Def("medium", 3_000, 399),
+      new Def("large", 8_000, 999),
+      new Def("huge", 20_000, 1999));
 
   public static Def find(String id) {
     return DEFS.stream().filter(d -> d.id().equals(id)).findFirst().orElse(null);

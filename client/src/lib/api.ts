@@ -5,7 +5,8 @@
 // only ever touches the caller's own profile. Guests don't hit these endpoints
 // (their progress is local) — the only public read is the leaderboard.
 // ---------------------------------------------------------------------------
-import type { GameStats, Upgrades } from '../types';
+import type { CharacterLoadout, GameStats, Upgrades } from '../types';
+import type { GuestProgressSnapshot } from './storage';
 import { auth } from './firebase';
 
 const BASE = (import.meta.env.VITE_API_BASE ?? '') + '/api';
@@ -14,10 +15,14 @@ export interface Profile {
   guestId: string; // = the account's Firebase uid
   name: string;
   stats: GameStats;
+  riddleStats: GameStats;
   upgrades: Upgrades;
   upgradeGames: number;
   powerups: Record<string, number>;
   maps: string[];
+  cosmetics: string[];
+  character: CharacterLoadout;
+  guestProgressImported: boolean;
 }
 
 export interface RunPayload {
@@ -33,6 +38,9 @@ export interface RunPayload {
   missedWords: Record<string, number>;
   mode: string;
   difficulty: string;
+  riddle: boolean;
+  /** Play style: 'typing' | 'riddles' | 'math' | 'trivia'. */
+  style: string;
 }
 
 export interface LeaderboardEntry {
@@ -44,7 +52,30 @@ export interface LeaderboardEntry {
   accuracy: number;
   mode: string;
   difficulty: string;
+  riddle: boolean;
+  style: string;
   at: number;
+}
+
+export interface Leaderboards {
+  typers: LeaderboardEntry[];
+  solvers: LeaderboardEntry[];
+}
+
+export interface ProfileBootstrap {
+  profile: Profile;
+  created: boolean;
+  imported: boolean;
+}
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
 /** Authorization header with a fresh Firebase ID token. Throws if signed out. */
@@ -61,20 +92,20 @@ async function apost<T>(path: string, body?: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(await errorMessage(res));
+  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
   return res.json() as Promise<T>;
 }
 
 async function aget<T>(path: string): Promise<T> {
   const res = await fetch(BASE + path, { headers: await authHeader() });
-  if (!res.ok) throw new Error(await errorMessage(res));
+  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
   return res.json() as Promise<T>;
 }
 
 /** Public GET — no auth (leaderboard is read-only public data). */
 async function jget<T>(path: string): Promise<T> {
   const res = await fetch(BASE + path);
-  if (!res.ok) throw new Error(await errorMessage(res));
+  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
   return res.json() as Promise<T>;
 }
 
@@ -93,6 +124,25 @@ async function errorMessage(res: Response): Promise<string> {
 export async function getProfile(): Promise<Profile> {
   const { profile } = await aget<{ profile: Profile }>('/profile');
   return profile;
+}
+
+let pendingBootstrap: { uid: string; promise: Promise<ProfileBootstrap> } | null = null;
+
+/**
+ * Load the signed-in profile in one request. The backend imports the optional
+ * guest snapshot only if this request creates the account profile. Concurrent
+ * React development-mode mounts share the same in-flight request.
+ */
+export function bootstrapProfile(guest?: GuestProgressSnapshot): Promise<ProfileBootstrap> {
+  const uid = auth?.currentUser?.uid;
+  if (!uid) return Promise.reject(new Error('Please sign in.'));
+  if (pendingBootstrap?.uid === uid) return pendingBootstrap.promise;
+
+  const promise = apost<ProfileBootstrap>('/profile/bootstrap', guest).finally(() => {
+    if (pendingBootstrap?.promise === promise) pendingBootstrap = null;
+  });
+  pendingBootstrap = { uid, promise };
+  return promise;
 }
 
 export async function submitRun(run: RunPayload): Promise<{ profile: Profile; isHighScore: boolean }> {
@@ -124,6 +174,16 @@ export async function buyMap(mapId: string): Promise<Profile> {
   return profile;
 }
 
+export async function buyCosmetic(key: string): Promise<Profile> {
+  const { profile } = await apost<{ profile: Profile }>('/profile/buy-cosmetic', { key });
+  return profile;
+}
+
+export async function equipCharacter(character: CharacterLoadout): Promise<Profile> {
+  const { profile } = await apost<{ profile: Profile }>('/profile/equip-character', character);
+  return profile;
+}
+
 /** Claim the rewarded-ad bonus. Returns the updated profile + coins granted. */
 export async function claimReward(): Promise<{ profile: Profile; reward: number }> {
   return apost('/profile/reward');
@@ -134,7 +194,6 @@ export async function checkoutCoinPack(packId: string): Promise<{ url: string }>
   return apost('/billing/checkout', { packId });
 }
 
-export async function getLeaderboard(limit = 20): Promise<LeaderboardEntry[]> {
-  const { leaderboard } = await jget<{ leaderboard: LeaderboardEntry[] }>(`/leaderboard?limit=${limit}`);
-  return leaderboard;
+export async function getLeaderboard(limit = 20): Promise<Leaderboards> {
+  return jget<Leaderboards>(`/leaderboard?limit=${limit}`);
 }

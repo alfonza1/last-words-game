@@ -11,8 +11,8 @@ export interface CoinPack {
 }
 
 export const COIN_PACKS: CoinPack[] = [
-  { id: 'small', coins: 1000, price: '$0.99' },
-  { id: 'medium', coins: 6000, price: '$3.99' },
-  { id: 'large', coins: 16000, price: '$9.99', best: true },
-  { id: 'huge', coins: 40000, price: '$19.99' },
+  { id: 'small', coins: 500, price: '$0.99' },
+  { id: 'medium', coins: 3000, price: '$3.99' },
+  { id: 'large', coins: 8000, price: '$9.99', best: true },
+  { id: 'huge', coins: 20000, price: '$19.99' },
 ];

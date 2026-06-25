@@ -3,9 +3,10 @@
 // frame: a themed post-apocalyptic environment with shambling zombie figures.
 // (Words to type live in the on-screen UI panels, not above zombie heads.)
 // ---------------------------------------------------------------------------
-import type { GameState, Zombie } from '../types';
+import type { CharacterLoadout, GameState, Zombie } from '../types';
 import { bossHealthFraction } from './boss';
 import type { MapTheme } from '../data/maps';
+import { drawSurvivor } from './character';
 
 interface ZStyle {
   skin: string;
@@ -32,7 +33,12 @@ function rand(i: number): number {
   return x - Math.floor(x);
 }
 
-export function drawGame(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme) {
+export function drawGame(
+  ctx: CanvasRenderingContext2D,
+  s: GameState,
+  theme: MapTheme,
+  character: CharacterLoadout,
+) {
   const { width: w, height: h } = s;
   const time = performance.now();
   ctx.clearRect(0, 0, w, h);
@@ -44,12 +50,14 @@ export function drawGame(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   ctx.translate(ox, oy);
 
   drawEnvironment(ctx, s, theme, time);
-  drawBase(ctx, s, theme);
+  drawBase(ctx, s, theme, time);
 
   const ordered = [...s.zombies].sort((a, b) => a.y - b.y);
   for (const z of ordered) drawZombie(ctx, z, s, time);
+  drawSurvivor(ctx, s, character, time);
 
   drawGroundFog(ctx, s, theme, time);
+  if (theme.id === 'forest') drawBleedingForestAtmosphere(ctx, s, time);
   if (theme.features.snow) drawSnow(ctx, s, time);
   if (theme.features.embers) drawEmbers(ctx, s, theme, time);
   drawFloating(ctx, s);
@@ -96,18 +104,21 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
     ctx.fill();
   }
 
-  // Stars (two layers — distant + brighter twinkles)
-  for (let i = 0; i < 90; i++) {
-    const sx = rand(i) * w;
-    const sy = rand(i + 99) * hy * 0.95;
-    const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * 0.001 + i));
-    const big = rand(i + 13) > 0.92;
-    ctx.fillStyle = `rgba(220,235,225,${0.12 + tw * 0.4})`;
-    ctx.fillRect(sx, sy, big ? 2.4 : 1.4, big ? 2.4 : 1.4);
+  // Stars (two layers — distant + brighter twinkles). Dead City replaces
+  // these with a low, light-polluted storm ceiling.
+  if (theme.id !== 'city' && theme.id !== 'inferno' && theme.id !== 'forest') {
+    for (let i = 0; i < 90; i++) {
+      const sx = rand(i) * w;
+      const sy = rand(i + 99) * hy * 0.95;
+      const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * 0.001 + i));
+      const big = rand(i + 13) > 0.92;
+      ctx.fillStyle = `rgba(220,235,225,${0.12 + tw * 0.4})`;
+      ctx.fillRect(sx, sy, big ? 2.4 : 1.4, big ? 2.4 : 1.4);
+    }
   }
 
   // Occasional shooting star streaking across.
-  {
+  if (theme.id !== 'city' && theme.id !== 'inferno' && theme.id !== 'forest') {
     const period = 5200;
     const phase = (time % period) / period;
     if (phase < 0.16) {
@@ -138,6 +149,10 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
     ctx.fillRect(0, hy - h * 0.12, w, h * 0.12 + 6);
   }
 
+  if (theme.id === 'city') drawDeadCitySky(ctx, s, time, hy);
+  if (theme.id === 'inferno') drawInfernoSky(ctx, s, time, hy);
+  if (theme.id === 'forest') drawBleedingForestSky(ctx, s, time, hy);
+
   // Aurora for the tundra
   if (theme.id === 'tundra') {
     for (let b = 0; b < 3; b++) {
@@ -159,26 +174,28 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
     }
   }
 
-  // Moon
-  const mx = w * 0.82;
-  const my = hy * 0.45;
-  const mr = Math.min(60, h * 0.09);
-  const glow = ctx.createRadialGradient(mx, my, mr * 0.3, mx, my, mr * 3);
-  glow.addColorStop(0, p.glow);
-  glow.addColorStop(1, p.glow.replace(/[\d.]+\)$/, '0)'));
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(mx, my, mr * 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = p.moon;
-  ctx.beginPath();
-  ctx.arc(mx, my, mr, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(60,40,40,0.25)';
-  for (let i = 0; i < 5; i++) {
+  // Moon. Dead City has its own occluded moon inside the storm layer.
+  if (theme.id !== 'city' && theme.id !== 'inferno' && theme.id !== 'forest') {
+    const mx = w * 0.82;
+    const my = hy * 0.45;
+    const mr = Math.min(60, h * 0.09);
+    const glow = ctx.createRadialGradient(mx, my, mr * 0.3, mx, my, mr * 3);
+    glow.addColorStop(0, p.glow);
+    glow.addColorStop(1, p.glow.replace(/[\d.]+\)$/, '0)'));
+    ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(mx + (rand(i) - 0.5) * mr, my + (rand(i + 3) - 0.5) * mr, mr * (0.1 + rand(i + 7) * 0.18), 0, Math.PI * 2);
+    ctx.arc(mx, my, mr * 3, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = p.moon;
+    ctx.beginPath();
+    ctx.arc(mx, my, mr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(60,40,40,0.25)';
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.arc(mx + (rand(i) - 0.5) * mr, my + (rand(i + 3) - 0.5) * mr, mr * (0.1 + rand(i + 7) * 0.18), 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   // Skyline silhouette (+ neon windows)
@@ -213,7 +230,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   ctx.fillRect(0, hy, w, h - hy);
 
   // Lab grid floor
-  if (theme.id === 'lab') {
+  if (theme.id === 'lab-legacy') {
     ctx.strokeStyle = `rgba(0,255,200,0.08)`;
     ctx.lineWidth = 1;
     for (let i = -8; i <= 8; i++) {
@@ -231,7 +248,7 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   }
 
   // Path toward the bunker
-  ctx.fillStyle = 'rgba(40,55,40,0.25)';
+  ctx.fillStyle = theme.id === 'forest' ? 'rgba(48,5,13,0.36)' : 'rgba(40,55,40,0.25)';
   ctx.beginPath();
   ctx.moveTo(w / 2 - 30, hy);
   ctx.lineTo(w / 2 + 30, hy);
@@ -281,6 +298,1618 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
   drawThemeScenery(ctx, s, theme, time, hy);
 }
 
+function drawDeadCitySky(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+
+  // A sickly moon is almost swallowed by the storm front.
+  const mx = w * 0.7;
+  const my = horizon * 0.48;
+  const mr = Math.min(68, h * 0.105);
+  const moonGlow = ctx.createRadialGradient(mx, my, mr * 0.1, mx, my, mr * 3.2);
+  moonGlow.addColorStop(0, 'rgba(180,255,235,0.34)');
+  moonGlow.addColorStop(0.45, 'rgba(40,220,190,0.1)');
+  moonGlow.addColorStop(1, 'rgba(20,120,130,0)');
+  ctx.fillStyle = moonGlow;
+  ctx.fillRect(mx - mr * 3.2, my - mr * 3.2, mr * 6.4, mr * 6.4);
+  ctx.fillStyle = '#b7d8cf';
+  ctx.beginPath();
+  ctx.arc(mx, my, mr, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(20,45,48,0.3)';
+  for (let i = 0; i < 7; i++) {
+    ctx.beginPath();
+    ctx.arc(
+      mx + (rand(i + 410) - 0.5) * mr * 1.25,
+      my + (rand(i + 420) - 0.5) * mr,
+      mr * (0.07 + rand(i + 430) * 0.17),
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+
+  // Heavy cloud shelves move at different rates and repeatedly veil the moon.
+  for (let layer = 0; layer < 4; layer++) {
+    const speed = 0.006 + layer * 0.002;
+    const drift = (time * speed + layer * 170) % (w + 360);
+    const cy = horizon * (0.12 + layer * 0.2);
+    ctx.fillStyle = `rgba(${4 + layer * 5},${13 + layer * 8},${18 + layer * 10},${0.72 - layer * 0.08})`;
+    ctx.beginPath();
+    ctx.moveTo(-220, cy + 20);
+    for (let x = -220; x <= w + 220; x += 48) {
+      const wave = Math.sin((x + drift) * 0.016 + layer) * (10 + layer * 3);
+      const noise = (rand(Math.floor((x + drift) / 48) + layer * 19) - 0.5) * 18;
+      ctx.lineTo(x, cy + wave + noise);
+    }
+    ctx.lineTo(w + 220, cy + 54);
+    ctx.lineTo(-220, cy + 54);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // The rim stays barely visible through the cloud cover.
+  ctx.strokeStyle = 'rgba(185,246,230,0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(mx, my, mr, -1.25, 1.1);
+  ctx.stroke();
+
+  // A rare, brief lightning fork silhouettes the ruined skyline.
+  const lightningPhase = (time % 7300) / 7300;
+  if (lightningPhase > 0.965) {
+    const alpha = Math.sin(((lightningPhase - 0.965) / 0.035) * Math.PI);
+    ctx.fillStyle = `rgba(140,255,235,${alpha * 0.1})`;
+    ctx.fillRect(0, 0, w, horizon + 12);
+    ctx.strokeStyle = `rgba(205,255,248,${alpha * 0.88})`;
+    ctx.shadowColor = '#70ffe1';
+    ctx.shadowBlur = 16;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.22, 0);
+    ctx.lineTo(w * 0.25, horizon * 0.23);
+    ctx.lineTo(w * 0.21, horizon * 0.42);
+    ctx.lineTo(w * 0.27, horizon * 0.66);
+    ctx.lineTo(w * 0.24, horizon * 0.92);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawInfernoSky(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+
+  // A black sun with a breathing corona replaces the ordinary moon.
+  const sx = w * 0.22;
+  const sy = horizon * 0.5;
+  const sr = Math.min(72, h * 0.11);
+  const pulse = 0.82 + Math.sin(time * 0.0013) * 0.08;
+  const corona = ctx.createRadialGradient(sx, sy, sr * 0.7, sx, sy, sr * 3.5 * pulse);
+  corona.addColorStop(0, 'rgba(255,55,12,0.48)');
+  corona.addColorStop(0.28, 'rgba(210,30,8,0.2)');
+  corona.addColorStop(0.65, 'rgba(120,12,5,0.08)');
+  corona.addColorStop(1, 'rgba(70,4,2,0)');
+  ctx.fillStyle = corona;
+  ctx.fillRect(sx - sr * 4, sy - sr * 4, sr * 8, sr * 8);
+
+  ctx.fillStyle = '#ff4a16';
+  ctx.beginPath();
+  ctx.arc(sx, sy, sr * 1.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#080102';
+  ctx.beginPath();
+  ctx.arc(sx, sy, sr * 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Uneven flame-like prominences make the eclipse feel alive.
+  ctx.strokeStyle = `rgba(255,70,18,${0.55 + Math.sin(time * 0.002) * 0.12})`;
+  ctx.lineWidth = 2;
+  for (let ray = 0; ray < 12; ray++) {
+    const a = (ray / 12) * Math.PI * 2;
+    const inner = sr * 1.05;
+    const outer = sr * (1.2 + rand(ray + 1300) * 0.32 + Math.sin(time * 0.0018 + ray) * 0.06);
+    ctx.beginPath();
+    ctx.moveTo(sx + Math.cos(a) * inner, sy + Math.sin(a) * inner);
+    ctx.quadraticCurveTo(
+      sx + Math.cos(a + 0.12) * outer,
+      sy + Math.sin(a + 0.12) * outer,
+      sx + Math.cos(a + 0.24) * inner,
+      sy + Math.sin(a + 0.24) * inner,
+    );
+    ctx.stroke();
+  }
+
+  // Low soot clouds roll in thick horizontal layers.
+  for (let layer = 0; layer < 5; layer++) {
+    const drift = (time * (0.003 + layer * 0.001) + layer * 190) % (w + 420);
+    const y = horizon * (0.12 + layer * 0.18);
+    ctx.fillStyle = `rgba(${8 + layer * 4},${2 + layer},${2 + layer},${0.72 - layer * 0.07})`;
+    ctx.beginPath();
+    ctx.moveTo(-230, y + 28);
+    for (let x = -230; x <= w + 230; x += 52) {
+      const wave = Math.sin((x + drift) * 0.013 + layer) * (9 + layer * 3);
+      const noise = (rand(Math.floor((x + drift) / 52) + layer * 31) - 0.5) * 20;
+      ctx.lineTo(x, y + wave + noise);
+    }
+    ctx.lineTo(w + 230, y + 62);
+    ctx.lineTo(-230, y + 62);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Ash falls slowly from the cloud ceiling before the brighter embers rise.
+  ctx.fillStyle = 'rgba(120,90,82,0.24)';
+  for (let i = 0; i < 46; i++) {
+    const x = (rand(i + 1340) * w + Math.sin(time * 0.0004 + i) * 22) % w;
+    const y = (rand(i + 1390) * horizon + time * 0.009 * (0.5 + rand(i))) % horizon;
+    const size = 1 + rand(i + 1430) * 1.8;
+    ctx.fillRect(x, y, size, size);
+  }
+}
+
+function drawBleedingForestSky(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const moonX = w * 0.76;
+  const moonY = horizon * 0.45;
+  const moonR = Math.min(66, h * 0.095);
+  const pulse = 0.88 + Math.sin(time * 0.0009) * 0.06;
+
+  // A pale eclipse burns behind the canopy. Its red rim breathes slowly enough
+  // to feel alive without becoming a gameplay flash.
+  const halo = ctx.createRadialGradient(moonX, moonY, moonR * 0.5, moonX, moonY, moonR * 3.6 * pulse);
+  halo.addColorStop(0, 'rgba(255,42,72,0.42)');
+  halo.addColorStop(0.34, 'rgba(190,10,38,0.17)');
+  halo.addColorStop(1, 'rgba(75,0,15,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(moonX - moonR * 4, moonY - moonR * 4, moonR * 8, moonR * 8);
+
+  ctx.fillStyle = '#efd7cd';
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#120308';
+  ctx.beginPath();
+  ctx.arc(moonX - moonR * 0.2, moonY - moonR * 0.07, moonR * 0.88, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = `rgba(255,45,75,${0.6 + Math.sin(time * 0.0011) * 0.12})`;
+  ctx.shadowColor = '#ff244f';
+  ctx.shadowBlur = 18;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonR * 1.01, -1.45, 1.58);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Long crimson cloud veils move at different depths.
+  for (let layer = 0; layer < 4; layer++) {
+    const drift = (time * (0.002 + layer * 0.0007) + layer * 180) % (w + 420);
+    const y = horizon * (0.14 + layer * 0.19);
+    ctx.fillStyle = `rgba(${24 + layer * 8},${2 + layer},${8 + layer * 3},${0.7 - layer * 0.08})`;
+    ctx.beginPath();
+    ctx.moveTo(-230, y + 26);
+    for (let x = -230; x <= w + 230; x += 48) {
+      const wave = Math.sin((x + drift) * 0.012 + layer * 1.7) * (8 + layer * 3);
+      const noise = (rand(Math.floor((x + drift) / 48) + layer * 43) - 0.5) * 16;
+      ctx.lineTo(x, y + wave + noise);
+    }
+    ctx.lineTo(w + 230, y + 56);
+    ctx.lineTo(-230, y + 56);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // A few distant crows cross the eclipse in a loose, repeating formation.
+  ctx.strokeStyle = 'rgba(4,1,3,0.88)';
+  ctx.lineWidth = Math.max(1, w / 850);
+  for (let i = 0; i < 7; i++) {
+    const travel = ((time * (0.006 + i * 0.0005) + i * 137) % (w + 180)) - 90;
+    const birdY = horizon * (0.18 + rand(i + 1810) * 0.46);
+    const wing = 3 + rand(i + 1820) * 4;
+    ctx.beginPath();
+    ctx.moveTo(travel - wing * 2, birdY);
+    ctx.quadraticCurveTo(travel - wing, birdY - wing, travel, birdY);
+    ctx.quadraticCurveTo(travel + wing, birdY - wing, travel + wing * 2, birdY);
+    ctx.stroke();
+  }
+
+  // Branches intrude from above, making the sky feel enclosed before the
+  // foreground forest is drawn.
+  ctx.strokeStyle = '#080104';
+  ctx.lineCap = 'round';
+  for (const side of [-1, 1] as const) {
+    ctx.lineWidth = Math.max(7, w * 0.009);
+    ctx.beginPath();
+    ctx.moveTo(side < 0 ? -20 : w + 20, horizon * 0.08);
+    ctx.bezierCurveTo(
+      w * (side < 0 ? 0.09 : 0.91),
+      horizon * 0.02,
+      w * (side < 0 ? 0.15 : 0.85),
+      horizon * 0.42,
+      w * (side < 0 ? 0.28 : 0.72),
+      horizon * 0.5,
+    );
+    ctx.stroke();
+    ctx.lineWidth = Math.max(2, w * 0.003);
+    for (let twig = 0; twig < 4; twig++) {
+      const baseX = w * (side < 0 ? 0.08 + twig * 0.05 : 0.92 - twig * 0.05);
+      const baseY = horizon * (0.17 + twig * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(baseX, baseY);
+      ctx.lineTo(baseX + side * w * 0.08, baseY + (twig % 2 ? 18 : -15));
+      ctx.stroke();
+    }
+  }
+}
+
+function drawArea67Scenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const scale = Math.max(0.78, Math.min(1.5, w / 960));
+
+  // Nevada-like mountain basin surrounding the installation.
+  ctx.fillStyle = '#11151a';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 8);
+  for (let x = 0; x <= w; x += Math.max(38, w / 20)) {
+    const ridge = horizon - h * (0.035 + rand(x + 810) * 0.11);
+    ctx.lineTo(x, ridge);
+  }
+  ctx.lineTo(w, horizon + 16);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#181b1c';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 10);
+  for (let x = 0; x <= w; x += Math.max(52, w / 14)) {
+    const ridge = horizon - h * (0.01 + rand(x + 840) * 0.065);
+    ctx.lineTo(x, ridge);
+  }
+  ctx.lineTo(w, horizon + 18);
+  ctx.closePath();
+  ctx.fill();
+
+  // Hard-packed desert apron.
+  const desert = ctx.createLinearGradient(0, horizon, 0, h);
+  desert.addColorStop(0, '#302e25');
+  desert.addColorStop(0.46, '#1b1b17');
+  desert.addColorStop(1, '#080a0a');
+  ctx.fillStyle = desert;
+  ctx.fillRect(0, horizon, w, h - horizon);
+
+  // Half-buried command bunker centered beneath the mountain.
+  const vaultX = w / 2;
+  const vaultW = Math.min(w * 0.3, 310);
+  const vaultTop = horizon - h * 0.045;
+  ctx.fillStyle = '#151b1c';
+  ctx.beginPath();
+  ctx.moveTo(vaultX - vaultW * 0.62, horizon + 14);
+  ctx.lineTo(vaultX - vaultW * 0.46, vaultTop);
+  ctx.lineTo(vaultX + vaultW * 0.46, vaultTop);
+  ctx.lineTo(vaultX + vaultW * 0.62, horizon + 14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#394342';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#080d0e';
+  ctx.fillRect(vaultX - vaultW * 0.28, vaultTop + 9, vaultW * 0.56, h * 0.095);
+  ctx.strokeStyle = 'rgba(157,255,79,0.42)';
+  ctx.strokeRect(vaultX - vaultW * 0.28, vaultTop + 9, vaultW * 0.56, h * 0.095);
+  ctx.fillStyle = '#222c2b';
+  for (let y = vaultTop + 15; y < vaultTop + h * 0.095; y += 8) {
+    ctx.fillRect(vaultX - vaultW * 0.25, y, vaultW * 0.5, 3);
+  }
+  ctx.fillStyle = 'rgba(157,255,79,0.65)';
+  ctx.font = `700 ${8 * scale}px "JetBrains Mono", monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('SUBLEVEL 7', vaultX, vaultTop + 6);
+
+  // Hangars flank the runway. The right bay is cracked open around a recovered craft.
+  const drawHangar = (x: number, width: number, open: boolean) => {
+    const y = horizon - h * 0.005;
+    const hh = h * 0.11;
+    ctx.fillStyle = '#202526';
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x + width * 0.08, y + 10);
+    ctx.quadraticCurveTo(x + width / 2, y - 10, x + width * 0.92, y + 10);
+    ctx.lineTo(x + width, y + hh);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#47504e';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = open ? '#030707' : '#141a1b';
+    ctx.fillRect(x + width * 0.09, y + 18, width * 0.82, hh - 18);
+    if (!open) {
+      ctx.strokeStyle = 'rgba(95,110,105,0.55)';
+      for (let sx = x + width * 0.18; sx < x + width * 0.9; sx += width * 0.14) {
+        ctx.beginPath();
+        ctx.moveTo(sx, y + 20);
+        ctx.lineTo(sx, y + hh);
+        ctx.stroke();
+      }
+    } else {
+      const craftX = x + width * 0.52;
+      const craftY = y + hh * 0.64;
+      const glow = ctx.createRadialGradient(craftX, craftY, 2, craftX, craftY, width * 0.35);
+      glow.addColorStop(0, 'rgba(157,255,79,0.2)');
+      glow.addColorStop(1, 'rgba(157,255,79,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(x, y, width, hh);
+      ctx.fillStyle = '#7f9188';
+      ctx.beginPath();
+      ctx.ellipse(craftX, craftY, width * 0.24, 7 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#b7c9bd';
+      ctx.beginPath();
+      ctx.ellipse(craftX, craftY - 5 * scale, width * 0.09, 7 * scale, 0, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(157,255,79,0.75)';
+      for (const lx of [-0.12, 0, 0.12]) {
+        ctx.beginPath();
+        ctx.arc(craftX + width * lx, craftY + 1, 1.7 * scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.fillStyle = 'rgba(255,190,70,0.65)';
+    ctx.fillRect(x + 5, y + hh - 4, 4, 4);
+    ctx.fillRect(x + width - 9, y + hh - 4, 4, 4);
+  };
+  drawHangar(w * 0.035, w * 0.25, false);
+  drawHangar(w * 0.715, w * 0.25, true);
+
+  // Runway drives the eye toward the underground vault.
+  const runway = ctx.createLinearGradient(0, horizon, 0, h);
+  runway.addColorStop(0, '#181d1c');
+  runway.addColorStop(1, '#050707');
+  ctx.fillStyle = runway;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.445, horizon);
+  ctx.lineTo(w * 0.555, horizon);
+  ctx.lineTo(w * 0.88, h);
+  ctx.lineTo(w * 0.12, h);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(190,205,180,0.36)';
+  ctx.lineWidth = 2;
+  for (const side of [-1, 1] as const) {
+    ctx.beginPath();
+    ctx.moveTo(w / 2 + side * w * 0.055, horizon);
+    ctx.lineTo(w / 2 + side * w * 0.38, h);
+    ctx.stroke();
+  }
+
+  // Runway threshold bars.
+  ctx.fillStyle = 'rgba(218,224,202,0.35)';
+  for (const side of [-1, 1] as const) {
+    for (let stripe = 0; stripe < 4; stripe++) {
+      const x = w / 2 + side * (w * 0.09 + stripe * 13 * scale);
+      ctx.fillRect(x - 4 * scale, h - 120, 8 * scale, 52);
+    }
+  }
+
+  // Fixed runway lights: deliberately sparse and non-flashing.
+  for (let row = 0; row < 7; row++) {
+    const v = (row + 0.8) / 7.8;
+    const y = horizon + v * (h - horizon);
+    const half = w * (0.055 + v * 0.325);
+    const r = 1.2 + v * 2.1;
+    for (const side of [-1, 1] as const) {
+      const x = w / 2 + side * half;
+      const on = (row + (side > 0 ? 1 : 0)) % 4 !== 2;
+      ctx.fillStyle = on ? 'rgba(180,255,130,0.78)' : 'rgba(55,70,58,0.5)';
+      if (on) {
+        ctx.shadowColor = '#9dff4f';
+        ctx.shadowBlur = 7;
+      }
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  // Radar dishes watch the sky from both sides.
+  const drawRadar = (x: number, y: number, size: number, phase: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.strokeStyle = '#56615d';
+    ctx.lineWidth = 2 * size;
+    ctx.beginPath();
+    ctx.moveTo(-8 * size, 18 * size);
+    ctx.lineTo(0, 0);
+    ctx.lineTo(8 * size, 18 * size);
+    ctx.stroke();
+    ctx.rotate(Math.sin(time * 0.00035 + phase) * 0.45);
+    ctx.strokeStyle = '#87938c';
+    ctx.lineWidth = 2 * size;
+    ctx.beginPath();
+    ctx.arc(0, 0, 17 * size, -0.1, Math.PI + 0.1);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(12 * size, -12 * size);
+    ctx.stroke();
+    ctx.fillStyle = '#9dff4f';
+    ctx.beginPath();
+    ctx.arc(12 * size, -12 * size, 2 * size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+  drawRadar(w * 0.31, horizon + 32, 0.72 * scale, 0);
+  drawRadar(w * 0.67, horizon + 25, 0.62 * scale, 2);
+
+  // Perimeter fencing stays at the sides so zombies remain readable.
+  for (const side of [-1, 1] as const) {
+    const innerTop = w / 2 + side * w * 0.31;
+    const innerBottom = w / 2 + side * w * 0.49;
+    ctx.strokeStyle = 'rgba(105,125,116,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(innerTop, horizon + 26);
+    ctx.lineTo(innerBottom, h - 64);
+    ctx.stroke();
+    for (let post = 0; post < 6; post++) {
+      const v = post / 5;
+      const px = innerTop + (innerBottom - innerTop) * v;
+      const py = horizon + 26 + (h - 64 - (horizon + 26)) * v;
+      const ph = 18 + v * 35;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px, py - ph);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px, py - ph);
+      ctx.lineTo(px - side * 8, py - ph - 5);
+      ctx.stroke();
+    }
+  }
+
+  // Two guard towers cast slow, opposing searchlights.
+  for (const tower of [{ x: w * 0.1, phase: 0 }, { x: w * 0.9, phase: Math.PI }]) {
+    const ty = horizon + h * 0.24;
+    const sweepX = tower.x + Math.sin(time * 0.00045 + tower.phase) * w * 0.16;
+    const beam = ctx.createLinearGradient(tower.x, ty - 58, sweepX, h - 70);
+    beam.addColorStop(0, 'rgba(225,235,190,0.13)');
+    beam.addColorStop(1, 'rgba(225,235,190,0)');
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(tower.x - 3, ty - 55);
+    ctx.lineTo(tower.x + 3, ty - 55);
+    ctx.lineTo(sweepX + 55, h - 70);
+    ctx.lineTo(sweepX - 55, h - 70);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#313a38';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(tower.x - 16, ty - 70, 32, 18);
+    ctx.beginPath();
+    ctx.moveTo(tower.x - 12, ty - 52);
+    ctx.lineTo(tower.x - 19, ty);
+    ctx.moveTo(tower.x + 12, ty - 52);
+    ctx.lineTo(tower.x + 19, ty);
+    ctx.stroke();
+  }
+
+  // Derelict military utility truck near the fence.
+  ctx.save();
+  ctx.translate(w * 0.79, h - 125);
+  ctx.rotate(-0.07);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#30372c';
+  ctx.fillRect(-30, -9, 60, 20);
+  ctx.fillStyle = '#3f4939';
+  ctx.fillRect(-27, -21, 26, 13);
+  ctx.fillStyle = 'rgba(80,105,95,0.35)';
+  ctx.fillRect(-23, -18, 17, 7);
+  ctx.fillStyle = '#090b09';
+  ctx.beginPath();
+  ctx.arc(-20, 12, 7, 0, Math.PI * 2);
+  ctx.arc(21, 12, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(220,205,120,0.45)';
+  ctx.font = '700 6px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('USAF', 13, 3);
+  ctx.restore();
+
+  // Sparse scrub, rocks, and luminous tracks around the runway margins.
+  for (let i = 0; i < 16; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.29 + rand(i + 900) * 0.19);
+    const y = horizon + 65 + rand(i + 910) * (h - horizon - 145);
+    const size = 2 + rand(i + 920) * 7;
+    ctx.fillStyle = '#27281f';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 1.8, size, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = 'rgba(157,255,79,0.2)';
+  ctx.lineWidth = 1.5;
+  for (let step = 0; step < 5; step++) {
+    const fx = w * 0.23 + step * 12 * scale;
+    const fy = h * 0.58 + step * 18;
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, 3 * scale, 7 * scale, -0.25, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Windblown dust catches moonlight near the ground.
+  for (let i = 0; i < 36; i++) {
+    const x = (rand(i + 950) * (w + 100) + time * 0.012) % (w + 100) - 50;
+    const y = horizon + rand(i + 960) * (h - horizon - 65);
+    ctx.fillStyle = `rgba(180,175,135,${0.05 + rand(i + 970) * 0.08})`;
+    ctx.fillRect(x, y, 1.5, 1.5);
+  }
+}
+
+function drawFrozenOutpostScenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const scale = Math.max(0.78, Math.min(1.5, w / 960));
+
+  // A wall of glaciated mountains closes the station off from the world.
+  const rearPeaks: Array<[number, number]> = [];
+  ctx.fillStyle = '#102332';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 12);
+  for (let x = 0; x <= w; x += Math.max(45, w / 18)) {
+    const y = horizon - h * (0.08 + rand(x + 1100) * 0.16);
+    rearPeaks.push([x, y]);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(w, horizon + 14);
+  ctx.closePath();
+  ctx.fill();
+
+  // Wind-facing ridges catch moonlight while their lee sides stay blue-black.
+  ctx.fillStyle = 'rgba(195,225,240,0.38)';
+  for (const [px, py] of rearPeaks) {
+    const cap = 13 + rand(px + 1110) * 16;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - cap, py + cap * 0.8);
+    ctx.lineTo(px - cap * 0.28, py + cap * 0.55);
+    ctx.lineTo(px + cap * 0.18, py + cap);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // The ice shelf itself is layered and cracked rather than a flat snow field.
+  const shelf = ctx.createLinearGradient(0, horizon, 0, h);
+  shelf.addColorStop(0, '#264354');
+  shelf.addColorStop(0.46, '#152b38');
+  shelf.addColorStop(1, '#07131b');
+  ctx.fillStyle = shelf;
+  ctx.fillRect(0, horizon, w, h - horizon);
+
+  for (let band = 0; band < 4; band++) {
+    const y = horizon + h * (0.08 + band * 0.15);
+    ctx.fillStyle = `rgba(205,235,245,${0.04 + band * 0.015})`;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    for (let x = 0; x <= w; x += 50) {
+      ctx.lineTo(x, y + Math.sin(x * 0.015 + band) * 8 + (rand(x + band * 30) - 0.5) * 5);
+    }
+    ctx.lineTo(w, y + 22);
+    ctx.lineTo(0, y + 20);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // The station is carved into a glacier face, with only its reinforced front exposed.
+  const stationX = w / 2;
+  const stationW = Math.min(w * 0.38, 370);
+  const stationTop = horizon - h * 0.055;
+  ctx.fillStyle = '#b9d7e3';
+  ctx.beginPath();
+  ctx.moveTo(stationX - stationW * 0.68, horizon + 18);
+  ctx.quadraticCurveTo(stationX - stationW * 0.54, stationTop - 18, stationX - stationW * 0.36, stationTop - 5);
+  ctx.lineTo(stationX + stationW * 0.38, stationTop - 5);
+  ctx.quadraticCurveTo(stationX + stationW * 0.57, stationTop - 15, stationX + stationW * 0.68, horizon + 18);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#172831';
+  ctx.fillRect(stationX - stationW * 0.43, stationTop + 6, stationW * 0.86, h * 0.105);
+  ctx.strokeStyle = '#638391';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(stationX - stationW * 0.43, stationTop + 6, stationW * 0.86, h * 0.105);
+
+  // Frosted observation windows and a sealed central airlock.
+  const windowY = stationTop + 16;
+  for (const side of [-1, 1] as const) {
+    const wx = stationX + side * stationW * 0.26;
+    const windowGlow = ctx.createRadialGradient(wx, windowY + 10, 1, wx, windowY + 10, 35 * scale);
+    windowGlow.addColorStop(0, 'rgba(255,190,105,0.18)');
+    windowGlow.addColorStop(1, 'rgba(255,190,105,0)');
+    ctx.fillStyle = windowGlow;
+    ctx.fillRect(wx - 38 * scale, windowY - 20, 76 * scale, 60);
+    ctx.fillStyle = 'rgba(255,190,105,0.5)';
+    ctx.fillRect(wx - 17 * scale, windowY, 34 * scale, 15 * scale);
+    ctx.strokeStyle = 'rgba(210,240,250,0.48)';
+    ctx.strokeRect(wx - 17 * scale, windowY, 34 * scale, 15 * scale);
+  }
+
+  const doorW = 48 * scale;
+  const doorH = 48 * scale;
+  ctx.fillStyle = '#081319';
+  ctx.fillRect(stationX - doorW / 2, stationTop + 12, doorW, doorH);
+  ctx.strokeStyle = '#84f7e5';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(stationX - doorW / 2, stationTop + 12, doorW, doorH);
+  ctx.fillStyle = 'rgba(132,247,229,0.7)';
+  ctx.fillRect(stationX - 14 * scale, stationTop + 19, 28 * scale, 3);
+  ctx.font = `700 ${7 * scale}px "JetBrains Mono", monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('POLAR-12', stationX, stationTop + 34 * scale);
+
+  // A plowed service trench cuts through the drift toward the airlock.
+  const trench = ctx.createLinearGradient(0, horizon, 0, h);
+  trench.addColorStop(0, '#15242c');
+  trench.addColorStop(1, '#050c11');
+  ctx.fillStyle = trench;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.445, horizon);
+  ctx.lineTo(w * 0.555, horizon);
+  ctx.lineTo(w * 0.82, h);
+  ctx.lineTo(w * 0.18, h);
+  ctx.closePath();
+  ctx.fill();
+
+  // High snowbanks frame the lane and keep the center readable.
+  for (const side of [-1, 1] as const) {
+    const bank = ctx.createLinearGradient(0, horizon, 0, h);
+    bank.addColorStop(0, 'rgba(220,240,248,0.58)');
+    bank.addColorStop(1, 'rgba(105,155,180,0.36)');
+    ctx.fillStyle = bank;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 + side * w * 0.055, horizon);
+    ctx.lineTo(w / 2 + side * w * 0.32, h);
+    ctx.lineTo(w / 2 + side * w * 0.48, h);
+    ctx.lineTo(w / 2 + side * w * 0.13, horizon);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(225,246,252,0.38)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 + side * w * 0.055, horizon);
+    ctx.lineTo(w / 2 + side * w * 0.32, h);
+    ctx.stroke();
+  }
+
+  // Red guide poles reveal the depth of the buried road.
+  for (let row = 0; row < 5; row++) {
+    const v = (row + 0.7) / 5.7;
+    const y = horizon + v * (h - horizon);
+    const half = w * (0.07 + v * 0.3);
+    const poleH = 13 + v * 28;
+    for (const side of [-1, 1] as const) {
+      const x = w / 2 + side * half;
+      ctx.strokeStyle = '#d84848';
+      ctx.lineWidth = 2 + v;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y - poleH);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(235,245,250,0.8)';
+      ctx.fillRect(x - 2, y - poleH + 5, 4, 5);
+    }
+  }
+
+  // Collapsed geodesic radome on the left.
+  const domeX = w * 0.13;
+  const domeY = horizon + h * 0.18;
+  const domeR = 48 * scale;
+  ctx.save();
+  ctx.translate(domeX, domeY);
+  ctx.rotate(-0.13);
+  ctx.strokeStyle = 'rgba(170,220,235,0.55)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(0, 0, domeR, Math.PI, Math.PI * 2);
+  ctx.stroke();
+  for (let spoke = -2; spoke <= 2; spoke++) {
+    ctx.beginPath();
+    ctx.moveTo(spoke * domeR * 0.2, 0);
+    ctx.lineTo(spoke * domeR * 0.34, -domeR * (0.65 + Math.abs(spoke) * 0.08));
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(-domeR, 0);
+  ctx.lineTo(domeR, 0);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(190,230,242,0.12)';
+  ctx.beginPath();
+  ctx.arc(0, 0, domeR, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Surviving communications mast and slowly tracking dish on the right.
+  const mastX = w * 0.86;
+  const mastBase = horizon + h * 0.28;
+  ctx.strokeStyle = '#668491';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(mastX - 22 * scale, mastBase);
+  ctx.lineTo(mastX, horizon - h * 0.02);
+  ctx.lineTo(mastX + 22 * scale, mastBase);
+  for (let y = horizon + 12; y < mastBase; y += 24 * scale) {
+    const v = (y - horizon) / (mastBase - horizon);
+    const half = 5 + v * 14 * scale;
+    ctx.moveTo(mastX - half, y);
+    ctx.lineTo(mastX + half, y);
+  }
+  ctx.stroke();
+  ctx.save();
+  ctx.translate(mastX, horizon + 3);
+  ctx.rotate(Math.sin(time * 0.00025) * 0.28);
+  ctx.strokeStyle = '#b2d4df';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, 20 * scale, -0.15, Math.PI + 0.15);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(13 * scale, -13 * scale);
+  ctx.stroke();
+  ctx.restore();
+
+  // A cable tram hangs abandoned between the mast and glacier station.
+  const cableY = horizon + 8;
+  ctx.strokeStyle = 'rgba(115,150,165,0.5)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.58, cableY);
+  ctx.quadraticCurveTo(w * 0.72, cableY + 30, mastX, horizon + 1);
+  ctx.stroke();
+  const tramX = w * 0.7;
+  const tramY = cableY + 18;
+  ctx.fillStyle = '#17272f';
+  ctx.fillRect(tramX - 18 * scale, tramY, 36 * scale, 17 * scale);
+  ctx.strokeStyle = '#7899a6';
+  ctx.strokeRect(tramX - 18 * scale, tramY, 36 * scale, 17 * scale);
+  ctx.fillStyle = 'rgba(120,190,210,0.28)';
+  ctx.fillRect(tramX - 13 * scale, tramY + 4, 9 * scale, 6 * scale);
+  ctx.fillRect(tramX + 4 * scale, tramY + 4, 9 * scale, 6 * scale);
+
+  // A snowcat sits half-buried where its crew abandoned it.
+  ctx.save();
+  ctx.translate(w * 0.77, h - 130);
+  ctx.rotate(0.08);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = '#d78332';
+  ctx.fillRect(-27, -12, 54, 22);
+  ctx.fillStyle = '#263740';
+  ctx.fillRect(-21, -25, 31, 14);
+  ctx.fillStyle = 'rgba(135,200,220,0.35)';
+  ctx.fillRect(-17, -22, 21, 8);
+  ctx.fillStyle = '#10171a';
+  ctx.fillRect(-34, 7, 68, 8);
+  for (let x = -28; x <= 28; x += 8) {
+    ctx.strokeStyle = '#46545a';
+    ctx.beginPath();
+    ctx.moveTo(x, 8);
+    ctx.lineTo(x + 5, 14);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(225,242,248,0.62)';
+  ctx.beginPath();
+  ctx.ellipse(8, -26, 22, 5, -0.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Blue light leaks from deep crevasses at the edges of the shelf.
+  for (const crevasse of [
+    { x: w * 0.08, y: h * 0.5, len: h * 0.24, bend: 1 },
+    { x: w * 0.92, y: h * 0.58, len: h * 0.22, bend: -1 },
+    { x: w * 0.2, y: h * 0.73, len: h * 0.13, bend: -1 },
+  ]) {
+    ctx.strokeStyle = 'rgba(90,220,255,0.18)';
+    ctx.shadowColor = '#55cfff';
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(crevasse.x, crevasse.y);
+    ctx.lineTo(crevasse.x + crevasse.bend * 14, crevasse.y + crevasse.len * 0.32);
+    ctx.lineTo(crevasse.x - crevasse.bend * 9, crevasse.y + crevasse.len * 0.65);
+    ctx.lineTo(crevasse.x + crevasse.bend * 18, crevasse.y + crevasse.len);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Wind-sculpted drifts and exposed ice crystals add local detail.
+  for (let i = 0; i < 12; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.27 + rand(i + 1200) * 0.2);
+    const y = horizon + 60 + rand(i + 1210) * (h - horizon - 130);
+    const width = 18 + rand(i + 1220) * 46;
+    ctx.fillStyle = 'rgba(220,240,248,0.16)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, width, 5 + width * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (i % 3 === 0) {
+      ctx.fillStyle = 'rgba(145,220,245,0.38)';
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 6 * scale, y);
+      ctx.lineTo(x + 1, y - (18 + rand(i) * 24) * scale);
+      ctx.lineTo(x + 7 * scale, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Low blowing snow travels horizontally while the global snow falls vertically.
+  ctx.strokeStyle = 'rgba(225,245,252,0.12)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 36; i++) {
+    const x = (rand(i + 1250) * (w + 180) + time * 0.055) % (w + 180) - 90;
+    const y = horizon + rand(i + 1260) * (h - horizon - 65);
+    const len = 12 + rand(i + 1270) * 26;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + len, y - 3);
+    ctx.stroke();
+  }
+}
+
+function drawInfernoScenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const scale = Math.max(0.78, Math.min(1.5, w / 960));
+
+  // Jagged volcanic teeth close the horizon around the cathedral.
+  ctx.fillStyle = '#100203';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 10);
+  for (let x = 0; x <= w; x += Math.max(32, w / 26)) {
+    const centralGap = Math.abs(x / w - 0.5) < 0.18;
+    const peak = centralGap ? h * 0.035 : h * (0.06 + rand(x + 1500) * 0.17);
+    ctx.lineTo(x, horizon - peak);
+  }
+  ctx.lineTo(w, horizon + 18);
+  ctx.closePath();
+  ctx.fill();
+
+  // Distant fires behind the ridge silhouette.
+  for (let i = 0; i < 9; i++) {
+    const fx = w * (0.05 + rand(i + 1510) * 0.9);
+    if (Math.abs(fx / w - 0.5) < 0.2) continue;
+    const fy = horizon - 5 - rand(i + 1520) * h * 0.08;
+    const radius = 18 + rand(i + 1530) * 34;
+    const fire = ctx.createRadialGradient(fx, fy, 1, fx, fy, radius);
+    fire.addColorStop(0, 'rgba(255,90,18,0.32)');
+    fire.addColorStop(1, 'rgba(130,12,2,0)');
+    ctx.fillStyle = fire;
+    ctx.fillRect(fx - radius, fy - radius, radius * 2, radius * 2);
+  }
+
+  // The Ash Cathedral is a colossal ribbed gate rather than a normal building.
+  const gateX = w / 2;
+  const gateTop = horizon - h * 0.2;
+  const gateW = Math.min(w * 0.38, 390);
+  const gateH = h * 0.24;
+
+  // Rear mass and horned roofline.
+  ctx.fillStyle = '#0b0102';
+  ctx.beginPath();
+  ctx.moveTo(gateX - gateW * 0.6, horizon + 14);
+  ctx.lineTo(gateX - gateW * 0.48, gateTop + gateH * 0.24);
+  ctx.lineTo(gateX - gateW * 0.38, gateTop - gateH * 0.28);
+  ctx.lineTo(gateX - gateW * 0.2, gateTop + gateH * 0.04);
+  ctx.lineTo(gateX, gateTop - gateH * 0.16);
+  ctx.lineTo(gateX + gateW * 0.2, gateTop + gateH * 0.04);
+  ctx.lineTo(gateX + gateW * 0.38, gateTop - gateH * 0.28);
+  ctx.lineTo(gateX + gateW * 0.48, gateTop + gateH * 0.24);
+  ctx.lineTo(gateX + gateW * 0.6, horizon + 14);
+  ctx.closePath();
+  ctx.fill();
+
+  // Rib-like buttresses curl inward toward the gate.
+  for (const side of [-1, 1] as const) {
+    for (let rib = 0; rib < 5; rib++) {
+      const outerX = gateX + side * gateW * (0.22 + rib * 0.085);
+      const outerY = gateTop + gateH * (0.12 + rib * 0.11);
+      const innerX = gateX + side * gateW * (0.08 + rib * 0.018);
+      const innerY = horizon + 10;
+      ctx.strokeStyle = rib % 2 === 0 ? '#26100d' : '#170706';
+      ctx.lineWidth = (10 - rib * 1.1) * scale;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(outerX, outerY);
+      ctx.quadraticCurveTo(
+        gateX + side * gateW * (0.43 - rib * 0.035),
+        gateTop + gateH * 0.55,
+        innerX,
+        innerY,
+      );
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,55,15,0.18)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+  }
+
+  // Colossal faceless sentinels flank the gate, too large to mistake for enemies.
+  for (const side of [-1, 1] as const) {
+    const statueX = gateX + side * gateW * 0.52;
+    const statueBase = horizon + 6;
+    const statueH = gateH * 0.92;
+    ctx.fillStyle = '#070101';
+    ctx.beginPath();
+    ctx.moveTo(statueX - 24 * scale, statueBase);
+    ctx.lineTo(statueX - 14 * scale, statueBase - statueH * 0.68);
+    ctx.quadraticCurveTo(statueX, statueBase - statueH, statueX + 14 * scale, statueBase - statueH * 0.68);
+    ctx.lineTo(statueX + 24 * scale, statueBase);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#190504';
+    ctx.beginPath();
+    ctx.ellipse(statueX, statueBase - statueH * 0.78, 11 * scale, 16 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#160403';
+    ctx.lineWidth = 5 * scale;
+    ctx.beginPath();
+    ctx.moveTo(statueX - 5 * scale, statueBase - statueH * 0.9);
+    ctx.lineTo(statueX - 20 * scale, statueBase - statueH * 1.1);
+    ctx.lineTo(statueX - 28 * scale, statueBase - statueH * 1.03);
+    ctx.moveTo(statueX + 5 * scale, statueBase - statueH * 0.9);
+    ctx.lineTo(statueX + 20 * scale, statueBase - statueH * 1.1);
+    ctx.lineTo(statueX + 28 * scale, statueBase - statueH * 1.03);
+    ctx.stroke();
+  }
+
+  // The entrance reads like an open mouth, but remains architectural.
+  const archW = gateW * 0.31;
+  const archH = gateH * 0.72;
+  ctx.fillStyle = '#020001';
+  ctx.beginPath();
+  ctx.moveTo(gateX - archW / 2, horizon + 8);
+  ctx.lineTo(gateX - archW / 2, gateTop + archH * 0.55);
+  ctx.arc(gateX, gateTop + archH * 0.55, archW / 2, Math.PI, 0);
+  ctx.lineTo(gateX + archW / 2, horizon + 8);
+  ctx.closePath();
+  ctx.fill();
+
+  const innerGlow = ctx.createRadialGradient(gateX, horizon - 5, 2, gateX, horizon - 5, archW * 0.9);
+  innerGlow.addColorStop(0, 'rgba(255,45,8,0.25)');
+  innerGlow.addColorStop(0.5, 'rgba(120,6,2,0.1)');
+  innerGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = innerGlow;
+  ctx.fillRect(gateX - archW, gateTop, archW * 2, gateH);
+
+  // Vertical teeth / portcullis inside the opening.
+  ctx.fillStyle = '#2b0b08';
+  for (let tooth = -3; tooth <= 3; tooth++) {
+    const x = gateX + tooth * archW * 0.11;
+    const len = gateH * (0.2 + (3 - Math.abs(tooth)) * 0.045);
+    ctx.beginPath();
+    ctx.moveTo(x - 3 * scale, gateTop + archH * 0.43);
+    ctx.lineTo(x + 3 * scale, gateTop + archH * 0.43);
+    ctx.lineTo(x, gateTop + archH * 0.43 + len);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Two unwavering eyes high in the structure imply something enormous behind it.
+  const eyeY = gateTop + gateH * 0.27;
+  const eyeAlpha = 0.58 + Math.sin(time * 0.00075) * 0.12;
+  ctx.fillStyle = `rgba(255,54,12,${eyeAlpha})`;
+  ctx.shadowColor = '#ff2d08';
+  ctx.shadowBlur = 15;
+  for (const side of [-1, 1] as const) {
+    ctx.beginPath();
+    ctx.ellipse(gateX + side * gateW * 0.105, eyeY, 7 * scale, 2.2 * scale, side * 0.16, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+
+  // Lava chasms flank a narrow obsidian processional causeway.
+  const lava = ctx.createLinearGradient(0, horizon, 0, h);
+  lava.addColorStop(0, '#5c0b04');
+  lava.addColorStop(0.45, '#310401');
+  lava.addColorStop(1, '#120100');
+  ctx.fillStyle = lava;
+  ctx.fillRect(0, horizon, w, h - horizon);
+
+  for (let band = 0; band < 5; band++) {
+    const y = horizon + h * (0.08 + band * 0.14);
+    const alpha = 0.12 + band * 0.025 + Math.sin(time * 0.0015 + band) * 0.025;
+    ctx.strokeStyle = `rgba(255,105,22,${alpha})`;
+    ctx.lineWidth = 2 + band * 0.4;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 32) {
+      const yy = y + Math.sin(x * 0.019 + band * 1.7 + time * 0.0007) * (5 + band);
+      if (x === 0) ctx.moveTo(x, yy);
+      else ctx.lineTo(x, yy);
+    }
+    ctx.stroke();
+  }
+
+  // Broken shelves of cooled rock float on the chasm surface.
+  for (let i = 0; i < 16; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.22 + rand(i + 1540) * 0.25);
+    const y = horizon + 40 + rand(i + 1550) * (h - horizon - 110);
+    const rw = 16 + rand(i + 1560) * 42;
+    const rh = 5 + rand(i + 1570) * 9;
+    ctx.fillStyle = '#0c0202';
+    ctx.beginPath();
+    ctx.moveTo(x - rw, y);
+    ctx.lineTo(x - rw * 0.45, y - rh);
+    ctx.lineTo(x + rw * 0.5, y - rh * 0.7);
+    ctx.lineTo(x + rw, y + rh * 0.15);
+    ctx.lineTo(x + rw * 0.18, y + rh);
+    ctx.lineTo(x - rw * 0.65, y + rh * 0.55);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,82,18,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  const road = ctx.createLinearGradient(0, horizon, 0, h);
+  road.addColorStop(0, '#150605');
+  road.addColorStop(0.5, '#0b0202');
+  road.addColorStop(1, '#020101');
+  ctx.fillStyle = road;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.44, horizon);
+  ctx.lineTo(w * 0.56, horizon);
+  ctx.lineTo(w * 0.82, h);
+  ctx.lineTo(w * 0.18, h);
+  ctx.closePath();
+  ctx.fill();
+
+  // Molten edges make the causeway look suspended over the chasm.
+  for (const side of [-1, 1] as const) {
+    const edge = ctx.createLinearGradient(w / 2, horizon, w / 2 + side * w * 0.34, h);
+    edge.addColorStop(0, 'rgba(255,65,10,0.55)');
+    edge.addColorStop(1, 'rgba(255,120,24,0.82)');
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ff3b12';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 + side * w * 0.06, horizon);
+    ctx.lineTo(w / 2 + side * w * 0.32, h);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Ancient slab joints repeat toward the gate and give the bridge weight.
+  for (let joint = 0; joint < 7; joint++) {
+    const v = 0.18 + joint * 0.12;
+    const y = horizon + v * (h - horizon);
+    const half = w * (0.06 + v * 0.26);
+    ctx.strokeStyle = 'rgba(80,20,14,0.42)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - half, y);
+    ctx.lineTo(w / 2 + half, y);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,55,12,0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - half, y + 3);
+    ctx.lineTo(w / 2 + half, y + 3);
+    ctx.stroke();
+  }
+
+  // Fractures and dim ritual glyphs break up the black stone.
+  ctx.strokeStyle = 'rgba(255,62,15,0.32)';
+  ctx.lineWidth = 1.5;
+  for (let crack = 0; crack < 11; crack++) {
+    let x = w * (0.29 + rand(crack + 1560) * 0.42);
+    let y = horizon + 38 + rand(crack + 1570) * (h - horizon - 120);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    for (let part = 0; part < 3; part++) {
+      x += (rand(crack * 9 + part + 1580) - 0.5) * 32;
+      y += 10 + rand(crack * 11 + part + 1590) * 18;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = 'rgba(190,26,12,0.2)';
+  for (let sigil = 0; sigil < 4; sigil++) {
+    const v = 0.24 + sigil * 0.18;
+    const x = w / 2 + (sigil % 2 === 0 ? -1 : 1) * w * 0.05;
+    const y = horizon + v * (h - horizon);
+    const r = (9 + v * 18) * scale;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.moveTo(x - r, y);
+    ctx.lineTo(x + r, y);
+    ctx.moveTo(x, y - r);
+    ctx.lineTo(x, y + r);
+    ctx.stroke();
+  }
+
+  // Chained monoliths frame the lower causeway.
+  const drawMonolith = (x: number, y: number, size: number, side: -1 | 1) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = '#110303';
+    ctx.beginPath();
+    ctx.moveTo(-12 * size, 0);
+    ctx.lineTo(-9 * size, -54 * size);
+    ctx.lineTo(0, -72 * size);
+    ctx.lineTo(9 * size, -54 * size);
+    ctx.lineTo(12 * size, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,50,12,0.24)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,48,12,0.52)';
+    ctx.beginPath();
+    ctx.arc(0, -43 * size, 3 * size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Heavy chain vanishes out of frame.
+    ctx.strokeStyle = '#26110e';
+    ctx.lineWidth = 4 * size;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 53 * size);
+    ctx.quadraticCurveTo(x + side * 42 * size, y - 100 * size, x + side * 95 * size, y - 125 * size);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(100,45,32,0.45)';
+    ctx.lineWidth = 1.2;
+    for (let link = 0; link < 7; link++) {
+      const t = link / 6;
+      const lx = x + side * (42 * t + 53 * t * t) * size;
+      const ly = y - (53 + 72 * t - 22 * t * t) * size;
+      ctx.beginPath();
+      ctx.ellipse(lx, ly, 6 * size, 3 * size, side * 0.65, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  };
+  drawMonolith(w * 0.12, h * 0.7, 0.85 * scale, -1);
+  drawMonolith(w * 0.88, h * 0.64, 0.78 * scale, 1);
+
+  // Motionless watchers stand beyond the bridge. Their eyes blink rarely.
+  for (let i = 0; i < 8; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.25 + rand(i + 1610) * 0.19);
+    const y = horizon + h * (0.13 + rand(i + 1620) * 0.53);
+    const size = 0.45 + ((y - horizon) / (h - horizon)) * 0.75;
+    ctx.fillStyle = 'rgba(2,0,0,0.92)';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 16 * size, 5 * size, 9 * size, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x - 8 * size, y);
+    ctx.lineTo(x, y - 19 * size);
+    ctx.lineTo(x + 8 * size, y);
+    ctx.closePath();
+    ctx.fill();
+    const awake = Math.sin(time * 0.0007 + i * 1.9) > -0.82;
+    if (awake) {
+      ctx.fillStyle = 'rgba(255,45,10,0.65)';
+      ctx.fillRect(x - 3.5 * size, y - 18 * size, 2 * size, 1.2 * size);
+      ctx.fillRect(x + 1.5 * size, y - 18 * size, 2 * size, 1.2 * size);
+    }
+  }
+
+  // Skeletal arches repeat down the bridge, reinforcing the processional scale.
+  for (let row = 0; row < 4; row++) {
+    const v = 0.2 + row * 0.19;
+    const y = horizon + v * (h - horizon);
+    const half = w * (0.08 + v * 0.24);
+    const archH = (28 + v * 50) * scale;
+    for (const side of [-1, 1] as const) {
+      const x = w / 2 + side * half;
+      ctx.strokeStyle = '#23100c';
+      ctx.lineWidth = 4 + v * 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x - side * 13 * scale, y - archH, x - side * 30 * scale, y - archH * 1.18);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,72,18,0.13)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  // Heat distortion appears as subtle vertical waves near the chasms.
+  ctx.strokeStyle = 'rgba(255,100,45,0.07)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 18; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const x = w / 2 + side * w * (0.24 + rand(i + 1650) * 0.24);
+    const y = horizon + rand(i + 1660) * (h - horizon - 80);
+    ctx.beginPath();
+    ctx.moveTo(x, y + 26);
+    ctx.bezierCurveTo(x - 8, y + 16, x + 8, y + 8, x, y);
+    ctx.stroke();
+  }
+}
+
+function drawBleedingForestScenery(
+  ctx: CanvasRenderingContext2D,
+  s: GameState,
+  time: number,
+  horizon: number,
+) {
+  const { width: w, height: h } = s;
+  const scale = Math.max(0.72, Math.min(1.5, w / 960));
+  const baseY = h - 60;
+  const heartBase = horizon + h * 0.16;
+
+  // Rich black loam and old red leaf litter replace the generic ground plane.
+  const earth = ctx.createLinearGradient(0, horizon, 0, h);
+  earth.addColorStop(0, '#19050a');
+  earth.addColorStop(0.48, '#100307');
+  earth.addColorStop(1, '#050103');
+  ctx.fillStyle = earth;
+  ctx.fillRect(0, horizon, w, h - horizon);
+
+  // The distant forest is layered from wine-red haze into near-black trunks.
+  for (let layer = 0; layer < 3; layer++) {
+    const count = 15 + layer * 5;
+    const color = layer === 0 ? '#230710' : layer === 1 ? '#15040a' : '#0b0206';
+    for (let i = 0; i < count; i++) {
+      const seed = layer * 100 + i;
+      const x = ((i + 0.35 + rand(seed + 1900) * 0.45) / count) * w;
+      const depth = layer * 0.035 + rand(seed + 1910) * 0.04;
+      const treeBase = horizon + h * depth;
+      const height = h * (0.12 + layer * 0.055 + rand(seed + 1920) * 0.09);
+      drawBleedingTree(ctx, x, treeBase, height, seed, color, layer === 2 ? 0.9 : 0.7, false);
+    }
+  }
+
+  // A reflective blood-sap river leads directly to the Heartwood Cathedral.
+  const river = ctx.createLinearGradient(0, horizon, 0, baseY);
+  river.addColorStop(0, 'rgba(78,6,18,0.6)');
+  river.addColorStop(0.55, 'rgba(126,8,28,0.54)');
+  river.addColorStop(1, 'rgba(45,3,12,0.72)');
+  ctx.fillStyle = river;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.485, heartBase);
+  ctx.bezierCurveTo(w * 0.47, h * 0.48, w * 0.4, h * 0.7, w * 0.29, baseY);
+  ctx.lineTo(w * 0.73, baseY);
+  ctx.bezierCurveTo(w * 0.61, h * 0.7, w * 0.53, h * 0.48, w * 0.515, heartBase);
+  ctx.closePath();
+  ctx.fill();
+
+  // Slow highlights travel down the current, never rapidly flashing.
+  ctx.strokeStyle = `rgba(255,50,74,${0.18 + Math.sin(time * 0.001) * 0.04})`;
+  ctx.lineWidth = 1.4;
+  for (let ribbon = 0; ribbon < 6; ribbon++) {
+    const startY = heartBase + 12 + ribbon * (baseY - heartBase) / 7;
+    const widthAtDepth = 8 + ribbon * w * 0.025;
+    const center = w * 0.5 + Math.sin(ribbon * 1.7) * w * 0.035;
+    ctx.beginPath();
+    ctx.moveTo(center - widthAtDepth, startY);
+    ctx.bezierCurveTo(
+      center + Math.sin(time * 0.0004 + ribbon) * 14,
+      startY + 22,
+      center - 20,
+      startY + 42,
+      center + widthAtDepth * 1.25,
+      startY + 62,
+    );
+    ctx.stroke();
+  }
+
+  drawHeartwoodCathedral(ctx, w * 0.5, heartBase, h * 0.35, time, scale);
+
+  // Repeating antler-and-bone wards make the route feel like an old procession.
+  for (let row = 0; row < 4; row++) {
+    const depth = 0.18 + row * 0.17;
+    const y = horizon + depth * (baseY - horizon);
+    const halfWidth = w * (0.07 + depth * 0.3);
+    const archScale = scale * (0.5 + depth * 0.75);
+    drawForestWardArch(ctx, w / 2, y, halfWidth, archScale, row, time);
+  }
+
+  // Massive foreground sentinels frame the combat lane without covering it.
+  const sentinels = [
+    { x: w * 0.04, y: baseY - h * 0.03, height: h * 0.44, seed: 2051 },
+    { x: w * 0.96, y: baseY - h * 0.08, height: h * 0.5, seed: 2077 },
+    { x: w * 0.14, y: horizon + h * 0.38, height: h * 0.3, seed: 2099 },
+    { x: w * 0.86, y: horizon + h * 0.31, height: h * 0.28, seed: 2111 },
+  ];
+  for (const tree of sentinels) {
+    drawBleedingTree(ctx, tree.x, tree.y, tree.height, tree.seed, '#070104', 1, true);
+  }
+
+  // Exposed roots vein through the earth and softly catch the crimson light.
+  for (let i = 0; i < 17; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const startX = w / 2 + side * w * (0.07 + rand(i + 2130) * 0.24);
+    const startY = horizon + h * (0.1 + rand(i + 2140) * 0.65);
+    ctx.strokeStyle = i % 4 === 0 ? 'rgba(160,18,38,0.42)' : 'rgba(35,6,12,0.72)';
+    ctx.lineWidth = 1.2 + rand(i + 2150) * 2.2;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.bezierCurveTo(
+      startX + side * 28,
+      startY + 18,
+      startX - side * 15,
+      startY + 45,
+      startX + side * (42 + rand(i + 2160) * 50),
+      startY + 70,
+    );
+    ctx.stroke();
+  }
+
+  // Watchers remain at the extreme edges; they blink independently and slowly.
+  for (let i = 0; i < 5; i++) {
+    const side = i % 2 === 0 ? 0.035 : 0.965;
+    const eyeX = side * w + (rand(i + 2180) - 0.5) * 26;
+    const eyeY = horizon + h * (0.2 + rand(i + 2190) * 0.5);
+    const awake = Math.sin(time * 0.0009 + i * 2.3) > -0.52;
+    if (!awake) continue;
+    ctx.fillStyle = 'rgba(255,44,72,0.72)';
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 7;
+    ctx.beginPath();
+    ctx.ellipse(eyeX - 4, eyeY, 2.2, 1.2, -0.15, 0, Math.PI * 2);
+    ctx.ellipse(eyeX + 4, eyeY, 2.2, 1.2, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawBleedingTree(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  baseY: number,
+  height: number,
+  seed: number,
+  color: string,
+  alpha: number,
+  bleeding: boolean,
+) {
+  const trunk = Math.max(4, height * (0.055 + rand(seed) * 0.025));
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = 'round';
+
+  // Split trunk.
+  ctx.strokeStyle = color;
+  ctx.lineWidth = trunk;
+  ctx.beginPath();
+  ctx.moveTo(x, baseY);
+  ctx.bezierCurveTo(
+    x + (rand(seed + 1) - 0.5) * height * 0.12,
+    baseY - height * 0.28,
+    x + (rand(seed + 2) - 0.5) * height * 0.1,
+    baseY - height * 0.7,
+    x + (rand(seed + 3) - 0.5) * height * 0.08,
+    baseY - height,
+  );
+  ctx.stroke();
+
+  // Gnarled limbs, with smaller hooked twigs on each side.
+  for (let limbIndex = 0; limbIndex < 6; limbIndex++) {
+    const side = limbIndex % 2 === 0 ? -1 : 1;
+    const attachY = baseY - height * (0.36 + limbIndex * 0.085);
+    const attachX = x + (rand(seed + limbIndex + 10) - 0.5) * trunk;
+    const reach = height * (0.2 + rand(seed + limbIndex + 20) * 0.16);
+    const endX = attachX + side * reach;
+    const endY = attachY - height * (0.08 + rand(seed + limbIndex + 30) * 0.15);
+    ctx.lineWidth = Math.max(1.5, trunk * (0.42 - limbIndex * 0.025));
+    ctx.beginPath();
+    ctx.moveTo(attachX, attachY);
+    ctx.quadraticCurveTo(attachX + side * reach * 0.42, attachY - reach * 0.18, endX, endY);
+    ctx.stroke();
+
+    ctx.lineWidth = Math.max(1, trunk * 0.16);
+    for (let twig = 0; twig < 2; twig++) {
+      const t = 0.52 + twig * 0.24;
+      const twigX = attachX + (endX - attachX) * t;
+      const twigY = attachY + (endY - attachY) * t;
+      ctx.beginPath();
+      ctx.moveTo(twigX, twigY);
+      ctx.lineTo(twigX + side * reach * 0.16, twigY + (twig === 0 ? -1 : 1) * reach * 0.12);
+      ctx.stroke();
+    }
+  }
+
+  // Buttress roots.
+  ctx.lineWidth = Math.max(2, trunk * 0.35);
+  for (let root = 0; root < 5; root++) {
+    const spread = (root - 2) * height * 0.09;
+    ctx.beginPath();
+    ctx.moveTo(x, baseY - 4);
+    ctx.quadraticCurveTo(x + spread * 0.35, baseY + 3, x + spread, baseY + 12 + rand(seed + root + 60) * 9);
+    ctx.stroke();
+  }
+
+  if (bleeding) {
+    ctx.strokeStyle = 'rgba(190,18,43,0.66)';
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 5;
+    ctx.lineWidth = Math.max(1, trunk * 0.11);
+    for (let drip = 0; drip < 3; drip++) {
+      const dripX = x + (drip - 1) * trunk * 0.23;
+      const dripTop = baseY - height * (0.48 + drip * 0.11);
+      const dripLength = height * (0.08 + rand(seed + drip + 80) * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(dripX, dripTop);
+      ctx.bezierCurveTo(dripX + 2, dripTop + dripLength * 0.35, dripX - 2, dripTop + dripLength * 0.72, dripX, dripTop + dripLength);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+}
+
+function drawHeartwoodCathedral(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  baseY: number,
+  height: number,
+  time: number,
+  scale: number,
+) {
+  const trunkWidth = height * 0.23;
+
+  // Vast roots spread out from the horizon like cathedral foundations.
+  ctx.strokeStyle = '#080104';
+  ctx.lineCap = 'round';
+  for (let root = 0; root < 9; root++) {
+    const side = root < 4 ? -1 : root > 4 ? 1 : 0;
+    const spread = (root - 4) * height * 0.12;
+    ctx.lineWidth = Math.max(5, height * (0.045 - Math.abs(root - 4) * 0.0035));
+    ctx.beginPath();
+    ctx.moveTo(x + side * trunkWidth * 0.22, baseY - 4);
+    ctx.bezierCurveTo(
+      x + spread * 0.3,
+      baseY + height * 0.03,
+      x + spread * 0.72,
+      baseY + height * 0.12,
+      x + spread,
+      baseY + height * 0.2,
+    );
+    ctx.stroke();
+  }
+
+  // Two fused trunks leave a tall wound at the center.
+  const bark = ctx.createLinearGradient(x - trunkWidth, 0, x + trunkWidth, 0);
+  bark.addColorStop(0, '#050103');
+  bark.addColorStop(0.48, '#210710');
+  bark.addColorStop(0.62, '#0b0206');
+  bark.addColorStop(1, '#030102');
+  ctx.fillStyle = bark;
+  ctx.strokeStyle = '#2a0812';
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.moveTo(x - trunkWidth * 0.58, baseY + 8);
+  ctx.bezierCurveTo(x - trunkWidth * 0.72, baseY - height * 0.38, x - trunkWidth * 0.36, baseY - height * 0.72, x - trunkWidth * 0.12, baseY - height);
+  ctx.bezierCurveTo(x - trunkWidth * 0.04, baseY - height * 0.72, x - trunkWidth * 0.13, baseY - height * 0.38, x - trunkWidth * 0.17, baseY - height * 0.08);
+  ctx.lineTo(x + trunkWidth * 0.16, baseY - height * 0.08);
+  ctx.bezierCurveTo(x + trunkWidth * 0.1, baseY - height * 0.42, x + trunkWidth * 0.08, baseY - height * 0.74, x + trunkWidth * 0.19, baseY - height);
+  ctx.bezierCurveTo(x + trunkWidth * 0.48, baseY - height * 0.72, x + trunkWidth * 0.74, baseY - height * 0.38, x + trunkWidth * 0.6, baseY + 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // The wound is the visual heart of the map.
+  const heartY = baseY - height * 0.42;
+  const heartPulse = 0.82 + Math.sin(time * 0.0011) * 0.08;
+  const woundGlow = ctx.createRadialGradient(x, heartY, 2, x, heartY, trunkWidth * 1.15 * heartPulse);
+  woundGlow.addColorStop(0, 'rgba(255,105,115,0.78)');
+  woundGlow.addColorStop(0.32, 'rgba(230,24,55,0.46)');
+  woundGlow.addColorStop(1, 'rgba(105,2,22,0)');
+  ctx.fillStyle = woundGlow;
+  ctx.fillRect(x - trunkWidth * 1.4, heartY - trunkWidth * 1.4, trunkWidth * 2.8, trunkWidth * 2.8);
+  ctx.fillStyle = '#3d0715';
+  ctx.strokeStyle = '#ff3157';
+  ctx.shadowColor = '#ff244f';
+  ctx.shadowBlur = 14;
+  ctx.lineWidth = 1.7 * scale;
+  ctx.beginPath();
+  ctx.ellipse(x, heartY, trunkWidth * 0.15, height * 0.14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Sap trails descend from the wound into the river.
+  ctx.strokeStyle = 'rgba(223,20,49,0.8)';
+  ctx.lineWidth = 2 * scale;
+  for (const offset of [-0.07, 0, 0.08]) {
+    ctx.beginPath();
+    ctx.moveTo(x + trunkWidth * offset, heartY + height * 0.1);
+    ctx.bezierCurveTo(
+      x + trunkWidth * (offset + 0.07),
+      heartY + height * 0.24,
+      x + trunkWidth * (offset - 0.05),
+      baseY - height * 0.12,
+      x + trunkWidth * offset,
+      baseY + 6,
+    );
+    ctx.stroke();
+  }
+
+  // A broad crown of hooked branches forms the cathedral vault.
+  ctx.strokeStyle = '#070104';
+  for (let branch = 0; branch < 12; branch++) {
+    const side = branch % 2 === 0 ? -1 : 1;
+    const tier = Math.floor(branch / 2);
+    const startY = baseY - height * (0.58 + tier * 0.065);
+    const reach = height * (0.3 + tier * 0.045);
+    ctx.lineWidth = Math.max(2.5, height * (0.035 - tier * 0.0028));
+    ctx.beginPath();
+    ctx.moveTo(x + side * trunkWidth * 0.12, startY);
+    ctx.bezierCurveTo(
+      x + side * reach * 0.28,
+      startY - height * 0.12,
+      x + side * reach * 0.75,
+      startY - height * (0.07 + tier * 0.018),
+      x + side * reach,
+      startY - height * 0.19,
+    );
+    ctx.stroke();
+  }
+}
+
+function drawForestWardArch(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  baseY: number,
+  halfWidth: number,
+  scale: number,
+  seed: number,
+  time: number,
+) {
+  const archHeight = (28 + seed * 9) * scale;
+  const bone = seed % 2 === 0 ? '#6b5b55' : '#554943';
+  ctx.strokeStyle = bone;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(1.3, 2.4 * scale);
+
+  for (const side of [-1, 1] as const) {
+    const x = centerX + side * halfWidth;
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.quadraticCurveTo(x - side * halfWidth * 0.04, baseY - archHeight * 0.8, centerX + side * halfWidth * 0.3, baseY - archHeight);
+    ctx.stroke();
+
+    // Antler tines.
+    for (let tine = 0; tine < 3; tine++) {
+      const tineY = baseY - archHeight * (0.35 + tine * 0.2);
+      ctx.beginPath();
+      ctx.moveTo(x - side * tine * halfWidth * 0.16, tineY);
+      ctx.lineTo(x - side * halfWidth * (0.13 + tine * 0.06), tineY - 8 * scale);
+      ctx.stroke();
+    }
+  }
+
+  // Joined crown turns the paired antlers into a complete ritual gateway.
+  ctx.strokeStyle = bone;
+  ctx.lineWidth = Math.max(1.1, 1.8 * scale);
+  ctx.beginPath();
+  ctx.moveTo(centerX - halfWidth * 0.3, baseY - archHeight);
+  ctx.quadraticCurveTo(centerX, baseY - archHeight - 9 * scale, centerX + halfWidth * 0.3, baseY - archHeight);
+  ctx.stroke();
+
+  // Suspended ward lantern, made from a small cage and a slow ember.
+  const sway = Math.sin(time * 0.0007 + seed) * 2.5 * scale;
+  const lanternY = baseY - archHeight + 10 * scale;
+  ctx.strokeStyle = '#3b2928';
+  ctx.lineWidth = Math.max(1, scale);
+  ctx.beginPath();
+  ctx.moveTo(centerX, baseY - archHeight);
+  ctx.lineTo(centerX + sway, lanternY);
+  ctx.stroke();
+  const glow = ctx.createRadialGradient(centerX + sway, lanternY + 5 * scale, 1, centerX + sway, lanternY + 5 * scale, 18 * scale);
+  glow.addColorStop(0, 'rgba(255,52,78,0.32)');
+  glow.addColorStop(1, 'rgba(255,30,55,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(centerX + sway - 20 * scale, lanternY - 15 * scale, 40 * scale, 40 * scale);
+  ctx.strokeStyle = '#7b5960';
+  ctx.strokeRect(centerX + sway - 4 * scale, lanternY, 8 * scale, 11 * scale);
+  ctx.fillStyle = 'rgba(255,47,74,0.7)';
+  ctx.fillRect(centerX + sway - 1.5 * scale, lanternY + 4 * scale, 3 * scale, 4 * scale);
+}
+
 /** Distinctive, recognizable set-dressing per map theme. */
 function drawThemeScenery(
   ctx: CanvasRenderingContext2D,
@@ -293,226 +1922,397 @@ function drawThemeScenery(
 
   if (theme.id === 'city') {
     const hzn = hy;
+    const sceneScale = Math.max(0.78, Math.min(1.5, w / 960));
 
-    // 1. Atmospheric glow behind the skyline (magenta fading to cyan).
+    // Toxic light pollution burns through the lowest cloud deck.
     const glow = ctx.createLinearGradient(0, hzn - h * 0.28, 0, hzn + 8);
-    glow.addColorStop(0, 'rgba(120,60,200,0)');
-    glow.addColorStop(0.65, 'rgba(150,70,210,0.16)');
-    glow.addColorStop(1, 'rgba(50,200,255,0.2)');
+    glow.addColorStop(0, 'rgba(20,120,125,0)');
+    glow.addColorStop(0.6, 'rgba(30,180,170,0.12)');
+    glow.addColorStop(1, 'rgba(80,255,205,0.24)');
     ctx.fillStyle = glow;
     ctx.fillRect(0, hzn - h * 0.28, w, h * 0.28 + 8);
 
-    // 2. Far skyline — dim, dense, for depth.
-    for (let i = 0; i < 24; i++) {
-      const bx = (i / 24) * w + (rand(i + 200) - 0.5) * 6;
-      const bw = w / 24 + 2;
-      const bh = h * (0.05 + rand(i + 201) * 0.12);
-      ctx.fillStyle = '#0c0a24';
-      ctx.fillRect(bx, hzn - bh, bw, bh + 6);
-      for (let wy = hzn - bh + 4; wy < hzn - 2; wy += 7) {
-        if (rand(bx * 0.3 + wy) > 0.86) {
-          ctx.fillStyle = 'rgba(130,110,200,0.5)';
-          ctx.fillRect(bx + 2, wy, 1.5, 2);
-        }
+    // Dense, powerless blocks disappear into the haze behind the main avenue.
+    for (let i = 0; i < 30; i++) {
+      const bx = (i / 30) * w + (rand(i + 200) - 0.5) * 10;
+      const bw = w / 29 + 3;
+      const bh = h * (0.04 + rand(i + 201) * 0.14);
+      ctx.fillStyle = i % 3 === 0 ? '#071116' : '#09151a';
+      ctx.fillRect(bx, hzn - bh, bw, bh + 8);
+      if (rand(i + 220) > 0.78) {
+        ctx.fillStyle = 'rgba(255,92,55,0.45)';
+        ctx.fillRect(bx + bw * 0.3, hzn - bh + 7, 2, 2);
       }
     }
 
-    // 3. Foreground towers — depth-shaded bodies with lit office-window grids.
-    const towers = 9;
+    // Ruined towers frame the lane. Every foundation sits on the same street
+    // grade; the broken rooflines provide the irregular silhouette.
+    const towers = 10;
     for (let i = 0; i < towers; i++) {
       const seg = w / towers;
-      const bx = i * seg + 3;
-      const bw = seg - 6;
-      const bh = h * (0.18 + rand(i + 9) * 0.27);
-      const top = hzn - bh;
-      const edge = rand(i) > 0.5 ? '0,240,255' : '255,43,214';
+      const bx = i * seg - 4;
+      const bw = seg + 8;
+      const edgeHeight = Math.abs((i + 0.5) / towers - 0.5) * 2;
+      const bh = hzn * (0.38 + rand(i + 9) * 0.42 + edgeHeight * 0.38);
+      const emergency = rand(i + 4) > 0.55 ? '32,242,194' : '255,72,55';
 
-      // body with left-to-right shading so it reads as a solid 3D block
-      const bg = ctx.createLinearGradient(bx, top, bx + bw, top);
-      bg.addColorStop(0, '#1a1444');
-      bg.addColorStop(0.5, '#120d33');
-      bg.addColorStop(1, '#08061c');
+      ctx.save();
+      ctx.translate(bx + bw / 2, hzn);
+      const left = -bw / 2;
+      const buildingTop = -bh;
+      const bg = ctx.createLinearGradient(left, 0, left + bw, 0);
+      bg.addColorStop(0, '#111c22');
+      bg.addColorStop(0.48, '#0a1319');
+      bg.addColorStop(1, '#03090d');
       ctx.fillStyle = bg;
-      ctx.fillRect(bx, top, bw, bh + 6);
-      // rooftop ledge
-      ctx.fillStyle = '#0c0826';
-      ctx.fillRect(bx - 1, top - 3, bw + 2, 4);
-      // rooftop water tank / housing on some towers
-      if (rand(i + 3) > 0.45) {
-        const tkw = bw * (0.2 + rand(i) * 0.2);
-        const tkx = bx + bw * (0.18 + rand(i + 1) * 0.4);
-        ctx.fillStyle = '#0c0826';
-        ctx.fillRect(tkx, top - 12, tkw, 9);
-        ctx.fillRect(tkx + tkw * 0.3, top - 16, tkw * 0.12, 4); // little pipe
-      }
-      // glowing neon edge strip
-      ctx.fillStyle = `rgba(${edge},0.55)`;
-      ctx.fillRect(bx, top, 2, bh + 6);
-      // window grid — rows of lit/dark office windows
-      const colW = 9;
-      const rowH = 11;
-      for (let wy = top + 8; wy < hzn - 5; wy += rowH) {
-        for (let wx = bx + 5; wx < bx + bw - 5; wx += colW) {
-          const r = rand(wx * 0.7 + wy * 1.3);
-          const lit = r > 0.62;
-          if (lit) {
-            ctx.fillStyle = rand(wx + wy) > 0.6 ? 'rgba(255,210,140,0.95)' : `rgba(${edge},0.9)`;
-            ctx.globalAlpha = 0.55 + 0.4 * Math.abs(Math.sin(time * 0.0016 + wx + wy));
-          } else {
-            ctx.fillStyle = 'rgba(42,38,72,0.6)';
-            ctx.globalAlpha = 1;
-          }
-          ctx.fillRect(wx, wy, colW - 3, rowH - 4);
-          ctx.globalAlpha = 1;
-        }
-      }
-      // antenna + red blinker on tall towers
-      if (bh > h * 0.34) {
-        ctx.strokeStyle = '#0c0826';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(bx + bw / 2, top - 3);
-        ctx.lineTo(bx + bw / 2, top - 18);
-        ctx.stroke();
-        ctx.fillStyle = `rgba(255,60,60,${Math.sin(time * 0.005 + i) > 0 ? 0.95 : 0.2})`;
-        ctx.beginPath();
-        ctx.arc(bx + bw / 2, top - 18, 2.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // 4. Glowing neon billboards.
-    for (const sign of [{ x: w * 0.2, c: '#00f0ff' }, { x: w * 0.78, c: '#ff2bd6' }]) {
-      const sy = hzn - h * 0.23;
-      ctx.globalAlpha = 0.55 + 0.45 * Math.abs(Math.sin(time * 0.004 + sign.x));
-      ctx.strokeStyle = sign.c;
-      ctx.lineWidth = 2;
-      ctx.shadowColor = sign.c;
-      ctx.shadowBlur = 14;
-      ctx.strokeRect(sign.x - 26, sy, 52, 20);
-      for (let b = 0; b < 3; b++) {
-        ctx.fillStyle = sign.c;
-        ctx.fillRect(sign.x - 18 + b * 14, sy + 7, 8, 6);
-      }
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha = 1;
-    }
-
-    // 5. Asphalt road in perspective + glowing centre line.
-    ctx.fillStyle = 'rgba(8,8,18,0.88)';
-    ctx.beginPath();
-    ctx.moveTo(w * 0.42, hzn);
-    ctx.lineTo(w * 0.58, hzn);
-    ctx.lineTo(w * 0.96, h);
-    ctx.lineTo(w * 0.04, h);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,240,255,0.4)';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([16, 18]);
-    ctx.beginPath();
-    ctx.moveTo(w / 2, hzn);
-    ctx.lineTo(w / 2, h);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 6. Street lamps lining the road edges (poles sit right at the asphalt,
-    //    arms reach over it). Matches the road polygon (edges 0.42→0.04 / 0.58→0.96).
-    const lampRows = 4;
-    for (let r = 0; r < lampRows; r++) {
-      const v = (r + 0.6) / lampRows; // 0 near horizon → 1 near camera
-      const ly = hzn + v * (h - hzn);
-      const edgeHalf = 0.08 + 0.38 * v; // road half-width at this depth
-      const scale = 0.4 + v * 0.95;
-      for (const side of [-1, 1] as const) {
-        const lx = w / 2 + side * w * (edgeHalf + 0.015); // pole just outside the road
-        const poleTop = ly - 52 * scale;
-        const headX = lx - side * 16 * scale; // arm + lamp head over the road
-        ctx.strokeStyle = '#10131f';
-        ctx.lineWidth = 3 * scale;
-        ctx.beginPath();
-        ctx.moveTo(lx, ly);
-        ctx.lineTo(lx, poleTop);
-        ctx.lineTo(headX, poleTop);
-        ctx.stroke();
-        const lamp = ctx.createRadialGradient(headX, poleTop + 2, 1, headX, poleTop + 2, 40 * scale);
-        lamp.addColorStop(0, 'rgba(255,210,120,0.5)');
-        lamp.addColorStop(1, 'rgba(255,210,120,0)');
-        ctx.fillStyle = lamp;
-        ctx.beginPath();
-        ctx.arc(headX, poleTop + 2, 40 * scale, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffe8a8';
-        ctx.beginPath();
-        ctx.arc(headX, poleTop + 2, 3 * scale, 0, Math.PI * 2);
-        ctx.fill();
-        // light pool on the road beneath the lamp head
-        const pool = ctx.createRadialGradient(headX, ly + 3, 2, headX, ly + 3, 52 * scale);
-        pool.addColorStop(0, 'rgba(255,210,120,0.12)');
-        pool.addColorStop(1, 'rgba(255,210,120,0)');
-        ctx.fillStyle = pool;
-        ctx.beginPath();
-        ctx.ellipse(headX, ly + 3, 52 * scale, 14 * scale, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // 7. A wrecked car on the road.
-    const wcx = w * 0.36;
-    const wcy = h - 86;
-    ctx.fillStyle = '#0e0c1a';
-    ctx.beginPath();
-    ctx.ellipse(wcx, wcy + 9, 26, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#15121f';
-    ctx.fillRect(wcx - 22, wcy - 6, 44, 14);
-    ctx.fillRect(wcx - 12, wcy - 16, 24, 12);
-    ctx.fillStyle = 'rgba(255,80,40,0.7)';
-    ctx.fillRect(wcx + 20, wcy - 2, 3, 4);
-
-    // 8. Neon puddle reflections shimmering on the wet street.
-    for (let i = 0; i < 6; i++) {
-      const rx = (rand(i + 80) * 0.9 + 0.05) * w;
-      const ry = hzn + 50 + rand(i + 81) * (h - hzn - 110);
-      const col = rand(i) > 0.5 ? '0,240,255' : '255,43,214';
-      ctx.fillStyle = `rgba(${col},${0.08 + 0.07 * Math.abs(Math.sin(time * 0.003 + i))})`;
       ctx.beginPath();
-      ctx.ellipse(rx, ry, 10 + rand(i) * 14, 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    return;
-  }
-
-  if (theme.id === 'forest') {
-    // Dense pine treeline along the horizon.
-    ctx.fillStyle = '#0a0303';
-    for (let i = 0; i < 26; i++) {
-      const tx = (i / 26) * w + (rand(i) - 0.5) * 18;
-      const th = 26 + rand(i + 5) * 40;
-      ctx.beginPath();
-      ctx.moveTo(tx, hy + 4);
-      ctx.lineTo(tx - 10, hy + 4);
-      ctx.lineTo(tx, hy - th);
-      ctx.lineTo(tx + 10, hy + 4);
+      ctx.moveTo(left, 6);
+      ctx.lineTo(left, buildingTop + 12);
+      ctx.lineTo(left + bw * 0.18, buildingTop + 2);
+      ctx.lineTo(left + bw * 0.34, buildingTop + 15 + rand(i + 70) * 16);
+      ctx.lineTo(left + bw * 0.56, buildingTop + rand(i + 71) * 8);
+      ctx.lineTo(left + bw * 0.74, buildingTop + 18 + rand(i + 72) * 15);
+      ctx.lineTo(left + bw, buildingTop + 8);
+      ctx.lineTo(left + bw, 6);
       ctx.closePath();
       ctx.fill();
+
+      // Mostly dead windows; only a tiny number of failing circuits flicker,
+      // and they do it slowly enough to feel atmospheric rather than strobing.
+      const colW = Math.max(8, bw / 8);
+      for (let wy = buildingTop + 27; wy < -5; wy += 12) {
+        for (let wx = left + 6; wx < left + bw - 6; wx += colW) {
+          const power = rand((i + 1) * 900 + wx * 0.7 + wy);
+          if (power > 0.83) {
+            const flicker = power > 0.975 ? Math.sin(time * 0.0018 + wx * 0.2) > -0.65 : true;
+            ctx.fillStyle = flicker ? `rgba(${emergency},0.72)` : 'rgba(15,35,38,0.55)';
+          } else {
+            ctx.fillStyle = 'rgba(17,34,39,0.72)';
+          }
+          ctx.fillRect(wx, wy, Math.max(3, colW - 4), 5);
+        }
+      }
+
+      // Exposed floor slabs and a dangling cable sell the structural collapse.
+      if (i % 3 === 1) {
+        ctx.strokeStyle = 'rgba(70,92,96,0.6)';
+        ctx.lineWidth = 1;
+        for (let slab = 0; slab < 3; slab++) {
+          const sy = buildingTop + 15 + slab * 7;
+          ctx.beginPath();
+          ctx.moveTo(left + bw * 0.58, sy);
+          ctx.lineTo(left + bw + 6, sy + 3);
+          ctx.stroke();
+        }
+        ctx.strokeStyle = 'rgba(30,45,48,0.9)';
+        ctx.beginPath();
+        ctx.moveTo(left + bw * 0.78, buildingTop + 10);
+        ctx.quadraticCurveTo(left + bw * 0.95, buildingTop + 42, left + bw * 0.7, buildingTop + 75);
+        ctx.stroke();
+      }
+
+      if (bh > h * 0.34) {
+        ctx.strokeStyle = '#17252a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, buildingTop + 5);
+        ctx.lineTo(0, buildingTop - 17);
+        ctx.stroke();
+        ctx.fillStyle = `rgba(255,65,45,${Math.sin(time * 0.006 + i) > 0.2 ? 0.95 : 0.12})`;
+        ctx.beginPath();
+        ctx.arc(0, buildingTop - 17, 2.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
-    // Glowing eyes peering from the dark edges.
-    for (let i = 0; i < 6; i++) {
-      const side = i % 2 === 0 ? 0.06 : 0.94;
-      const ex = side * w + (rand(i) - 0.5) * 30;
-      const ey = hy + 40 + rand(i + 3) * (h - hy - 120);
-      const blink = Math.sin(time * 0.002 + i * 2) > -0.3 ? 1 : 0.1;
-      ctx.fillStyle = `rgba(255,40,40,${0.8 * blink})`;
+
+    // Continuous storefront plinth makes the skyline meet the road on one
+    // clean, level baseline instead of appearing to float at mixed heights.
+    ctx.fillStyle = '#071014';
+    ctx.fillRect(0, hzn - 2, w, 10);
+    ctx.strokeStyle = 'rgba(65,92,94,0.42)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, hzn + 7);
+    ctx.lineTo(w, hzn + 7);
+    ctx.stroke();
+
+    // Wet evacuation boulevard in deep perspective.
+    const road = ctx.createLinearGradient(0, hzn, 0, h);
+    road.addColorStop(0, 'rgba(20,30,33,0.96)');
+    road.addColorStop(1, 'rgba(4,8,10,0.98)');
+    ctx.fillStyle = road;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.43, hzn);
+    ctx.lineTo(w * 0.57, hzn);
+    ctx.lineTo(w * 0.93, h);
+    ctx.lineTo(w * 0.07, h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Reflected quarantine light lifts the combat lane out of the darkness.
+    const laneGlow = ctx.createRadialGradient(w / 2, hzn + h * 0.14, 8, w / 2, hzn + h * 0.3, h * 0.62);
+    laneGlow.addColorStop(0, 'rgba(42,185,170,0.13)');
+    laneGlow.addColorStop(0.52, 'rgba(25,95,96,0.055)');
+    laneGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = laneGlow;
+    ctx.fillRect(0, hzn, w, h - hzn);
+
+    // Concrete curbs and dead lane markers widen toward the camera.
+    for (const side of [-1, 1] as const) {
+      ctx.strokeStyle = 'rgba(85,102,105,0.52)';
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.arc(ex - 4, ey, 2.2, 0, Math.PI * 2);
-      ctx.arc(ex + 4, ey, 2.2, 0, Math.PI * 2);
+      ctx.moveTo(w / 2 + side * w * 0.07, hzn);
+      ctx.lineTo(w / 2 + side * w * 0.43, h);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,188,64,0.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([14, 18]);
+      ctx.beginPath();
+      ctx.moveTo(w / 2 + side * w * 0.022, hzn + 8);
+      ctx.lineTo(w / 2 + side * w * 0.12, h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Broken elevated rail at the horizon, including one half-dropped carriage.
+    const railY = hzn + h * 0.035;
+    ctx.fillStyle = '#10191d';
+    ctx.fillRect(0, railY, w, 8);
+    ctx.fillStyle = '#071014';
+    for (let x = w * 0.03; x < w; x += w * 0.16) ctx.fillRect(x, railY + 8, 8, h * 0.12);
+    ctx.save();
+    ctx.translate(w * 0.66, railY + 2);
+    ctx.rotate(0.1);
+    ctx.fillStyle = '#172329';
+    ctx.fillRect(-42, -13, 84, 18);
+    ctx.fillStyle = 'rgba(255,72,45,0.28)';
+    for (let x = -34; x < 36; x += 14) ctx.fillRect(x, -9, 8, 6);
+    ctx.restore();
+
+    const busX = w * 0.38;
+    const busY = hzn + h * 0.17;
+
+    // Most street lamps are dead. The survivors stay steadily lit rather than
+    // flashing, so the road has a fixed readable lighting pattern.
+    for (let r = 0; r < 3; r++) {
+      const v = 0.26 + r * 0.23;
+      const ly = hzn + v * (h - hzn);
+      const edgeHalf = 0.07 + 0.36 * v;
+      const scale = 0.48 + v * 0.75;
+      const side = r % 2 === 0 ? -1 : 1;
+      const lx = w / 2 + side * w * (edgeHalf + 0.02);
+      const poleTop = ly - 58 * scale;
+      const headX = lx - side * 17 * scale;
+      ctx.strokeStyle = '#151f22';
+      ctx.lineWidth = 3 * scale;
+      ctx.beginPath();
+      ctx.moveTo(lx, ly);
+      ctx.lineTo(lx, poleTop);
+      ctx.lineTo(headX, poleTop + (r === 2 ? 7 : 0));
+      ctx.stroke();
+      const alive = r !== 1;
+      if (alive) {
+        const lamp = ctx.createRadialGradient(headX, poleTop, 1, headX, poleTop, 44 * scale);
+        lamp.addColorStop(0, 'rgba(255,181,76,0.48)');
+        lamp.addColorStop(1, 'rgba(255,130,40,0)');
+        ctx.fillStyle = lamp;
+        ctx.beginPath();
+        ctx.arc(headX, poleTop, 44 * scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Abandoned evacuation bus blocks one lane near the horizon.
+    ctx.save();
+    ctx.translate(busX, busY);
+    ctx.rotate(-0.045);
+    ctx.scale(sceneScale, sceneScale);
+    ctx.fillStyle = '#172126';
+    ctx.fillRect(-34, -13, 68, 25);
+    ctx.fillStyle = '#26343a';
+    ctx.fillRect(-29, -9, 54, 9);
+    ctx.fillStyle = 'rgba(70,170,165,0.18)';
+    for (let x = -26; x < 22; x += 12) ctx.fillRect(x, -7, 8, 5);
+    ctx.fillStyle = '#080c0e';
+    ctx.beginPath();
+    ctx.arc(-22, 13, 6, 0, Math.PI * 2);
+    ctx.arc(23, 13, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,60,40,0.65)';
+    ctx.fillRect(29, 0, 3, 5);
+    ctx.restore();
+
+    // Abandoned civilian sedan, left crooked across a lane.
+    ctx.save();
+    ctx.translate(w * 0.27, h - 158);
+    ctx.rotate(-0.12);
+    ctx.scale(sceneScale, sceneScale);
+    ctx.fillStyle = 'rgba(0,0,0,0.34)';
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 34, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#2d302b';
+    ctx.fillRect(-31, -8, 62, 17);
+    ctx.fillStyle = '#3d423b';
+    ctx.beginPath();
+    ctx.moveTo(-18, -8);
+    ctx.lineTo(-10, -20);
+    ctx.lineTo(14, -20);
+    ctx.lineTo(22, -8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(80,115,112,0.3)';
+    ctx.fillRect(-9, -17, 20, 7);
+    ctx.strokeStyle = '#191d1a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-28, -2);
+    ctx.lineTo(-16, 3);
+    ctx.stroke();
+    ctx.fillStyle = '#050708';
+    ctx.beginPath();
+    ctx.arc(-20, 10, 6, 0, Math.PI * 2);
+    ctx.arc(21, 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(120,25,18,0.58)';
+    ctx.fillRect(-31, -4, 3, 5);
+    ctx.restore();
+
+    // Abandoned police cruiser, right side, doors open and light bar dead.
+    ctx.save();
+    ctx.translate(w * 0.74, h - 125);
+    ctx.rotate(0.09);
+    ctx.scale(sceneScale, sceneScale);
+    ctx.fillStyle = 'rgba(0,0,0,0.38)';
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 36, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#d1d7d3';
+    ctx.fillRect(-32, -8, 64, 17);
+    ctx.fillStyle = '#12191d';
+    ctx.fillRect(-5, -8, 37, 17);
+    ctx.beginPath();
+    ctx.moveTo(-18, -8);
+    ctx.lineTo(-10, -21);
+    ctx.lineTo(14, -21);
+    ctx.lineTo(23, -8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(80,120,125,0.35)';
+    ctx.fillRect(-8, -18, 19, 7);
+    ctx.fillStyle = '#421718';
+    ctx.fillRect(-8, -24, 7, 3);
+    ctx.fillStyle = '#14283a';
+    ctx.fillRect(1, -24, 7, 3);
+    ctx.fillStyle = '#050708';
+    ctx.beginPath();
+    ctx.arc(-21, 10, 6, 0, Math.PI * 2);
+    ctx.arc(22, 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.save();
+    ctx.translate(27, -5);
+    ctx.rotate(-0.65);
+    ctx.fillStyle = '#11191d';
+    ctx.fillRect(0, -7, 18, 14);
+    ctx.restore();
+    ctx.fillStyle = 'rgba(15,20,22,0.85)';
+    ctx.font = '700 6px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('POLICE', -19, 3);
+    ctx.restore();
+
+    for (const side of [-1, 1] as const) {
+      const bx = w / 2 + side * w * 0.31;
+      const by = h - 73;
+      ctx.fillStyle = '#343d3e';
+      ctx.beginPath();
+      ctx.moveTo(bx - 34, by);
+      ctx.lineTo(bx - 27, by - 18);
+      ctx.lineTo(bx + 27, by - 18);
+      ctx.lineTo(bx + 34, by);
+      ctx.closePath();
       ctx.fill();
+      ctx.fillStyle = '#ffb340';
+      for (let stripe = -20; stripe <= 20; stripe += 16) {
+        ctx.save();
+        ctx.translate(bx + stripe, by - 9);
+        ctx.rotate(-0.7);
+        ctx.fillRect(-2, -8, 4, 16);
+        ctx.restore();
+      }
+    }
+
+    // Cracked asphalt and smeared reflections make the road feel wet and used.
+    ctx.strokeStyle = 'rgba(84,109,109,0.32)';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 9; i++) {
+      let cx = w * (0.18 + rand(i + 610) * 0.64);
+      let cy = hzn + h * (0.16 + rand(i + 620) * 0.56);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      for (let branch = 0; branch < 3; branch++) {
+        cx += (rand(i * 7 + branch + 630) - 0.5) * 34;
+        cy += 9 + rand(i * 9 + branch + 640) * 17;
+        ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+    }
+    for (let i = 0; i < 8; i++) {
+      const rx = (rand(i + 80) * 0.72 + 0.14) * w;
+      const ry = hzn + 42 + rand(i + 81) * (h - hzn - 125);
+      const col = i % 3 === 0 ? '255,73,56' : '32,242,194';
+      ctx.fillStyle = `rgba(${col},${0.06 + 0.05 * Math.abs(Math.sin(time * 0.003 + i))})`;
+      ctx.beginPath();
+      ctx.ellipse(rx, ry, 12 + rand(i) * 23, 2.5 + rand(i + 7) * 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Small fires burn at the edges; smoke stays out of the combat lane.
+    for (const fire of [{ x: w * 0.09, y: h * 0.61 }, { x: w * 0.91, y: h * 0.46 }]) {
+      const pulse = 0.7 + Math.sin(time * 0.015 + fire.x) * 0.18;
+      const fireGlow = ctx.createRadialGradient(fire.x, fire.y, 2, fire.x, fire.y, 48);
+      fireGlow.addColorStop(0, `rgba(255,165,55,${0.45 * pulse})`);
+      fireGlow.addColorStop(1, 'rgba(255,70,20,0)');
+      ctx.fillStyle = fireGlow;
+      ctx.fillRect(fire.x - 48, fire.y - 48, 96, 96);
+      ctx.fillStyle = '#ff7a32';
+      ctx.beginPath();
+      ctx.moveTo(fire.x - 7, fire.y + 7);
+      ctx.quadraticCurveTo(fire.x - 3, fire.y - 18 * pulse, fire.x, fire.y - 7);
+      ctx.quadraticCurveTo(fire.x + 8, fire.y - 24 * pulse, fire.x + 9, fire.y + 7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(22,31,32,0.2)';
+      for (let smoke = 0; smoke < 3; smoke++) {
+        const sy = fire.y - 24 - smoke * 17 - ((time * 0.01 + smoke * 9) % 14);
+        ctx.beginPath();
+        ctx.arc(fire.x + Math.sin(time * 0.001 + smoke) * 7, sy, 11 + smoke * 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Fine slanted rain catches the city lights without obscuring targets.
+    ctx.strokeStyle = 'rgba(135,225,220,0.16)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 42; i++) {
+      const x = (rand(i + 700) * (w + 80) + time * 0.065) % (w + 80) - 40;
+      const y = (rand(i + 720) * h + time * 0.16 * (0.7 + rand(i + 730))) % h;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 7, y + 18);
+      ctx.stroke();
     }
     return;
   }
 
   if (theme.id === 'lab') {
+    drawArea67Scenery(ctx, s, time, hy);
+    return;
+  }
+
+  if (theme.id === 'lab-legacy') {
     // Back wall + a row of blinking monitor/server lights.
     ctx.fillStyle = 'rgba(0,40,36,0.45)';
     ctx.fillRect(0, hy, w, 24);
@@ -761,89 +2561,7 @@ function drawThemeScenery(
   }
 
   if (theme.id === 'tundra') {
-    // Distant mountain range silhouette with snow caps.
-    ctx.fillStyle = 'rgba(40,70,95,0.6)';
-    ctx.beginPath();
-    ctx.moveTo(0, hy);
-    const peaks: Array<[number, number]> = [];
-    for (let x = 0; x <= w; x += 50) {
-      const y = hy - (28 + Math.abs(Math.sin(x * 0.011 + 2)) * 60 + rand(x) * 18);
-      peaks.push([x, y]);
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(w, hy);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = 'rgba(230,242,255,0.7)';
-    for (const [px, py] of peaks) {
-      ctx.beginPath();
-      ctx.moveTo(px, py);
-      ctx.lineTo(px - 9, py + 12);
-      ctx.lineTo(px + 9, py + 12);
-      ctx.closePath();
-      ctx.fill();
-    }
-    // Outpost hut with a warm window, on the right.
-    const hx = w * 0.8;
-    const hb = h - 70;
-    ctx.fillStyle = '#1a2a34';
-    ctx.fillRect(hx - 28, hb - 32, 56, 32);
-    ctx.fillStyle = '#0e1a22';
-    ctx.beginPath();
-    ctx.moveTo(hx - 34, hb - 32);
-    ctx.lineTo(hx, hb - 52);
-    ctx.lineTo(hx + 34, hb - 32);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = 'rgba(235,245,255,0.85)'; // snow on roof
-    ctx.fillRect(hx - 28, hb - 34, 56, 3);
-    ctx.fillStyle = 'rgba(255,200,120,0.8)'; // window glow
-    ctx.fillRect(hx - 8, hb - 22, 12, 12);
-    // Frozen lattice tower on the left.
-    const tx = w * 0.16;
-    ctx.strokeStyle = 'rgba(180,220,245,0.5)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(tx - 16, h - 64);
-    ctx.lineTo(tx, hy + 6);
-    ctx.lineTo(tx + 16, h - 64);
-    for (let yy = hy + 30; yy < h - 64; yy += 26) {
-      const t = (yy - (hy + 6)) / (h - 64 - (hy + 6));
-      const half = 4 + t * 14;
-      ctx.moveTo(tx - half, yy);
-      ctx.lineTo(tx + half, yy);
-    }
-    ctx.stroke();
-    // Snow drifts.
-    for (let i = 0; i < 7; i++) {
-      const dx = (rand(i + 11) * 0.92 + 0.04) * w;
-      const dy = hy + 60 + rand(i + 2) * (h - hy - 110);
-      const dw = 30 + rand(i) * 60;
-      ctx.fillStyle = 'rgba(225,240,255,0.18)';
-      ctx.beginPath();
-      ctx.ellipse(dx, dy, dw, dw * 0.3, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // Ice shards.
-    for (let i = 0; i < 9; i++) {
-      const ix = (rand(i + 21) * 0.9 + 0.05) * w;
-      const iy = hy + 70 + rand(i + 7) * (h - hy - 130);
-      const ih = 14 + rand(i) * 26;
-      ctx.fillStyle = 'rgba(160,215,255,0.45)';
-      ctx.beginPath();
-      ctx.moveTo(ix, iy);
-      ctx.lineTo(ix - 5, iy);
-      ctx.lineTo(ix, iy - ih);
-      ctx.lineTo(ix + 5, iy);
-      ctx.closePath();
-      ctx.fill();
-    }
-    // Snow sheen building up near the base.
-    const snowGrad = ctx.createLinearGradient(0, h - 90, 0, h);
-    snowGrad.addColorStop(0, 'rgba(220,235,255,0)');
-    snowGrad.addColorStop(1, 'rgba(220,235,255,0.25)');
-    ctx.fillStyle = snowGrad;
-    ctx.fillRect(0, h - 90, w, 90);
+    drawFrozenOutpostScenery(ctx, s, time, hy);
     return;
   }
 
@@ -899,53 +2617,153 @@ function drawThemeScenery(
     return;
   }
 
-  if (theme.id === 'inferno') {
-    // Lava pools.
-    for (let i = 0; i < 3; i++) {
-      const px = (rand(i + 4) * 0.7 + 0.15) * w;
-      const py = hy + 60 + rand(i + 8) * (h - hy - 140);
-      const pw = 40 + rand(i) * 50;
-      const pulse = 0.35 + 0.25 * Math.abs(Math.sin(time * 0.003 + i));
-      const pool = ctx.createRadialGradient(px, py, 2, px, py, pw);
-      pool.addColorStop(0, `rgba(255,150,40,${pulse})`);
-      pool.addColorStop(1, 'rgba(120,20,0,0)');
-      ctx.fillStyle = pool;
+  if (theme.id === 'forest') {
+    drawBleedingForestScenery(ctx, s, time, hy);
+    const baseY = h - 60;
+
+    // The survivor holds a warded hunter's shrine swallowed by living roots.
+    const soil = ctx.createLinearGradient(0, baseY, 0, h);
+    soil.addColorStop(0, '#16050a');
+    soil.addColorStop(1, '#040102');
+    ctx.fillStyle = soil;
+    ctx.fillRect(0, baseY, w, 60);
+
+    // A woven root wall follows the collision line.
+    ctx.strokeStyle = '#220711';
+    ctx.lineCap = 'round';
+    for (let strand = 0; strand < 4; strand++) {
+      ctx.lineWidth = 7 - strand;
       ctx.beginPath();
-      ctx.ellipse(px, py, pw, pw * 0.4, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // Branching lava cracks across the ground.
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 6; i++) {
-      const glow = 0.4 + 0.4 * Math.abs(Math.sin(time * 0.004 + i));
-      ctx.strokeStyle = `rgba(255,${90 + Math.floor(rand(i) * 80)},20,${glow})`;
-      const sx = rand(i + 30) * w;
-      let cx = sx;
-      let cy = hy + 30;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      while (cy < h - 60) {
-        cx += (rand(cx + cy) - 0.5) * 40;
-        cy += 24;
-        ctx.lineTo(cx, cy);
+      ctx.moveTo(-20, baseY + 5 + strand * 11);
+      for (let x = -20; x <= w + 20; x += 38) {
+        ctx.quadraticCurveTo(
+          x + 19,
+          baseY - 5 + strand * 12 + Math.sin(x * 0.025 + strand) * 7,
+          x + 38,
+          baseY + 5 + strand * 11,
+        );
       }
       ctx.stroke();
     }
-    // Volcanic rocks with an ember rim.
-    for (let i = 0; i < 5; i++) {
-      const rx = (rand(i + 60) * 0.9 + 0.05) * w;
-      const ry = hy + 60 + rand(i + 9) * (h - hy - 120);
-      const rr = 8 + rand(i) * 14;
-      ctx.fillStyle = '#160805';
+
+    // Carved ward stones break up the wall and make the boundary readable.
+    for (let x = 18; x < w; x += 64) {
+      const stoneH = 18 + rand(x + 2210) * 13;
+      ctx.fillStyle = x % 128 < 64 ? '#21171a' : '#181013';
       ctx.beginPath();
-      ctx.ellipse(rx, ry, rr, rr * 0.7, 0, 0, Math.PI * 2);
+      ctx.moveTo(x - 13, baseY + 25);
+      ctx.lineTo(x - 10, baseY + 5);
+      ctx.lineTo(x - 4, baseY - stoneH);
+      ctx.lineTo(x + 9, baseY - stoneH + 4);
+      ctx.lineTo(x + 13, baseY + 25);
+      ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = `rgba(255,120,30,${0.5 + 0.3 * Math.sin(time * 0.005 + i)})`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.ellipse(rx, ry + 1, rr, rr * 0.7, 0, 0, Math.PI);
+      ctx.strokeStyle = 'rgba(102,62,67,0.5)';
+      ctx.lineWidth = 1;
       ctx.stroke();
+
+      if (x % 192 < 64) {
+        ctx.strokeStyle = 'rgba(255,36,79,0.48)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x - 4, baseY - stoneH + 8);
+        ctx.lineTo(x + 4, baseY - stoneH + 14);
+        ctx.lineTo(x - 3, baseY - stoneH + 20);
+        ctx.stroke();
+      }
     }
+
+    // A continuous sap ward replaces the generic neon collision stripe.
+    const ward = ctx.createLinearGradient(0, baseY, w, baseY);
+    ward.addColorStop(0, 'rgba(255,36,79,0.18)');
+    ward.addColorStop(0.5, 'rgba(255,61,92,0.82)');
+    ward.addColorStop(1, 'rgba(255,36,79,0.18)');
+    ctx.strokeStyle = ward;
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY);
+    for (let x = 0; x <= w; x += 28) {
+      ctx.lineTo(x, baseY + Math.sin(x * 0.065) * 2);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const cx = w / 2;
+    const shrineY = baseY + 8;
+
+    // Hollow stump bunker with a protective antler crest.
+    ctx.fillStyle = '#090204';
+    ctx.beginPath();
+    ctx.moveTo(cx - 48, baseY + 42);
+    ctx.quadraticCurveTo(cx - 45, baseY - 17, cx - 25, baseY - 24);
+    ctx.quadraticCurveTo(cx, baseY - 36, cx + 25, baseY - 24);
+    ctx.quadraticCurveTo(cx + 45, baseY - 17, cx + 48, baseY + 42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#3c101a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#19050a';
+    ctx.beginPath();
+    ctx.arc(cx, shrineY + 4, 25, Math.PI, 0);
+    ctx.lineTo(cx + 25, baseY + 35);
+    ctx.lineTo(cx - 25, baseY + 35);
+    ctx.closePath();
+    ctx.fill();
+
+    // The ward sigil breathes softly and echoes the distant Heartwood wound.
+    const sigilAlpha = 0.55 + Math.sin(time * 0.001) * 0.09;
+    ctx.strokeStyle = `rgba(255,48,82,${sigilAlpha})`;
+    ctx.fillStyle = `rgba(255,48,82,${sigilAlpha})`;
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(cx, shrineY + 3, 14, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, shrineY - 10);
+    ctx.lineTo(cx + 10, shrineY + 10);
+    ctx.lineTo(cx - 11, shrineY);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, shrineY + 3, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Antler crest and two steady ritual lamps.
+    ctx.strokeStyle = '#725d57';
+    ctx.lineWidth = 2;
+    for (const side of [-1, 1] as const) {
+      ctx.beginPath();
+      ctx.moveTo(cx + side * 22, baseY - 20);
+      ctx.quadraticCurveTo(cx + side * 42, baseY - 43, cx + side * 37, baseY - 62);
+      ctx.moveTo(cx + side * 34, baseY - 39);
+      ctx.lineTo(cx + side * 51, baseY - 48);
+      ctx.moveTo(cx + side * 38, baseY - 50);
+      ctx.lineTo(cx + side * 50, baseY - 65);
+      ctx.stroke();
+
+      const lampX = cx + side * 58;
+      const lampGlow = ctx.createRadialGradient(lampX, baseY - 12, 1, lampX, baseY - 12, 28);
+      lampGlow.addColorStop(0, 'rgba(255,55,82,0.34)');
+      lampGlow.addColorStop(1, 'rgba(255,30,55,0)');
+      ctx.fillStyle = lampGlow;
+      ctx.fillRect(lampX - 30, baseY - 42, 60, 60);
+      ctx.fillStyle = '#ff3157';
+      ctx.beginPath();
+      ctx.arc(lampX, baseY - 12, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return;
+  }
+
+  if (theme.id === 'inferno') {
+    drawInfernoScenery(ctx, s, time, hy);
     return;
   }
 }
@@ -997,9 +2815,302 @@ function drawGrave(ctx: CanvasRenderingContext2D, x: number, y: number, sc: numb
   ctx.fill();
 }
 
-function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme) {
+function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, time: number) {
   const { width: w, height: h } = s;
   const baseY = h - 60;
+
+  // Bleeding Forest's root shrine is part of its bespoke environment pass so
+  // its roots and ward stones interlock with the surrounding scenery.
+  if (theme.id === 'forest') return;
+
+  if (theme.id === 'city') {
+    // The final checkpoint: concrete blast wall, shutter, hazard paint, and
+    // emergency beacons. It replaces the generic green bunker on this map.
+    const asphalt = ctx.createLinearGradient(0, baseY, 0, h);
+    asphalt.addColorStop(0, '#10171a');
+    asphalt.addColorStop(1, '#030608');
+    ctx.fillStyle = asphalt;
+    ctx.fillRect(0, baseY, w, 60);
+
+    ctx.fillStyle = '#303a3b';
+    for (let x = -10; x < w + 70; x += 72) {
+      ctx.beginPath();
+      ctx.moveTo(x, h);
+      ctx.lineTo(x + 9, baseY + 8);
+      ctx.lineTo(x + 61, baseY + 8);
+      ctx.lineTo(x + 72, h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(8,14,16,0.65)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Worn quarantine stripe along the collision line.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, baseY, w, 9);
+    ctx.clip();
+    ctx.fillStyle = '#d38b2f';
+    for (let x = -24; x < w + 24; x += 32) {
+      ctx.save();
+      ctx.translate(x, baseY + 4);
+      ctx.rotate(-0.72);
+      ctx.fillRect(-4, -18, 8, 36);
+      ctx.restore();
+    }
+    ctx.restore();
+
+    const cx = w / 2;
+    ctx.fillStyle = '#091115';
+    ctx.fillRect(cx - 43, baseY - 5, 86, 40);
+    ctx.strokeStyle = '#53666a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 43, baseY - 5, 86, 40);
+    ctx.fillStyle = '#182326';
+    for (let y = baseY; y < baseY + 31; y += 7) ctx.fillRect(cx - 36, y, 72, 3);
+
+    ctx.fillStyle = '#20f2c2';
+    ctx.shadowColor = '#20f2c2';
+    ctx.shadowBlur = 14;
+    ctx.fillRect(cx - 3, baseY - 32, 6, 27);
+    ctx.beginPath();
+    ctx.arc(cx, baseY - 33, 7, Math.PI, 0);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    const beaconOn = Math.sin(time * 0.012) > 0;
+    for (const side of [-1, 1] as const) {
+      const bx = cx + side * 57;
+      const color = side < 0 ? '#ff4938' : '#20f2c2';
+      ctx.fillStyle = color;
+      ctx.globalAlpha = beaconOn === (side < 0) ? 1 : 0.22;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.arc(bx, baseY - 6, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    }
+    return;
+  }
+
+  if (theme.id === 'lab') {
+    // Mobile blast barricade protecting the runway control point.
+    const concrete = ctx.createLinearGradient(0, baseY, 0, h);
+    concrete.addColorStop(0, '#363a34');
+    concrete.addColorStop(1, '#121513');
+    ctx.fillStyle = concrete;
+    ctx.fillRect(0, baseY, w, 60);
+
+    ctx.strokeStyle = 'rgba(157,255,79,0.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY);
+    ctx.lineTo(w, baseY);
+    ctx.stroke();
+
+    // Modular concrete Jersey barriers.
+    ctx.fillStyle = '#4a4c43';
+    for (let x = -12; x < w + 70; x += 76) {
+      ctx.beginPath();
+      ctx.moveTo(x, h);
+      ctx.lineTo(x + 10, baseY + 10);
+      ctx.lineTo(x + 58, baseY + 10);
+      ctx.lineTo(x + 70, h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#20231f';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    const cx = w / 2;
+    ctx.fillStyle = '#0b1010';
+    ctx.fillRect(cx - 42, baseY - 8, 84, 37);
+    ctx.strokeStyle = '#6c766d';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 42, baseY - 8, 84, 37);
+    ctx.fillStyle = '#16201b';
+    ctx.fillRect(cx - 34, baseY - 2, 68, 19);
+    ctx.fillStyle = '#9dff4f';
+    ctx.shadowColor = '#9dff4f';
+    ctx.shadowBlur = 12;
+    ctx.fillRect(cx - 24, baseY + 4, 29, 3);
+    ctx.fillRect(cx - 24, baseY + 10, 18, 3);
+    ctx.beginPath();
+    ctx.arc(cx + 23, baseY + 8, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = '#56615b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx, baseY - 8);
+    ctx.lineTo(cx, baseY - 31);
+    ctx.stroke();
+    ctx.fillStyle = '#9dff4f';
+    ctx.beginPath();
+    ctx.arc(cx, baseY - 33, 5, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+
+  if (theme.id === 'tundra') {
+    // Ice-block defensive wall with a heated emergency airlock.
+    const ice = ctx.createLinearGradient(0, baseY, 0, h);
+    ice.addColorStop(0, '#789dad');
+    ice.addColorStop(1, '#203945');
+    ctx.fillStyle = ice;
+    ctx.fillRect(0, baseY, w, 60);
+
+    for (let row = 0; row < 3; row++) {
+      const blockW = 54;
+      const blockH = 20;
+      for (let x = -blockW + (row % 2) * (blockW / 2); x < w + blockW; x += blockW) {
+        ctx.fillStyle = row % 2 === 0 ? 'rgba(185,225,238,0.34)' : 'rgba(130,185,205,0.3)';
+        ctx.fillRect(x + 1, baseY + row * blockH + 1, blockW - 2, blockH - 2);
+        ctx.strokeStyle = 'rgba(220,245,252,0.25)';
+        ctx.strokeRect(x + 1, baseY + row * blockH + 1, blockW - 2, blockH - 2);
+      }
+    }
+
+    ctx.strokeStyle = 'rgba(132,247,229,0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY);
+    ctx.lineTo(w, baseY);
+    ctx.stroke();
+
+    const cx = w / 2;
+    const warm = ctx.createRadialGradient(cx, baseY - 3, 2, cx, baseY - 3, 62);
+    warm.addColorStop(0, 'rgba(255,184,95,0.24)');
+    warm.addColorStop(1, 'rgba(255,184,95,0)');
+    ctx.fillStyle = warm;
+    ctx.fillRect(cx - 65, baseY - 66, 130, 80);
+
+    ctx.fillStyle = '#13242c';
+    ctx.fillRect(cx - 39, baseY - 8, 78, 43);
+    ctx.strokeStyle = '#9dc4d2';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 39, baseY - 8, 78, 43);
+    ctx.fillStyle = '#071218';
+    ctx.fillRect(cx - 28, baseY - 2, 56, 29);
+    ctx.strokeStyle = '#84f7e5';
+    ctx.strokeRect(cx - 28, baseY - 2, 56, 29);
+    ctx.fillStyle = 'rgba(255,184,95,0.72)';
+    ctx.fillRect(cx - 4, baseY + 4, 8, 17);
+
+    // Static locator lamp and a crust of windblown snow.
+    ctx.fillStyle = '#84f7e5';
+    ctx.shadowColor = '#84f7e5';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(cx, baseY - 18, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(235,248,252,0.65)';
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 32) {
+      const y = baseY + Math.sin(x * 0.03) * 4;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(w, baseY + 8);
+    ctx.lineTo(0, baseY + 8);
+    ctx.closePath();
+    ctx.fill();
+    return;
+  }
+
+  if (theme.id === 'inferno') {
+    // The player holds a sealed threshold at the end of the causeway.
+    const basalt = ctx.createLinearGradient(0, baseY, 0, h);
+    basalt.addColorStop(0, '#180504');
+    basalt.addColorStop(1, '#020101');
+    ctx.fillStyle = basalt;
+    ctx.fillRect(0, baseY, w, 60);
+
+    // Interlocking black-stone blocks.
+    for (let row = 0; row < 3; row++) {
+      const blockW = 62;
+      const blockH = 20;
+      for (let x = -blockW + (row % 2) * (blockW / 2); x < w + blockW; x += blockW) {
+        ctx.fillStyle = row % 2 === 0 ? '#1e0907' : '#130403';
+        ctx.fillRect(x + 1, baseY + row * blockH + 1, blockW - 2, blockH - 2);
+        ctx.strokeStyle = 'rgba(85,28,20,0.52)';
+        ctx.strokeRect(x + 1, baseY + row * blockH + 1, blockW - 2, blockH - 2);
+      }
+    }
+
+    // Molten seam marks the collision threshold.
+    const seam = ctx.createLinearGradient(0, baseY, w, baseY);
+    seam.addColorStop(0, 'rgba(255,45,8,0.25)');
+    seam.addColorStop(0.5, 'rgba(255,105,22,0.95)');
+    seam.addColorStop(1, 'rgba(255,45,8,0.25)');
+    ctx.strokeStyle = seam;
+    ctx.shadowColor = '#ff3b12';
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(0, baseY);
+    ctx.lineTo(w, baseY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const cx = w / 2;
+    const sealY = baseY + 9;
+    ctx.fillStyle = '#070101';
+    ctx.beginPath();
+    ctx.arc(cx, sealY, 38, Math.PI, 0);
+    ctx.lineTo(cx + 38, baseY + 42);
+    ctx.lineTo(cx - 38, baseY + 42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#4a130d';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Slowly breathing ritual seal—readable, not a rapid flash.
+    const sealAlpha = 0.48 + Math.sin(time * 0.0012) * 0.12;
+    ctx.strokeStyle = `rgba(255,61,15,${sealAlpha})`;
+    ctx.fillStyle = `rgba(255,61,15,${sealAlpha})`;
+    ctx.shadowColor = '#ff3b12';
+    ctx.shadowBlur = 11;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.arc(cx, sealY + 4, 18, 0, Math.PI * 2);
+    ctx.stroke();
+    for (let point = 0; point < 5; point++) {
+      const a = -Math.PI / 2 + (point / 5) * Math.PI * 2;
+      const b = -Math.PI / 2 + (((point + 2) % 5) / 5) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * 16, sealY + 4 + Math.sin(a) * 16);
+      ctx.lineTo(cx + Math.cos(b) * 16, sealY + 4 + Math.sin(b) * 16);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(cx, sealY + 4, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Obsidian spikes make the wall feel like a final desperate barricade.
+    ctx.fillStyle = '#100302';
+    for (let x = 18; x < w; x += 42) {
+      if (Math.abs(x - cx) < 58) continue;
+      const height = 18 + rand(x + 1700) * 18;
+      ctx.beginPath();
+      ctx.moveTo(x - 7, baseY + 4);
+      ctx.lineTo(x, baseY - height);
+      ctx.lineTo(x + 7, baseY + 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,55,12,0.16)';
+      ctx.stroke();
+    }
+    return;
+  }
 
   ctx.fillStyle = '#1a2417';
   ctx.fillRect(0, baseY, w, 60);
@@ -1325,6 +3436,65 @@ function drawGroundFog(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTh
     ctx.closePath();
     ctx.fill();
   }
+  ctx.restore();
+}
+
+function drawBleedingForestAtmosphere(ctx: CanvasRenderingContext2D, s: GameState, time: number) {
+  const { width: w, height: h } = s;
+  ctx.save();
+
+  // Thin red mist ribbons cross the lower field at different speeds.
+  for (let layer = 0; layer < 3; layer++) {
+    const y = h * (0.56 + layer * 0.11);
+    const drift = (time * (0.004 + layer * 0.002)) % (w + 260);
+    const mist = ctx.createLinearGradient(0, y - 35, 0, y + 45);
+    mist.addColorStop(0, 'rgba(165,14,42,0)');
+    mist.addColorStop(0.58, `rgba(165,14,42,${0.035 + layer * 0.015})`);
+    mist.addColorStop(1, 'rgba(95,5,25,0)');
+    ctx.fillStyle = mist;
+    ctx.beginPath();
+    for (let x = -260; x <= w + 260; x += 36) {
+      const waveY = y + Math.sin((x + drift) * 0.016 + layer) * (8 + layer * 3);
+      if (x === -260) ctx.moveTo(x, waveY);
+      else ctx.lineTo(x, waveY);
+    }
+    ctx.lineTo(w + 260, y + 55);
+    ctx.lineTo(-260, y + 55);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Sparse falling leaves and ash-like bark fragments add premium motion while
+  // remaining translucent enough not to hide words, zombies, or hit effects.
+  for (let i = 0; i < 42; i++) {
+    const fallSpeed = 0.008 + rand(i + 2300) * 0.017;
+    const y = (rand(i + 2310) * h + time * fallSpeed) % h;
+    const x = (rand(i + 2320) * w + Math.sin(time * 0.0005 + i) * (12 + rand(i) * 20)) % w;
+    const size = 1.5 + rand(i + 2330) * 2.8;
+    const rotation = time * 0.001 + i;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.fillStyle = i % 5 === 0 ? 'rgba(255,63,88,0.48)' : 'rgba(112,22,39,0.42)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, size * 1.8, size * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Firefly-like spores gather near the blood river and blink slowly.
+  for (let i = 0; i < 24; i++) {
+    const x = w * (0.34 + rand(i + 2340) * 0.32) + Math.sin(time * 0.0007 + i) * 13;
+    const y = h * (0.28 + rand(i + 2350) * 0.53) + Math.cos(time * 0.0005 + i * 1.4) * 11;
+    const alpha = 0.16 + Math.abs(Math.sin(time * 0.0012 + i * 0.8)) * 0.3;
+    ctx.fillStyle = `rgba(255,67,91,${alpha})`;
+    ctx.shadowColor = '#ff244f';
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.arc(x, y, 1.1 + rand(i + 2360), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
   ctx.restore();
 }
 

@@ -4,7 +4,6 @@ import com.deadkeys.model.Dtos.LeaderboardEntry;
 import com.deadkeys.model.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +17,8 @@ import java.util.Random;
  */
 @Component
 public class ProfileStore {
+  public record EnsuredProfile(Profile profile, boolean created) {}
+
   private final ProfileRepository profiles;
   private final LeaderboardRepository leaderboard;
   private final ObjectMapper mapper;
@@ -48,15 +49,15 @@ public class ProfileStore {
         .anyMatch(e -> !e.id.equals(exceptId));
   }
 
-  /** Get the profile for this account id, creating it on first sign-in. */
+  /** Get the profile for this account id, reporting whether this call created it. */
   @Transactional
-  public Profile ensureProfile(String id, String name) {
+  public EnsuredProfile ensureProfile(String id, String name) {
     Profile existing = findProfile(id);
-    if (existing != null) return existing;
+    if (existing != null) return new EnsuredProfile(existing, false);
     String handle = (name != null && !name.trim().isEmpty()) ? name.trim() : randomHandle();
     Profile p = new Profile(id, handle);
     save(p);
-    return p;
+    return new EnsuredProfile(p, true);
   }
 
   @Transactional
@@ -70,19 +71,22 @@ public class ProfileStore {
    */
   @Transactional
   public void upsertLeaderboard(String ownerId, LeaderboardEntry run) {
-    LeaderboardEntity e = leaderboard.findByOwnerId(ownerId).orElse(null);
+    // Two independent boards keyed by run.riddle(): Typers (false) and Riddlers (true).
+    boolean riddle = run.riddle();
+    LeaderboardEntity e = leaderboard.findByOwnerIdAndRiddle(ownerId, riddle).orElse(null);
     if (e != null && run.score() <= e.score) {
-      return; // not a new personal best — leave the existing row untouched
+      return; // not a new personal best on this board — leave the row untouched
     }
     if (e == null) {
-      // Brand-new entrant: only store them if they'd crack the global top N,
-      // so the table never grows beyond the leaderboard we actually show.
-      List<LeaderboardEntity> top = leaderboard.findAllByOrderByScoreDesc(PageRequest.of(0, MAX_ENTRIES));
+      // Brand-new entrant: only store them if they'd crack this board's top N,
+      // so the table never grows beyond the leaderboards we actually show.
+      List<LeaderboardEntity> top = leaderboard.findByRiddleOrderByScoreDesc(riddle, PageRequest.of(0, MAX_ENTRIES));
       if (top.size() >= MAX_ENTRIES && run.score() <= top.get(top.size() - 1).score) {
         return;
       }
       e = new LeaderboardEntity();
       e.ownerId = ownerId;
+      e.riddle = riddle;
     }
     e.name = run.name();
     e.score = run.score();
@@ -91,22 +95,23 @@ public class ProfileStore {
     e.accuracy = run.accuracy();
     e.mode = run.mode();
     e.difficulty = run.difficulty();
+    e.style = run.style();
     e.at = System.currentTimeMillis();
     leaderboard.save(e);
-    pruneLeaderboard();
+    pruneLeaderboard(riddle);
   }
 
-  /** Keep only the global top {@link #MAX_ENTRIES} rows. */
-  private void pruneLeaderboard() {
-    List<LeaderboardEntity> all = leaderboard.findAll(Sort.by(Sort.Direction.DESC, "score"));
+  /** Keep only the top {@link #MAX_ENTRIES} rows on one board. */
+  private void pruneLeaderboard(boolean riddle) {
+    List<LeaderboardEntity> all = leaderboard.findByRiddleOrderByScoreDesc(riddle);
     if (all.size() > MAX_ENTRIES) {
       leaderboard.deleteAll(all.subList(MAX_ENTRIES, all.size()));
     }
   }
 
   @Transactional(readOnly = true)
-  public List<LeaderboardEntry> topLeaderboard(int limit) {
-    return leaderboard.findAllByOrderByScoreDesc(PageRequest.of(0, limit)).stream().map(this::toDto).toList();
+  public List<LeaderboardEntry> topLeaderboard(boolean riddle, int limit) {
+    return leaderboard.findByRiddleOrderByScoreDesc(riddle, PageRequest.of(0, limit)).stream().map(this::toDto).toList();
   }
 
   public long countProfiles() {
@@ -137,7 +142,7 @@ public class ProfileStore {
 
   private LeaderboardEntry toDto(LeaderboardEntity e) {
     return new LeaderboardEntry("lb-" + e.id, e.name, e.score, e.wave, e.wpm,
-        e.accuracy, e.mode, e.difficulty, e.at);
+        e.accuracy, e.mode, e.difficulty, e.riddle, e.style, e.at);
   }
 
   private static String randomHandle() {

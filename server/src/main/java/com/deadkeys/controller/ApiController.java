@@ -3,6 +3,7 @@ package com.deadkeys.controller;
 import com.deadkeys.catalog.CoinPackCatalog;
 import com.deadkeys.exception.BadRequestException;
 import com.deadkeys.exception.NotFoundException;
+import com.deadkeys.model.Dtos.GuestProgressImport;
 import com.deadkeys.model.Dtos.RunResult;
 import com.deadkeys.model.Profile;
 import com.deadkeys.persistence.ProfileStore;
@@ -55,6 +56,17 @@ public class ApiController {
     return json("profile", current(req));
   }
 
+  @PostMapping("/api/profile/bootstrap")
+  public Object bootstrapProfile(HttpServletRequest req, @RequestBody(required = false) GuestProgressImport guest) {
+    String uid = currentUid(req);
+    String name = (String) req.getAttribute(FirebaseAuthFilter.NAME_ATTR);
+    ProfileService.ProfileBootstrap result = profileService.bootstrapProfile(uid, name, guest);
+    return json(
+        "profile", result.profile(),
+        "created", result.created(),
+        "imported", result.imported());
+  }
+
   @PostMapping("/api/profile/run")
   public Object submitRun(HttpServletRequest req, @RequestBody RunResult run) {
     Profile profile = current(req);
@@ -102,6 +114,26 @@ public class ApiController {
     return json("profile", profile);
   }
 
+  @PostMapping("/api/profile/buy-cosmetic")
+  public Object buyCosmetic(HttpServletRequest req, @RequestBody(required = false) Map<String, Object> body) {
+    Profile profile = current(req);
+    profileService.buyCosmetic(profile, readString(body, "key"));
+    return json("profile", profile);
+  }
+
+  @PostMapping("/api/profile/equip-character")
+  public Object equipCharacter(HttpServletRequest req, @RequestBody(required = false) Map<String, Object> body) {
+    Profile profile = current(req);
+    profileService.equipCharacter(
+        profile,
+        readString(body, "skinTone"),
+        readString(body, "hair"),
+        readString(body, "hairColor"),
+        readString(body, "outfit"),
+        readString(body, "accessory"));
+    return json("profile", profile);
+  }
+
   @PostMapping("/api/profile/reward")
   public Object claimReward(HttpServletRequest req) {
     Profile profile = current(req);
@@ -135,17 +167,24 @@ public class ApiController {
     // window (and keep serving the stale copy briefly while revalidating) to cut load.
     return ResponseEntity.ok()
         .cacheControl(CacheControl.maxAge(Duration.ofSeconds(30)).cachePublic().staleWhileRevalidate(Duration.ofSeconds(60)))
-        .body(json("leaderboard", store.topLeaderboard(safeLimit)));
+        .body(json(
+            "typers", store.topLeaderboard(false, safeLimit),
+            "solvers", store.topLeaderboard(true, safeLimit)));
   }
 
   // --- helpers ---------------------------------------------------------------
 
   /** The authenticated account's profile (the auth filter guarantees a uid). */
   private Profile current(HttpServletRequest req) {
-    String uid = (String) req.getAttribute(FirebaseAuthFilter.UID_ATTR);
-    if (uid == null) throw new NotFoundException("no authenticated account");
+    String uid = currentUid(req);
     String name = (String) req.getAttribute(FirebaseAuthFilter.NAME_ATTR);
     return profileService.getOrCreate(uid, name);
+  }
+
+  private String currentUid(HttpServletRequest req) {
+    String uid = (String) req.getAttribute(FirebaseAuthFilter.UID_ATTR);
+    if (uid == null) throw new NotFoundException("no authenticated account");
+    return uid;
   }
 
   private static String readString(Map<String, Object> body, String key) {
