@@ -129,8 +129,8 @@ export function Upgrades({
           onClick={onRequireSignIn}
           className="rounded-lg border border-neon-pink/50 bg-neon-pink/10 px-4 py-2 text-left text-sm text-neon-pink hover:bg-neon-pink/20"
         >
-          👻 Playing as a guest — purchases save on this device only and may not stick.{' '}
-          <span className="font-bold underline">Sign in</span> to save your progress (and to buy coin packs).
+          👻 You're playing as a guest — purchases save on this device only and may not stick.{' '}
+          <span className="font-bold underline">Sign in</span> to save your progress across devices.
         </button>
       )}
 

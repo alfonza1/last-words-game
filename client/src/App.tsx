@@ -374,13 +374,13 @@ export default function App() {
         saveStats(nextStats);
         setCosmetics(nextCosmetics);
         persistGuest({ cosmetics: nextCosmetics });
-        toast.success('Gear unlocked — check your Closet.');
+        toast.success('Gear unlocked — check your closet.');
         return;
       }
       apiBuyCosmetic(key)
         .then((p) => {
           applyProfile(p);
-          toast.success('Gear unlocked — check your Closet.');
+          toast.success('Gear unlocked — check your closet.');
         })
         .catch(fail);
     },
@@ -393,13 +393,13 @@ export default function App() {
         const look = normalizeCharacter(next);
         setCharacter(look);
         persistGuest({ character: look });
-        toast.success('Look equipped.');
+        toast.success('Survivor look equipped!');
         return;
       }
       apiEquipCharacter(next)
         .then((p) => {
           applyProfile(p);
-          toast.success('Survivor look equipped.');
+          toast.success('Survivor look equipped!');
         })
         .catch(fail);
     },
