@@ -285,6 +285,31 @@ the only deployment authority.
 Create a Cloudflare API token with only the permissions needed to deploy Pages.
 Store it as `CLOUDFLARE_API_TOKEN` in both GitHub environments.
 
+#### Restrict UAT to the operator
+
+Protect `https://dead-keys-uat.pages.dev` with Cloudflare Access so an anonymous
+visitor cannot load the client:
+
+1. In Cloudflare, open **Workers & Pages > dead-keys-uat > Settings > General**
+   and enable the Access policy.
+2. Open **Zero Trust > Access controls > Applications**, select the generated
+   Pages application, and choose **Configure**.
+3. In **Public hostname**, remove the wildcard (`*`) from the subdomain so the
+   application protects the root hostname `dead-keys-uat.pages.dev`. Rename the
+   application if Cloudflare reports a duplicate-name conflict.
+4. Add an **Allow** policy whose Include selector is **Emails** and set it to the
+   operator's exact email address. Do not use an `Everyone` or whole-domain
+   selector for private UAT.
+5. Select an identity method the operator can complete, such as Google or an
+   emailed one-time PIN, then verify the URL in a private browser window.
+6. If deployment preview URLs must also remain private, return to the Pages
+   project and enable its preview Access policy again. Cloudflare should then
+   show separate applications for the root hostname and
+   `*.dead-keys-uat.pages.dev`.
+
+This Access gate is configured in Cloudflare and survives normal Pages
+deployments. It does not replace Firebase authorization or API-side security.
+
 ### 4. Create Google Cloud resources
 
 Use one Google Cloud project for the initial free-tier implementation. It

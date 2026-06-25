@@ -1,6 +1,10 @@
 name: CI
 
 on:
+  push:
+    branches:
+      - "feature/**"
+      - "codex/**"
   pull_request:
     branches:
       - develop
@@ -64,3 +68,21 @@ jobs:
 
       - name: Package server
         run: ./mvnw -B -DskipTests package
+
+  server-docker:
+    name: server-docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build server image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          push: false
+          cache-from: type=gha,scope=dead-keys-server-ci
+          cache-to: type=gha,mode=max,scope=dead-keys-server-ci

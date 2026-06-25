@@ -26,7 +26,6 @@ export const DEFAULT_STATS: GameStats = {
   coinsEarned: 0,
   totalCoins: 0,
   gamesPlayed: 0,
-  missedWords: {},
 };
 
 export const DEFAULT_UPGRADES: Upgrades = {
@@ -89,9 +88,18 @@ export function saveJSON<T>(key: string, value: T, store?: Storage): void {
   }
 }
 
-export const loadStats = (store?: Storage) => loadJSON(KEYS.stats, DEFAULT_STATS, store);
+function loadCleanStats(key: string, store?: Storage): GameStats {
+  const loaded = loadJSON<GameStats & { missedWords?: unknown }>(key, DEFAULT_STATS, store);
+  if (!Object.prototype.hasOwnProperty.call(loaded, 'missedWords')) return loaded;
+  const clean = { ...loaded };
+  delete clean.missedWords;
+  saveJSON(key, clean, store);
+  return clean;
+}
+
+export const loadStats = (store?: Storage) => loadCleanStats(KEYS.stats, store);
 export const saveStats = (v: GameStats, store?: Storage) => saveJSON(KEYS.stats, v, store);
-export const loadRiddleStats = (store?: Storage) => loadJSON(KEYS.riddleStats, DEFAULT_STATS, store);
+export const loadRiddleStats = (store?: Storage) => loadCleanStats(KEYS.riddleStats, store);
 export const saveRiddleStats = (v: GameStats, store?: Storage) => saveJSON(KEYS.riddleStats, v, store);
 
 export const loadUpgrades = (store?: Storage) => loadJSON(KEYS.upgrades, DEFAULT_UPGRADES, store);
@@ -190,8 +198,7 @@ function hasStats(stats: GameStats): boolean {
     stats.longestStreak > 0 ||
     stats.coinsEarned > 0 ||
     stats.totalCoins > 0 ||
-    stats.gamesPlayed > 0 ||
-    Object.values(stats.missedWords ?? {}).some((count) => count > 0)
+    stats.gamesPlayed > 0
   );
 }
 
@@ -247,13 +254,8 @@ export function mergeRunIntoStats(
     bossesDefeated: number;
     streak: number;
     coins: number;
-    missedWords: Record<string, number>;
   },
 ): GameStats {
-  const missedWords = { ...prev.missedWords };
-  for (const [word, count] of Object.entries(run.missedWords)) {
-    missedWords[word] = (missedWords[word] ?? 0) + count;
-  }
   return {
     bestScore: Math.max(prev.bestScore, run.score),
     longestSurvivalMs: Math.max(prev.longestSurvivalMs, run.survivalMs),
@@ -265,7 +267,6 @@ export function mergeRunIntoStats(
     coinsEarned: (prev.coinsEarned ?? 0) + run.coins,
     totalCoins: prev.totalCoins + run.coins,
     gamesPlayed: prev.gamesPlayed + 1,
-    missedWords,
   };
 }
 

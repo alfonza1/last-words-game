@@ -6,8 +6,6 @@ import com.deadkeys.persistence.ProfileStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -52,6 +50,6 @@ class ProfileServiceRunStatsTest {
   private static RunResult run(int score, int kills, int coins, boolean riddle) {
     return new RunResult(
         score, 3, 42, 96.5, 60_000,
-        kills, 0, 4, coins, Map.of(), "survival", "normal", riddle, riddle ? "riddles" : "typing");
+        kills, 0, 4, coins, "survival", "normal", riddle, riddle ? "riddles" : "typing");
   }
 }

@@ -41,8 +41,6 @@ class ProfileServiceGuestImportTest {
     stats.coinsEarned = 900;
     stats.totalCoins = 275;
     stats.gamesPlayed = 4;
-    stats.missedWords.put("zombie", 3);
-
     Stats riddleStats = new Stats();
     riddleStats.bestScore = 500;
     riddleStats.gamesPlayed = 2;

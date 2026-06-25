@@ -1,8 +1,5 @@
 package com.deadkeys.model;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 /** Lifetime player stats. Mirrors the frontend GameStats. */
 public class Stats {
   public int bestScore = 0;
@@ -16,5 +13,4 @@ public class Stats {
   public int coinsEarned = 0;
   public int totalCoins = 0;
   public int gamesPlayed = 0;
-  public Map<String, Integer> missedWords = new LinkedHashMap<>();
 }

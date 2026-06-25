@@ -36,7 +36,6 @@ export interface RunPayload {
   bossesDefeated: number;
   streak: number;
   coins: number;
-  missedWords: Record<string, number>;
   mode: string;
   difficulty: string;
   riddle: boolean;
