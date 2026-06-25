@@ -55,6 +55,7 @@ class ProfileServiceGuestImportTest {
     character.skinTone = "deep";
     character.hair = "mohawk";
     character.hairColor = "cyan";
+    character.expression = "haunted";
     character.outfit = "outfit-hoodie";
     character.accessory = "accessory-cap";
 
@@ -91,6 +92,7 @@ class ProfileServiceGuestImportTest {
     assertFalse(profile.maps.contains("unknown"));
     assertTrue(profile.cosmetics.contains("outfit-hoodie"));
     assertEquals("deep", profile.character.skinTone);
+    assertEquals("haunted", profile.character.expression);
     assertEquals("outfit-hoodie", profile.character.outfit);
     assertTrue(profile.guestProgressImported);
 

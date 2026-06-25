@@ -129,6 +129,7 @@ public class ApiController {
         readString(body, "skinTone"),
         readString(body, "hair"),
         readString(body, "hairColor"),
+        readString(body, "expression"),
         readString(body, "outfit"),
         readString(body, "accessory"));
     return json("profile", profile);
