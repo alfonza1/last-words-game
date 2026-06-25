@@ -22,7 +22,7 @@ export interface OutfitPalette {
 
 export const DEFAULT_CHARACTER: CharacterLoadout = {
   skinTone: 'warm',
-  hair: 'undercut',
+  hair: 'buzz',
   hairColor: 'charcoal',
   outfit: 'outfit-field',
   accessory: 'accessory-none',

@@ -208,6 +208,10 @@ export interface GameState {
   bossWarning: number; // seconds remaining of the warning overlay
   /** Brief visual trace from the survivor to the zombie targeted by a completed word. */
   survivorShot: { x: number; y: number; life: number; ttl: number } | null;
+  /** Monotonic count of shots that actually reached a visible target. */
+  shotsFired: number;
+  /** Completed-word shots waiting for a zombie to become visible. */
+  pendingShots: number;
 
   missedWords: Record<string, number>;
   upgrades: Upgrades;

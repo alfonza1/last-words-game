@@ -7,7 +7,7 @@ interface Props {
 type GuideSection = 'defense' | 'rules' | 'zombies' | 'powerups';
 
 const DEFENSE: [string, string][] = [
-  ['Typing Defense', 'Type the highlighted word, then press SPACE. Each completed word fires one shot at the nearest zombie.'],
+  ['Typing Defense', 'Type the highlighted word, then press SPACE. Each completed word fires one shot; shots wait in reserve when no zombie is visible.'],
   ['Riddle Defense', 'Solve the riddle, then press SPACE. A solve fires a volley: 5 / 8 / 12 shots on Easy / Normal / Nightmare.'],
   ['Math Defense', 'Solve the arithmetic, then press SPACE. Harder math each difficulty; a solve fires 3 / 4 / 6 shots.'],
   ['Trivia Defense', 'Answer the question, then press SPACE. Tougher questions each difficulty; a solve fires 3 / 5 / 8 shots.'],

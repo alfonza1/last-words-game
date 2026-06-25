@@ -68,7 +68,7 @@ export function GameScreen({
   const inputRef = useRef<HTMLInputElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
   const endedRef = useRef(false);
-  const prevWordsRef = useRef(0);
+  const prevShotsFiredRef = useRef(0);
   const prevConsumablesRef = useRef<Record<string, number>>({ grenade: 0, freeze: 0 });
   const [, setTick] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -238,10 +238,12 @@ export function GameScreen({
     }
     setTick((t) => (t + 1) % 1_000_000);
 
-    // Gunshot whenever a word is completed.
-    const words = engine.state.correctWords;
-    if (words > prevWordsRef.current) audio.gunshot(settings.weapon);
-    prevWordsRef.current = words;
+    // Play gunshots only when reserved shots actually reach visible targets.
+    const shotsFired = engine.state.shotsFired;
+    for (let i = prevShotsFiredRef.current; i < shotsFired; i++) {
+      audio.gunshot(settings.weapon);
+    }
+    prevShotsFiredRef.current = shotsFired;
 
     // Sync any consumed powerups to the backend (so the charge is spent).
     const cons = engine.state.powerups.consumables as unknown as Record<string, number>;
@@ -267,6 +269,7 @@ export function GameScreen({
           Status events (WAVE CLEARED, etc.) sit UNDER the box so it never hides them. */}
       {s.status === 'playing' && (
         <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex flex-col items-center gap-2 px-4">
+          {s.pendingShots > 0 && <ShotsReadyBanner count={s.pendingShots} />}
           <div className="rounded-2xl border border-white/10 bg-black/55 px-5 py-2.5 backdrop-blur-sm">
             {s.riddleMode ? (
               <RiddlePrompt prompt={s.riddlePrompt} wrong={wrong} />
@@ -405,6 +408,14 @@ export function GameScreen({
 }
 
 /** Puzzle prompt panel — shows the prompt (not the answer). */
+function ShotsReadyBanner({ count }: { count: number }) {
+  return (
+    <div className="rounded-full border border-neon-amber bg-black/75 px-4 py-1 text-xs font-black tracking-[0.22em] text-neon-amber shadow-[0_0_14px_rgba(255,209,102,0.45)]">
+      SHOTS READY x{count}
+    </div>
+  );
+}
+
 function RiddlePrompt({ prompt, wrong }: { prompt: string | null; wrong: boolean }) {
   return (
     <div className="flex w-full max-w-2xl flex-col items-center gap-1 text-center">

@@ -474,7 +474,7 @@ public class ProfileService {
       changed = true;
     }
     if (!CharacterCatalog.HAIR_STYLES.contains(profile.character.hair)) {
-      profile.character.hair = "undercut";
+      profile.character.hair = "buzz";
       changed = true;
     }
     if (!CharacterCatalog.HAIR_COLORS.contains(profile.character.hairColor)) {
