@@ -279,9 +279,10 @@ function drawCombatFace(
   } else if (expression === 'blood-rush') {
     ctx.moveTo(32 * scale, -33 * scale);
     ctx.lineTo(38 * scale, -30 * scale);
-    ctx.moveTo(34.5 * scale, -22 * scale);
-    ctx.quadraticCurveTo(39 * scale, -25 * scale, 43.5 * scale, -22 * scale);
-    ctx.quadraticCurveTo(39 * scale, -18.5 * scale, 34.5 * scale, -22 * scale);
+    ctx.moveTo(34 * scale, -21 * scale);
+    ctx.quadraticCurveTo(39 * scale, -25 * scale, 44 * scale, -22 * scale);
+    ctx.moveTo(35 * scale, -19 * scale);
+    ctx.quadraticCurveTo(40 * scale, -17 * scale, 44 * scale, -21 * scale);
   } else {
     ctx.moveTo(36 * scale, -23 * scale);
     ctx.lineTo(40 * scale, -21 * scale);
