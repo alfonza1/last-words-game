@@ -2,6 +2,7 @@ package com.deadkeys.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.List;
 import java.util.Map;
 
 /** Request/response DTOs. */
@@ -20,4 +21,16 @@ public final class Dtos {
       int score, int wave, int wpm, double accuracy, long survivalMs,
       int kills, int bossesDefeated, int streak, int coins,
       Map<String, Integer> missedWords, String mode, String difficulty, boolean riddle, String style) {}
+
+  /** Locally stored progress offered once when a guest signs into an account. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public record GuestProgressImport(
+      Stats stats,
+      Stats riddleStats,
+      Upgrades upgrades,
+      int upgradeGames,
+      Map<String, Integer> powerups,
+      List<String> maps,
+      List<String> cosmetics,
+      CharacterLoadout character) {}
 }

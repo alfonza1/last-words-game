@@ -6,6 +6,7 @@ import com.deadkeys.catalog.UpgradeCatalog;
 import com.deadkeys.catalog.CharacterCatalog;
 import com.deadkeys.exception.BadRequestException;
 import com.deadkeys.model.CharacterLoadout;
+import com.deadkeys.model.Dtos.GuestProgressImport;
 import com.deadkeys.model.Dtos.LeaderboardEntry;
 import com.deadkeys.model.Dtos.RunResult;
 import com.deadkeys.model.Profile;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 /**
  * Domain logic for a player's profile: merging finished runs (with anti-cheat
@@ -41,6 +43,13 @@ public class ProfileService {
   private static final int MAX_BOSSES = 5_000;
   private static final int MAX_STREAK = 200_000;
   private static final int MAX_COINS = 1_000_000;
+  private static final int MAX_IMPORTED_COINS = 10_000_000;
+  private static final int MAX_IMPORTED_GAMES = 100_000;
+  private static final int MAX_IMPORTED_KILLS = 20_000_000;
+  private static final int MAX_IMPORTED_BOSSES = 500_000;
+  private static final int MAX_IMPORTED_POWERUPS = 1_000;
+  private static final int MAX_IMPORTED_MISSED_WORDS = 10_000;
+  private static final int MAX_IMPORTED_MISSED_PER_WORD = 1_000_000;
 
   private final ProfileStore store;
   private final String grantUser;
@@ -68,6 +77,59 @@ public class ProfileService {
     }
     if (changed) store.save(p);
     return p;
+  }
+
+  /**
+   * Merge one browser's local guest progress into this account. The profile flag
+   * makes the operation idempotent; the client clears local progress only when
+   * this returns true.
+   */
+  public boolean importGuestProgress(Profile profile, GuestProgressImport guest) {
+    normalizeProfile(profile);
+    if (profile.guestProgressImported || guest == null) return false;
+
+    mergeImportedStats(profile.stats, guest.stats());
+    mergeImportedStats(profile.riddleStats, guest.riddleStats());
+
+    if (guest.upgrades() != null) {
+      for (UpgradeCatalog.Def def : UpgradeCatalog.DEFS) {
+        int imported = clampInt(guest.upgrades().get(def.key()), def.maxLevel());
+        profile.upgrades.set(def.key(), Math.max(profile.upgrades.get(def.key()), imported));
+      }
+    }
+    profile.upgradeGames = Math.max(
+        profile.upgradeGames,
+        clampInt(guest.upgradeGames(), UpgradeCatalog.LIFESPAN));
+
+    if (guest.powerups() != null) {
+      for (PowerupCatalog.Def def : PowerupCatalog.DEFS) {
+        int imported = clampInt(guest.powerups().getOrDefault(def.key(), 0), MAX_IMPORTED_POWERUPS);
+        if (imported > 0) {
+          profile.powerups.put(
+              def.key(),
+              cappedAdd(profile.powerups.getOrDefault(def.key(), 0), imported, Integer.MAX_VALUE));
+        }
+      }
+    }
+
+    if (guest.maps() != null) {
+      for (String mapId : guest.maps()) {
+        if (MapCatalog.find(mapId) != null && !profile.maps.contains(mapId)) profile.maps.add(mapId);
+      }
+    }
+    if (guest.cosmetics() != null) {
+      for (String key : guest.cosmetics()) {
+        if (CharacterCatalog.find(key) != null && !profile.cosmetics.contains(key)) profile.cosmetics.add(key);
+      }
+    }
+
+    applyImportedCharacter(profile, guest.character());
+    profile.guestProgressImported = true;
+    store.save(profile);
+    log.info("guest progress imported uid={} games={} coins={} maps={} cosmetics={}",
+        profile.guestId, profile.stats.gamesPlayed, profile.stats.totalCoins,
+        profile.maps.size(), profile.cosmetics.size());
+    return true;
   }
 
   /** Merge a finished (or abandoned) run into the profile + leaderboard. */
@@ -119,6 +181,75 @@ public class ProfileService {
 
   private static int clampInt(int v, int max) {
     return Math.max(0, Math.min(max, v));
+  }
+
+  private static int cappedAdd(int current, int added, int max) {
+    return (int) Math.min(max, (long) Math.max(0, current) + Math.max(0, added));
+  }
+
+  private static void mergeImportedStats(Stats target, Stats imported) {
+    if (imported == null) return;
+    target.bestScore = Math.max(target.bestScore, clampInt(imported.bestScore, MAX_SCORE));
+    target.longestSurvivalMs = Math.max(
+        target.longestSurvivalMs,
+        Math.max(0, Math.min(MAX_SURVIVAL_MS, imported.longestSurvivalMs)));
+    target.highestWpm = Math.max(target.highestWpm, clampInt(imported.highestWpm, MAX_WPM));
+    target.bestAccuracy = Math.max(target.bestAccuracy, Math.max(0, Math.min(100, imported.bestAccuracy)));
+    target.totalKills = cappedAdd(
+        target.totalKills,
+        clampInt(imported.totalKills, MAX_IMPORTED_KILLS),
+        Integer.MAX_VALUE);
+    target.bossesDefeated = cappedAdd(
+        target.bossesDefeated,
+        clampInt(imported.bossesDefeated, MAX_IMPORTED_BOSSES),
+        Integer.MAX_VALUE);
+    target.longestStreak = Math.max(target.longestStreak, clampInt(imported.longestStreak, MAX_STREAK));
+    target.coinsEarned = cappedAdd(
+        target.coinsEarned,
+        clampInt(imported.coinsEarned, MAX_IMPORTED_COINS),
+        Integer.MAX_VALUE);
+    target.totalCoins = cappedAdd(
+        target.totalCoins,
+        clampInt(imported.totalCoins, MAX_IMPORTED_COINS),
+        Integer.MAX_VALUE);
+    target.gamesPlayed = cappedAdd(
+        target.gamesPlayed,
+        clampInt(imported.gamesPlayed, MAX_IMPORTED_GAMES),
+        Integer.MAX_VALUE);
+
+    if (imported.missedWords != null) {
+      int accepted = 0;
+      for (Map.Entry<String, Integer> missed : imported.missedWords.entrySet()) {
+        String word = missed.getKey();
+        if (accepted >= MAX_IMPORTED_MISSED_WORDS) break;
+        if (word == null || word.isBlank() || word.length() > 80 || missed.getValue() == null) continue;
+        int count = clampInt(missed.getValue(), MAX_IMPORTED_MISSED_PER_WORD);
+        if (count <= 0) continue;
+        target.missedWords.put(
+            word,
+            cappedAdd(target.missedWords.getOrDefault(word, 0), count, Integer.MAX_VALUE));
+        accepted++;
+      }
+    }
+  }
+
+  private static void applyImportedCharacter(Profile profile, CharacterLoadout imported) {
+    if (imported == null) return;
+    if (CharacterCatalog.SKIN_TONES.contains(imported.skinTone)) profile.character.skinTone = imported.skinTone;
+    if (CharacterCatalog.HAIR_STYLES.contains(imported.hair)) profile.character.hair = imported.hair;
+    if (CharacterCatalog.HAIR_COLORS.contains(imported.hairColor)) profile.character.hairColor = imported.hairColor;
+    CharacterCatalog.Def outfit = CharacterCatalog.find(imported.outfit);
+    if (outfit != null
+        && CharacterCatalog.OUTFIT.equals(outfit.slot())
+        && profile.cosmetics.contains(imported.outfit)) {
+      profile.character.outfit = imported.outfit;
+    }
+    CharacterCatalog.Def accessory = CharacterCatalog.find(imported.accessory);
+    if (accessory != null
+        && CharacterCatalog.ACCESSORY.equals(accessory.slot())
+        && profile.cosmetics.contains(imported.accessory)) {
+      profile.character.accessory = imported.accessory;
+    }
   }
 
   private static void mergeStats(Stats stats, RunResult run) {
@@ -288,6 +419,30 @@ public class ProfileService {
     }
     if (profile.riddleStats == null) {
       profile.riddleStats = new Stats();
+      changed = true;
+    }
+    if (profile.stats.missedWords == null) {
+      profile.stats.missedWords = new LinkedHashMap<>();
+      changed = true;
+    }
+    if (profile.riddleStats.missedWords == null) {
+      profile.riddleStats.missedWords = new LinkedHashMap<>();
+      changed = true;
+    }
+    if (profile.upgrades == null) {
+      profile.upgrades = new Upgrades();
+      changed = true;
+    }
+    if (profile.powerups == null) {
+      profile.powerups = new LinkedHashMap<>();
+      changed = true;
+    }
+    if (profile.maps == null) {
+      profile.maps = new ArrayList<>();
+      changed = true;
+    }
+    if (!profile.maps.contains("graveyard")) {
+      profile.maps.add("graveyard");
       changed = true;
     }
     if (profile.cosmetics == null) {

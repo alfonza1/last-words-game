@@ -6,6 +6,7 @@
 // (their progress is local) — the only public read is the leaderboard.
 // ---------------------------------------------------------------------------
 import type { CharacterLoadout, GameStats, Upgrades } from '../types';
+import type { GuestProgressSnapshot } from './storage';
 import { auth } from './firebase';
 
 const BASE = (import.meta.env.VITE_API_BASE ?? '') + '/api';
@@ -21,6 +22,7 @@ export interface Profile {
   maps: string[];
   cosmetics: string[];
   character: CharacterLoadout;
+  guestProgressImported: boolean;
 }
 
 export interface RunPayload {
@@ -106,6 +108,12 @@ async function errorMessage(res: Response): Promise<string> {
 export async function getProfile(): Promise<Profile> {
   const { profile } = await aget<{ profile: Profile }>('/profile');
   return profile;
+}
+
+export async function importGuestProgress(
+  guest: GuestProgressSnapshot,
+): Promise<{ profile: Profile; imported: boolean }> {
+  return apost('/profile/import-guest', guest);
 }
 
 export async function submitRun(run: RunPayload): Promise<{ profile: Profile; isHighScore: boolean }> {

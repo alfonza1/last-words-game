@@ -106,10 +106,12 @@ export const saveSettings = (v: Settings, store?: Storage) => saveJSON(KEYS.sett
 
 /**
  * A guest's locally-owned inventory (no account). Guests can buy cosmetics,
- * power-ups and upgrades with their local coins; it all lives here on the device.
- * (Coins live in stats; coin packs and maps still require signing in.)
+ * power-ups, upgrades, and maps with their local coins; it all lives here on
+ * the device. Coins live in stats; real-money coin packs still require signing in.
  */
 export interface GuestProfile {
+  name: string;
+  maps: string[];
   cosmetics: string[];
   powerups: Record<string, number>;
   upgrades: Upgrades;
@@ -118,6 +120,8 @@ export interface GuestProfile {
 }
 
 export const DEFAULT_GUEST: GuestProfile = {
+  name: '',
+  maps: ['graveyard'],
   cosmetics: [...DEFAULT_COSMETICS],
   powerups: {},
   upgrades: DEFAULT_UPGRADES,
@@ -125,8 +129,100 @@ export const DEFAULT_GUEST: GuestProfile = {
   character: DEFAULT_CHARACTER,
 };
 
-export const loadGuest = (store?: Storage) => loadJSON(KEYS.guest, DEFAULT_GUEST, store);
 export const saveGuest = (v: GuestProfile, store?: Storage) => saveJSON(KEYS.guest, v, store);
+
+export function generateGuestName(rng: () => number = Math.random): string {
+  const digits = Math.floor(rng() * 100_000)
+    .toString()
+    .padStart(5, '0');
+  return `Survivor${digits}`;
+}
+
+export function loadGuest(store?: Storage): GuestProfile {
+  const loaded = loadJSON(KEYS.guest, DEFAULT_GUEST, store);
+  const name = loaded.name || generateGuestName();
+  const existingMaps = Array.isArray(loaded.maps) ? loaded.maps : [];
+  const maps = [...new Set(['graveyard', ...existingMaps])];
+  const guest = { ...loaded, name, maps };
+  const mapsChanged = maps.length !== existingMaps.length || maps.some((map, i) => map !== existingMaps[i]);
+
+  // Persist generated/migrated fields so a guest keeps the same identity and
+  // map ownership on future visits without creating a database profile.
+  if (name !== loaded.name || mapsChanged) {
+    saveGuest(guest, store);
+  }
+  return guest;
+}
+
+export interface GuestProgressSnapshot {
+  stats: GameStats;
+  riddleStats: GameStats;
+  upgrades: Upgrades;
+  upgradeGames: number;
+  powerups: Record<string, number>;
+  maps: string[];
+  cosmetics: string[];
+  character: CharacterLoadout;
+}
+
+export function loadGuestProgress(store?: Storage): GuestProgressSnapshot {
+  const guest = loadGuest(store);
+  return {
+    stats: loadStats(store),
+    riddleStats: loadRiddleStats(store),
+    upgrades: guest.upgrades,
+    upgradeGames: guest.upgradeGames,
+    powerups: guest.powerups,
+    maps: guest.maps,
+    cosmetics: guest.cosmetics,
+    character: guest.character,
+  };
+}
+
+function hasStats(stats: GameStats): boolean {
+  return (
+    stats.bestScore > 0 ||
+    stats.longestSurvivalMs > 0 ||
+    stats.highestWpm > 0 ||
+    stats.bestAccuracy > 0 ||
+    stats.totalKills > 0 ||
+    stats.bossesDefeated > 0 ||
+    stats.longestStreak > 0 ||
+    stats.coinsEarned > 0 ||
+    stats.totalCoins > 0 ||
+    stats.gamesPlayed > 0 ||
+    Object.values(stats.missedWords ?? {}).some((count) => count > 0)
+  );
+}
+
+/** Whether there is meaningful local progress worth transferring to an account. */
+export function hasGuestProgress(progress: GuestProgressSnapshot): boolean {
+  return (
+    hasStats(progress.stats) ||
+    hasStats(progress.riddleStats) ||
+    Object.values(progress.upgrades).some((level) => level > 0) ||
+    progress.upgradeGames > 0 ||
+    Object.values(progress.powerups).some((count) => count > 0) ||
+    progress.maps.some((map) => map !== 'graveyard') ||
+    progress.cosmetics.some((key) => !DEFAULT_COSMETICS.includes(key)) ||
+    Object.entries(DEFAULT_CHARACTER).some(
+      ([key, value]) => progress.character[key as keyof CharacterLoadout] !== value,
+    )
+  );
+}
+
+/** Remove only transferred progress; device-local settings remain unchanged. */
+export function clearGuestProgress(store?: Storage): void {
+  const s = getStore(store);
+  if (!s) return;
+  try {
+    s.removeItem(KEYS.stats);
+    s.removeItem(KEYS.riddleStats);
+    s.removeItem(KEYS.guest);
+  } catch {
+    /* access blocked */
+  }
+}
 
 export const loadHighScores = (store?: Storage) => loadJSON<HighScore[]>(KEYS.highscores, [], store);
 

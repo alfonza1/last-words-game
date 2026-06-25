@@ -32,6 +32,8 @@ public class Profile {
   public boolean granted = false;
   /** Epoch millis of the last rewarded-ad claim (cooldown to limit abuse). */
   public long lastRewardAt = 0;
+  /** True after local guest progress has been transferred into this account. */
+  public boolean guestProgressImported = false;
 
   public Profile() {}
 
