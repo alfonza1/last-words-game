@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
@@ -50,8 +49,6 @@ public class ProfileService {
   private static final int MAX_IMPORTED_KILLS = 20_000_000;
   private static final int MAX_IMPORTED_BOSSES = 500_000;
   private static final int MAX_IMPORTED_POWERUPS = 1_000;
-  private static final int MAX_IMPORTED_MISSED_WORDS = 10_000;
-  private static final int MAX_IMPORTED_MISSED_PER_WORD = 1_000_000;
 
   private final ProfileStore store;
   private final String grantUser;
@@ -186,7 +183,7 @@ public class ProfileService {
         clampInt(r.bossesDefeated(), MAX_BOSSES),
         clampInt(r.streak(), MAX_STREAK),
         clampInt(r.coins(), MAX_COINS),
-        r.missedWords(), r.mode(), r.difficulty(), r.riddle(), r.style());
+        r.mode(), r.difficulty(), r.riddle(), r.style());
   }
 
   private static int clampInt(int v, int max) {
@@ -227,20 +224,6 @@ public class ProfileService {
         clampInt(imported.gamesPlayed, MAX_IMPORTED_GAMES),
         Integer.MAX_VALUE);
 
-    if (imported.missedWords != null) {
-      int accepted = 0;
-      for (Map.Entry<String, Integer> missed : imported.missedWords.entrySet()) {
-        String word = missed.getKey();
-        if (accepted >= MAX_IMPORTED_MISSED_WORDS) break;
-        if (word == null || word.isBlank() || word.length() > 80 || missed.getValue() == null) continue;
-        int count = clampInt(missed.getValue(), MAX_IMPORTED_MISSED_PER_WORD);
-        if (count <= 0) continue;
-        target.missedWords.put(
-            word,
-            cappedAdd(target.missedWords.getOrDefault(word, 0), count, Integer.MAX_VALUE));
-        accepted++;
-      }
-    }
   }
 
   private static void applyImportedCharacter(Profile profile, CharacterLoadout imported) {
@@ -273,11 +256,6 @@ public class ProfileService {
     stats.coinsEarned += run.coins();
     stats.totalCoins += run.coins();
     stats.gamesPlayed += 1;
-    if (run.missedWords() != null) {
-      for (Map.Entry<String, Integer> missed : run.missedWords().entrySet()) {
-        stats.missedWords.merge(missed.getKey(), missed.getValue(), Integer::sum);
-      }
-    }
   }
 
   /** Each finished/abandoned run consumes one game of the upgrade lifespan. */
@@ -429,14 +407,6 @@ public class ProfileService {
     }
     if (profile.riddleStats == null) {
       profile.riddleStats = new Stats();
-      changed = true;
-    }
-    if (profile.stats.missedWords == null) {
-      profile.stats.missedWords = new LinkedHashMap<>();
-      changed = true;
-    }
-    if (profile.riddleStats.missedWords == null) {
-      profile.riddleStats.missedWords = new LinkedHashMap<>();
       changed = true;
     }
     if (profile.upgrades == null) {

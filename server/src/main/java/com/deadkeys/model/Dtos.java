@@ -20,7 +20,7 @@ public final class Dtos {
   public record RunResult(
       int score, int wave, int wpm, double accuracy, long survivalMs,
       int kills, int bossesDefeated, int streak, int coins,
-      Map<String, Integer> missedWords, String mode, String difficulty, boolean riddle, String style) {}
+      String mode, String difficulty, boolean riddle, String style) {}
 
   /** Locally stored progress offered once when a guest signs into an account. */
   @JsonIgnoreProperties(ignoreUnknown = true)
