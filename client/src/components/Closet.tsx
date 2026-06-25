@@ -107,9 +107,6 @@ export function Closet({
               {hasUnsavedChanges ? 'Unsaved' : 'Equipped'}
             </span>
           </div>
-          {!signedIn && (
-            <p className="mt-2 pl-2 text-[11px] text-neon-pink">Guest looks last for this visit.</p>
-          )}
           <button
             onClick={save}
             disabled={!dirty || saved}

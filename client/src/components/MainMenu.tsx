@@ -226,7 +226,6 @@ function Records({
         ) : (
           <Row k="Highest WPM" v={selected.highestWpm} />
         )}
-        <Row k="Best Accuracy" v={`${selected.bestAccuracy}%`} />
         <Row k="Total Kills" v={selected.totalKills} />
         <Row k="Bosses Defeated" v={selected.bossesDefeated} />
         <Row k="Longest Streak" v={selected.longestStreak} />
