@@ -1,7 +1,9 @@
 # Dead Keys Cost-Efficiency Audit
 
-**Reviewed:** June 25, 2026  
-**Scope:** Client, Spring Boot API, Neon Postgres usage, Cloud Run deployment, Cloudflare Pages, logging, and CI/CD  
+**Reviewed:** June 25, 2026
+
+**Scope:** Client, Spring Boot API, Neon Postgres usage, Cloud Run deployment, Cloudflare Pages, logging, and CI/CD
+
 **Constraint:** Findings only. No cost-efficiency logic or infrastructure changes were made as part of this audit.
 
 ## Executive summary
@@ -41,8 +43,10 @@ The highest-value savings are logic and operations improvements that do not alte
 
 ### 1. Remove the cold-start full-profile scan
 
-**Priority:** High  
-**Expected benefit:** Lower cold-start latency, database reads, database wake time, and migration write traffic as the user count grows  
+**Priority:** High
+
+**Expected benefit:** Lower cold-start latency, database reads, database wake time, and migration write traffic as the user count grows
+
 **Gameplay risk:** None
 
 `LegacyProfileDataCleaner` is an `ApplicationRunner` and calls `profiles.findAll()` every time the server starts. It then parses every stored profile and writes profiles that still contain retired weak-word data.
@@ -65,8 +69,10 @@ This cleanup is appropriate as a one-time migration, but it should not remain in
 
 ### 2. Bound the in-memory rate-limit map
 
-**Priority:** High  
-**Expected benefit:** Prevent gradual memory growth and avoid unnecessary 512 MiB instance pressure  
+**Priority:** High
+
+**Expected benefit:** Prevent gradual memory growth and avoid unnecessary 512 MiB instance pressure
+
 **Gameplay risk:** None if expiry is longer than the rate-limit window
 
 `RateLimitFilter` stores one bucket per observed IP address in a `ConcurrentHashMap`, but old IPs are never removed. Normal traffic may grow it slowly; hostile traffic can grow it quickly.
@@ -86,8 +92,10 @@ This cleanup is appropriate as a one-time migration, but it should not remain in
 
 ### 3. Split liveness from database readiness
 
-**Priority:** High  
-**Expected benefit:** Fewer database queries and fewer avoidable Neon wakeups from deployment checks or external uptime monitors  
+**Priority:** High
+
+**Expected benefit:** Fewer database queries and fewer avoidable Neon wakeups from deployment checks or external uptime monitors
+
 **Gameplay risk:** None
 
 Both `/health` and `/api/health` currently count profile and leaderboard rows. Every health request therefore executes two database queries. Deployment smoke tests call `/api/health`, and future monitoring may call it repeatedly.
@@ -109,8 +117,10 @@ Both `/health` and `/api/health` currently count profile and leaderboard rows. E
 
 ### 4. Control successful access-log volume
 
-**Priority:** Medium now; High after traffic growth  
-**Expected benefit:** Lower Cloud Logging ingestion and easier incident searches  
+**Priority:** Medium now; High after traffic growth
+
+**Expected benefit:** Lower Cloud Logging ingestion and easier incident searches
+
 **Gameplay risk:** None
 
 Every `/api/` request is logged at `INFO`, including successful health checks and leaderboard reads. This is useful at low volume and likely remains inside Google Cloud's free logging allotment, but it scales directly with traffic.
@@ -132,8 +142,10 @@ Google currently includes the first 50 GiB per project per month for most Cloud 
 
 ### 5. Measure and right-size the Hikari connection pool
 
-**Priority:** Medium  
-**Expected benefit:** Fewer database connections and potentially less Neon active time  
+**Priority:** Medium
+
+**Expected benefit:** Fewer database connections and potentially less Neon active time
+
 **Gameplay risk:** Low only after UAT load testing; an undersized pool can increase latency
 
 No Hikari pool limits are configured. HikariCP's documented defaults are a maximum pool size of 10 and a minimum idle value equal to the maximum. For this application, Cloud Run is capped at one 1-vCPU instance and most requests perform short database work.
@@ -157,8 +169,10 @@ This is deliberately a measured change, not an automatic recommendation to set t
 
 ### 6. Put shared caching and abuse controls in front of the API when traffic warrants it
 
-**Priority:** Medium  
-**Expected benefit:** Fewer Cloud Run invocations and better protection against automated origin traffic  
+**Priority:** Medium
+
+**Expected benefit:** Fewer Cloud Run invocations and better protection against automated origin traffic
+
 **Gameplay risk:** None when authenticated routes are never cached
 
 The public leaderboard sends a cacheable response, but the configured API base is a direct Cloud Run service URL unless a custom proxy has been added outside this repository. Browser caching helps an individual client; it does not provide a shared cache across users.
@@ -181,8 +195,10 @@ The origin rate limiter also runs only after a request has already reached Cloud
 
 ### 7. Add Artifact Registry cleanup policies
 
-**Priority:** Medium  
-**Expected benefit:** Prevent unbounded container-image storage growth  
+**Priority:** Medium
+
+**Expected benefit:** Prevent unbounded container-image storage growth
+
 **Gameplay risk:** None
 
 Every deployment publishes an image tagged by commit SHA. No repository-managed cleanup policy is present in source, and the existing setup checklist still marks cleanup rules as unfinished.
@@ -202,8 +218,10 @@ Every deployment publishes an image tagged by commit SHA. No repository-managed 
 
 ### 8. Promote a validated server image instead of rebuilding it for production
 
-**Priority:** Medium/Low  
-**Expected benefit:** Fewer CI minutes, build-cache writes, registry layers, and release variance  
+**Priority:** Medium/Low
+
+**Expected benefit:** Fewer CI minutes, build-cache writes, registry layers, and release variance
+
 **Gameplay risk:** None
 
 UAT and production both build the server image. If a production release points to the exact commit already validated in UAT, rebuilding the container repeats work and produces a second artifact rather than promoting the tested artifact.
@@ -223,8 +241,10 @@ GitHub-hosted Actions minutes are metered for private repositories after plan al
 
 ### 9. Keep profile persistence simple for now
 
-**Priority:** No immediate change  
-**Expected benefit:** Avoid unnecessary engineering and operational overhead  
+**Priority:** No immediate change
+
+**Expected benefit:** Avoid unnecessary engineering and operational overhead
+
 **Gameplay risk:** A redesign would create more risk than current cost justifies
 
 Each user currently has:
@@ -249,8 +269,10 @@ The application reads and writes the full profile aggregate for mutations. That 
 
 ### 10. Review tracing before enabling paid monitoring volume
 
-**Priority:** Low  
-**Expected benefit:** Avoid unnecessary third-party trace volume  
+**Priority:** Low
+
+**Expected benefit:** Avoid unnecessary third-party trace volume
+
 **Gameplay risk:** None
 
 Sentry is disabled when no DSN is configured. If enabled later, the current trace sample rate is 10%.
