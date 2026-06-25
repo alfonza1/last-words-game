@@ -7,10 +7,8 @@ interface Props {
   difficulty: Difficulty;
   selectedMapId: string;
   ownedMaps: string[];
-  signedIn: boolean;
   onSelect: (id: string) => void;
   onBuyMap: (id: string) => void;
-  onRequireSignIn: () => void;
   onDeploy: () => void;
   onBack: () => void;
 }
@@ -25,10 +23,8 @@ export function MapSelect({
   difficulty,
   selectedMapId,
   ownedMaps,
-  signedIn,
   onSelect,
   onBuyMap,
-  onRequireSignIn,
   onDeploy,
   onBack,
 }: Props) {
@@ -111,7 +107,7 @@ export function MapSelect({
                   </button>
                 ) : (
                   <button
-                    onClick={() => (signedIn ? setPendingMap(m) : onRequireSignIn())}
+                    onClick={() => setPendingMap(m)}
                     className="mt-auto w-full rounded-md border border-neon-amber/60 px-3 py-1.5 text-xs font-bold text-neon-amber hover:bg-neon-amber/10"
                   >
                     {m.cost.toLocaleString()} 🪙

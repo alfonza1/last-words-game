@@ -106,10 +106,12 @@ export const saveSettings = (v: Settings, store?: Storage) => saveJSON(KEYS.sett
 
 /**
  * A guest's locally-owned inventory (no account). Guests can buy cosmetics,
- * power-ups and upgrades with their local coins; it all lives here on the device.
- * (Coins live in stats; coin packs and maps still require signing in.)
+ * power-ups, upgrades, and maps with their local coins; it all lives here on
+ * the device. Coins live in stats; real-money coin packs still require signing in.
  */
 export interface GuestProfile {
+  name: string;
+  maps: string[];
   cosmetics: string[];
   powerups: Record<string, number>;
   upgrades: Upgrades;
@@ -118,6 +120,8 @@ export interface GuestProfile {
 }
 
 export const DEFAULT_GUEST: GuestProfile = {
+  name: '',
+  maps: ['graveyard'],
   cosmetics: [...DEFAULT_COSMETICS],
   powerups: {},
   upgrades: DEFAULT_UPGRADES,
@@ -125,8 +129,30 @@ export const DEFAULT_GUEST: GuestProfile = {
   character: DEFAULT_CHARACTER,
 };
 
-export const loadGuest = (store?: Storage) => loadJSON(KEYS.guest, DEFAULT_GUEST, store);
 export const saveGuest = (v: GuestProfile, store?: Storage) => saveJSON(KEYS.guest, v, store);
+
+export function generateGuestName(rng: () => number = Math.random): string {
+  const digits = Math.floor(rng() * 100_000)
+    .toString()
+    .padStart(5, '0');
+  return `Survivor${digits}`;
+}
+
+export function loadGuest(store?: Storage): GuestProfile {
+  const loaded = loadJSON(KEYS.guest, DEFAULT_GUEST, store);
+  const name = loaded.name || generateGuestName();
+  const existingMaps = Array.isArray(loaded.maps) ? loaded.maps : [];
+  const maps = [...new Set(['graveyard', ...existingMaps])];
+  const guest = { ...loaded, name, maps };
+  const mapsChanged = maps.length !== existingMaps.length || maps.some((map, i) => map !== existingMaps[i]);
+
+  // Persist generated/migrated fields so a guest keeps the same identity and
+  // map ownership on future visits without creating a database profile.
+  if (name !== loaded.name || mapsChanged) {
+    saveGuest(guest, store);
+  }
+  return guest;
+}
 
 export const loadHighScores = (store?: Storage) => loadJSON<HighScore[]>(KEYS.highscores, [], store);
 

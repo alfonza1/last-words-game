@@ -28,7 +28,7 @@ import {
   type Profile,
   type RunPayload,
 } from './lib/api';
-import { getMap } from './data/maps';
+import { getMap, MAPS } from './data/maps';
 import { DEFAULT_CHARACTER, DEFAULT_COSMETICS, cosmeticByKey, normalizeCharacter } from './data/cosmetics';
 import { POWERUP_DEFS } from './data/powerups';
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from './data/upgrades';
@@ -112,10 +112,11 @@ export default function App() {
     setStats(loadStats());
     setRiddleStats(loadRiddleStats());
     const g = loadGuest();
+    setUsername(g.name);
     setUpgrades(g.upgrades);
     setUpgradeGames(g.upgradeGames);
     setPowerups(g.powerups);
-    setMaps(['graveyard']); // maps still require an account
+    setMaps(g.maps);
     setCosmetics(g.cosmetics);
     setCharacter(normalizeCharacter(g.character));
   }, []);
@@ -321,7 +322,20 @@ export default function App() {
 
   const buyMap = useCallback(
     (mapId: string) => {
-      if (!user) return;
+      if (!user) {
+        const def = MAPS.find((map) => map.id === mapId);
+        if (!def || def.cost === 0 || maps.includes(mapId)) return;
+        if (stats.totalCoins < def.cost) return toast.error('Not enough coins.');
+        const nextStats = { ...stats, totalCoins: stats.totalCoins - def.cost };
+        const nextMaps = [...maps, mapId];
+        setStats(nextStats);
+        saveStats(nextStats);
+        setMaps(nextMaps);
+        persistGuest({ maps: nextMaps });
+        persistSettings({ ...settings, map: mapId });
+        toast.success('Map unlocked!');
+        return;
+      }
       apiBuyMap(mapId)
         .then((p) => {
           applyProfile(p);
@@ -330,7 +344,7 @@ export default function App() {
         })
         .catch(fail);
     },
-    [user, applyProfile, persistSettings, settings, toast, fail],
+    [user, maps, stats, persistGuest, applyProfile, persistSettings, settings, toast, fail],
   );
 
   const buyCosmetic = useCallback(
@@ -466,10 +480,8 @@ export default function App() {
             difficulty={settings.difficulty}
             selectedMapId={settings.map}
             ownedMaps={maps}
-            signedIn={signedIn}
             onSelect={setMap}
             onBuyMap={buyMap}
-            onRequireSignIn={() => requireSignIn('Sign in to buy maps and save them to your account.')}
             onDeploy={() => startGame(mode)}
             onBack={() => setScreen('menu')}
           />
@@ -509,7 +521,7 @@ export default function App() {
             character={character}
             ownedCosmetics={cosmetics}
             signedIn={signedIn}
-            username={username || (signedIn ? 'Survivor' : 'Guest')}
+            username={username || 'Survivor'}
             onEquip={equipCharacter}
             onOpenStore={() => openStore('closet')}
             onBack={() => setScreen('menu')}
@@ -546,7 +558,7 @@ export default function App() {
             riddleStats={riddleStats}
             difficulty={settings.difficulty}
             character={character}
-            username={username || (signedIn ? 'Survivor' : 'Guest')}
+            username={username || 'Survivor'}
             riddleMode={settings.riddleMode}
             puzzleStyle={settings.puzzleStyle}
             onStart={chooseMode}
@@ -618,7 +630,7 @@ export default function App() {
     return <ServerDown onPlayOffline={() => void signOut()} />;
   }
 
-  const accountLabel = signedIn ? username || user?.email || 'Player' : 'Guest';
+  const accountLabel = signedIn ? username || user?.email || 'Player' : username || 'Survivor';
   const showAccountChip = screen !== 'game' && screen !== 'signin';
   const showWalletChip = showAccountChip && screen !== 'upgrades';
 

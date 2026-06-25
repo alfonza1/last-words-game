@@ -13,6 +13,9 @@ import {
   loadDailyBest,
   saveDailyBest,
   DEFAULT_UPGRADES,
+  generateGuestName,
+  loadGuest,
+  saveGuest,
 } from './storage';
 
 /** Minimal in-memory Storage for deterministic tests. */
@@ -66,6 +69,28 @@ describe('save/load round trips', () => {
     expect(loadUpgrades(store).maxHealth).toBe(3);
     saveSettings({ ...loadSettings(store), music: false }, store);
     expect(loadSettings(store).music).toBe(false);
+  });
+});
+
+describe('guest profile', () => {
+  it('generates a five-digit survivor name', () => {
+    expect(generateGuestName(() => 0.12141)).toBe('Survivor12141');
+    expect(generateGuestName(() => 0)).toBe('Survivor00000');
+  });
+
+  it('persists a generated name and starter map for legacy guests', () => {
+    store.setItem('ztr.guest', JSON.stringify({ cosmetics: ['shirt_survivor'] }));
+
+    const first = loadGuest(store);
+    const second = loadGuest(store);
+
+    expect(first.name).toMatch(/^Survivor\d{5}$/);
+    expect(second.name).toBe(first.name);
+    expect(second.maps).toEqual(['graveyard']);
+    expect(second.cosmetics).toEqual(['shirt_survivor']);
+
+    saveGuest({ ...second, maps: [...second.maps, 'city'] }, store);
+    expect(loadGuest(store).maps).toEqual(['graveyard', 'city']);
   });
 });
 
