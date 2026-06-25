@@ -21,7 +21,7 @@ interface Props {
 
 /** A play style for the menu: plain typing, or one of the puzzle styles. */
 type Style = 'typing' | PuzzleStyle;
-const STYLE_ORDER: Style[] = ['typing', 'trivia', 'math', 'riddles'];
+const STYLE_ORDER: Style[] = ['typing', 'math', 'trivia', 'riddles'];
 
 const STYLE_META: Record<Style, { label: string; icon: string; active: string; blurb: string; tagWord: string }> = {
   typing: {
