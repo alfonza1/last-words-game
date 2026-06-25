@@ -62,6 +62,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - id: google-auth
         name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
