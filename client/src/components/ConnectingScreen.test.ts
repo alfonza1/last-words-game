@@ -1,22 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { CONNECTION_TIPS, connectingCopy } from './ConnectingScreen';
+import { CONNECTION_GAME_DELAY_MS, scoreSignalKey } from './ConnectingScreen';
 
-describe('connectingCopy', () => {
-  it('keeps the initial connection message concise', () => {
-    expect(connectingCopy(false, 0)).toEqual({
-      status: 'CONNECTING…',
-      title: null,
-      detail: null,
-      tip: null,
+describe('cold-start signal game', () => {
+  it('starts after four seconds', () => {
+    expect(CONNECTION_GAME_DELAY_MS).toBe(4_000);
+  });
+
+  it('scores matching keys and builds a streak', () => {
+    expect(scoreSignalKey('D', 'd', 200, 2, 1)).toEqual({
+      score: 350,
+      streak: 3,
+      misses: 1,
+      hit: true,
     });
   });
 
-  it('shows an engaging cold-start briefing after the delay', () => {
-    const copy = connectingCopy(true, 1);
-
-    expect(copy.status).toBe('STILL CONNECTING…');
-    expect(copy.title).toBe('WAKING THE SAFEHOUSE');
-    expect(copy.detail).toContain('first connection after downtime');
-    expect(copy.tip).toBe(CONNECTION_TIPS[1]);
+  it('counts a breach and breaks the streak on a miss', () => {
+    expect(scoreSignalKey('D', 'x', 200, 4, 1)).toEqual({
+      score: 200,
+      streak: 0,
+      misses: 2,
+      hit: false,
+    });
   });
 });
