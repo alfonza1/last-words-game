@@ -142,10 +142,20 @@ export default function App() {
           let profile: Profile;
           let imported = false;
           if (hasGuestProgress(guestProgress)) {
-            const result = await apiImportGuestProgress(guestProgress);
-            profile = result.profile;
-            imported = result.imported;
-            if (imported) clearGuestProgress();
+            try {
+              const result = await apiImportGuestProgress(guestProgress);
+              profile = result.profile;
+              imported = result.imported;
+              if (imported) clearGuestProgress();
+            } catch {
+              // Guest transfer is optional. A staggered deployment or rejected
+              // snapshot must not prevent an otherwise healthy account load.
+              // Keep the local snapshot intact so a later visit can retry it.
+              profile = await apiGetProfile();
+              if (!cancelled) {
+                toast.error('Account loaded, but guest progress could not transfer yet. It is still saved here.');
+              }
+            }
           } else {
             profile = await apiGetProfile();
           }
@@ -167,7 +177,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading, applyProfile, applyGuest]);
+  }, [user, authLoading, applyProfile, applyGuest, toast.error, toast.success]);
 
   // Keep the displayed username in sync with the signed-in account.
   useEffect(() => {
