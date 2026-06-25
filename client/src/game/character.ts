@@ -108,16 +108,7 @@ export function drawSurvivor(
   drawHair(ctx, character.hair, hair, scale);
   drawAccessory(ctx, character.accessory, outfit.trim, scale);
   ctx.restore();
-  ctx.fillStyle = '#111719';
-  ctx.beginPath();
-  ctx.arc(34 * scale, -29 * scale, 1.6 * scale, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(70,35,30,.7)';
-  ctx.lineWidth = scale;
-  ctx.beginPath();
-  ctx.moveTo(36 * scale, -23 * scale);
-  ctx.lineTo(40 * scale, -21 * scale);
-  ctx.stroke();
+  drawCombatFace(ctx, character.expression, outfit.trim, scale);
 
   // Trigger arm and braced support arm.
   limb(ctx, 0, -12, 24, -19, 8, outfit.primary, scale);
@@ -209,6 +200,93 @@ export function drawSurvivor(
   if (s.survivorShot) {
     drawTracer(ctx, muzzleWorldX, muzzleWorldY, s.survivorShot, scale);
   }
+}
+
+function drawCombatFace(
+  ctx: CanvasRenderingContext2D,
+  expression: string,
+  glow: string,
+  scale: number,
+) {
+  const eyeX = 34 * scale;
+  const eyeY = -29 * scale;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(0.9, scale);
+
+  if (expression === 'dead-calm') {
+    ctx.strokeStyle = '#111719';
+    ctx.beginPath();
+    ctx.moveTo(31 * scale, eyeY);
+    ctx.lineTo(37 * scale, eyeY);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(70,35,30,.75)';
+    ctx.beginPath();
+    ctx.moveTo(36 * scale, -22 * scale);
+    ctx.lineTo(41 * scale, -22 * scale);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (expression === 'haunted') {
+    ctx.fillStyle = '#eef4ef';
+    ctx.strokeStyle = '#111719';
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, 2.8 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#111719';
+    ctx.beginPath();
+    ctx.arc(eyeX + scale * 0.6, eyeY, scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(70,35,30,.75)';
+    ctx.beginPath();
+    ctx.moveTo(36 * scale, -21 * scale);
+    ctx.quadraticCurveTo(39 * scale, -25 * scale, 42 * scale, -21 * scale);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (expression === 'not-yet-dead') {
+    ctx.fillStyle = glow;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 6 * scale;
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, 1.8 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = glow;
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.moveTo(37 * scale, -27 * scale);
+    ctx.lineTo(41 * scale, -25 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.fillStyle = '#111719';
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, 1.6 * scale, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.strokeStyle = expression === 'blood-rush' ? '#111719' : 'rgba(70,35,30,.75)';
+  ctx.beginPath();
+  if (expression === 'grave-grin' || expression === 'not-yet-dead') {
+    ctx.moveTo(35 * scale, -23 * scale);
+    ctx.quadraticCurveTo(39 * scale, -18 * scale, 43 * scale, -22 * scale);
+  } else if (expression === 'blood-rush') {
+    ctx.moveTo(32 * scale, -33 * scale);
+    ctx.lineTo(38 * scale, -30 * scale);
+    ctx.moveTo(35 * scale, -22 * scale);
+    ctx.lineTo(42 * scale, -20 * scale);
+  } else {
+    ctx.moveTo(36 * scale, -23 * scale);
+    ctx.lineTo(40 * scale, -21 * scale);
+  }
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawTracer(

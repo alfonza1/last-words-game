@@ -24,6 +24,7 @@ export const DEFAULT_CHARACTER: CharacterLoadout = {
   skinTone: 'warm',
   hair: 'buzz',
   hairColor: 'charcoal',
+  expression: 'last-light',
   outfit: 'outfit-field',
   accessory: 'accessory-none',
 };
@@ -54,6 +55,45 @@ export const HAIR_COLORS = [
   { key: 'red', label: 'Red', color: '#9d3828' },
   { key: 'cyan', label: 'Cyan', color: '#00d9d9' },
   { key: 'pink', label: 'Pink', color: '#ff4db8' },
+] as const;
+
+export const EXPRESSIONS = [
+  {
+    key: 'last-light',
+    label: 'Last Light',
+    icon: '•_•',
+    description: 'Focused. Breathing. Still human.',
+  },
+  {
+    key: 'grave-grin',
+    label: 'Grave Grin',
+    icon: '¬‿¬',
+    description: 'A crooked smile for impossible odds.',
+  },
+  {
+    key: 'dead-calm',
+    label: 'Dead Calm',
+    icon: '—_—',
+    description: 'Nothing left to fear. Nothing left to prove.',
+  },
+  {
+    key: 'haunted',
+    label: 'Haunted',
+    icon: '◉_◉',
+    description: 'You saw what moved beyond the barricade.',
+  },
+  {
+    key: 'blood-rush',
+    label: 'Blood Rush',
+    icon: '▼皿▼',
+    description: 'Teeth clenched. Trigger ready.',
+  },
+  {
+    key: 'not-yet-dead',
+    label: 'Not Yet Dead',
+    icon: '◉‿◌',
+    description: 'One eye changed. You insist it is fine.',
+  },
 ] as const;
 
 export const COSMETICS: CosmeticDef[] = [

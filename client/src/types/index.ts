@@ -36,6 +36,7 @@ export interface CharacterLoadout {
   skinTone: string;
   hair: string;
   hairColor: string;
+  expression: string;
   outfit: string;
   accessory: string;
 }
