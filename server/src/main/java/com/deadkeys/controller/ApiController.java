@@ -3,6 +3,7 @@ package com.deadkeys.controller;
 import com.deadkeys.catalog.CoinPackCatalog;
 import com.deadkeys.exception.BadRequestException;
 import com.deadkeys.exception.NotFoundException;
+import com.deadkeys.model.Dtos.GuestProgressImport;
 import com.deadkeys.model.Dtos.RunResult;
 import com.deadkeys.model.Profile;
 import com.deadkeys.persistence.ProfileStore;
@@ -53,6 +54,13 @@ public class ApiController {
   @GetMapping("/api/profile")
   public Object getProfile(HttpServletRequest req) {
     return json("profile", current(req));
+  }
+
+  @PostMapping("/api/profile/import-guest")
+  public Object importGuestProgress(HttpServletRequest req, @RequestBody(required = false) GuestProgressImport guest) {
+    Profile profile = current(req);
+    boolean imported = profileService.importGuestProgress(profile, guest);
+    return json("profile", profile, "imported", imported);
   }
 
   @PostMapping("/api/profile/run")
