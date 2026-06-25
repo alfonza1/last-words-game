@@ -3,10 +3,12 @@ import type { CharacterLoadout, Difficulty, GameMode, GameStats, Screen, Setting
 import {
   DEFAULT_STATS,
   DEFAULT_UPGRADES,
+  loadGuest,
   loadRiddleStats,
   loadSettings,
   loadStats,
   mergeRunIntoStats,
+  saveGuest,
   saveRiddleStats,
   saveSettings,
   saveStats,
@@ -27,7 +29,9 @@ import {
   type RunPayload,
 } from './lib/api';
 import { getMap } from './data/maps';
-import { DEFAULT_CHARACTER, DEFAULT_COSMETICS, normalizeCharacter } from './data/cosmetics';
+import { DEFAULT_CHARACTER, DEFAULT_COSMETICS, cosmeticByKey, normalizeCharacter } from './data/cosmetics';
+import { POWERUP_DEFS } from './data/powerups';
+import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from './data/upgrades';
 import { audio } from './lib/audio';
 import { useAuth } from './lib/auth';
 import { useToast } from './lib/toast';
@@ -107,12 +111,18 @@ export default function App() {
   const applyGuest = useCallback(() => {
     setStats(loadStats());
     setRiddleStats(loadRiddleStats());
-    setUpgrades(DEFAULT_UPGRADES);
-    setUpgradeGames(0);
-    setPowerups({});
-    setMaps(['graveyard']);
-    setCosmetics(DEFAULT_COSMETICS);
-    setCharacter(DEFAULT_CHARACTER);
+    const g = loadGuest();
+    setUpgrades(g.upgrades);
+    setUpgradeGames(g.upgradeGames);
+    setPowerups(g.powerups);
+    setMaps(['graveyard']); // maps still require an account
+    setCosmetics(g.cosmetics);
+    setCharacter(normalizeCharacter(g.character));
+  }, []);
+
+  // Persist a change to the guest's local inventory (no account).
+  const persistGuest = useCallback((patch: Partial<ReturnType<typeof loadGuest>>) => {
+    saveGuest({ ...loadGuest(), ...patch });
   }, []);
 
   // Load the right progress for the current identity. Re-runs on sign in / out.
@@ -214,10 +224,18 @@ export default function App() {
           setStats(merged);
           saveStats(merged);
         }
+        // A finished run consumes one game of any local upgrade purchase.
+        if (upgradeGames > 0) {
+          const left = upgradeGames - 1;
+          const nextUpgrades = left > 0 ? upgrades : DEFAULT_UPGRADES;
+          setUpgradeGames(left);
+          if (left <= 0) setUpgrades(DEFAULT_UPGRADES);
+          persistGuest({ upgradeGames: left, upgrades: nextUpgrades });
+        }
         onResult?.(high);
       }
     },
-    [user, stats, riddleStats, mode, settings.difficulty, applyProfile, toast],
+    [user, stats, riddleStats, upgrades, upgradeGames, mode, settings.difficulty, applyProfile, persistGuest, toast],
   );
 
   const handleGameOver = useCallback(
@@ -243,7 +261,21 @@ export default function App() {
 
   const buyUpgrade = useCallback(
     (key: UpgradeKey) => {
-      if (!user) return;
+      if (!user) {
+        const def = UPGRADE_DEFS.find((d) => d.key === key);
+        if (!def || !canUpgrade(def, upgrades)) return;
+        const cost = upgradeCost(def, upgrades[key]);
+        if (stats.totalCoins < cost) return toast.error('Not enough coins.');
+        const nextStats = { ...stats, totalCoins: stats.totalCoins - cost };
+        const nextUpgrades = { ...upgrades, [key]: upgrades[key] + 1 };
+        setStats(nextStats);
+        saveStats(nextStats);
+        setUpgrades(nextUpgrades);
+        setUpgradeGames(UPGRADE_LIFESPAN);
+        persistGuest({ upgrades: nextUpgrades, upgradeGames: UPGRADE_LIFESPAN });
+        toast.success('Purchase successful!');
+        return;
+      }
       apiBuyUpgrade(key)
         .then((p) => {
           applyProfile(p);
@@ -251,12 +283,24 @@ export default function App() {
         })
         .catch(fail);
     },
-    [user, applyProfile, toast, fail],
+    [user, upgrades, stats, persistGuest, applyProfile, toast, fail],
   );
 
   const buyPowerup = useCallback(
     (key: string) => {
-      if (!user) return;
+      if (!user) {
+        const def = POWERUP_DEFS.find((d) => d.key === key);
+        if (!def) return;
+        if (stats.totalCoins < def.cost) return toast.error('Not enough coins.');
+        const nextStats = { ...stats, totalCoins: stats.totalCoins - def.cost };
+        const nextPowerups = { ...powerups, [key]: (powerups[key] ?? 0) + 1 };
+        setStats(nextStats);
+        saveStats(nextStats);
+        setPowerups(nextPowerups);
+        persistGuest({ powerups: nextPowerups });
+        toast.success('Purchase successful!');
+        return;
+      }
       apiBuyPowerup(key)
         .then((p) => {
           applyProfile(p);
@@ -264,7 +308,7 @@ export default function App() {
         })
         .catch(fail);
     },
-    [user, applyProfile, toast, fail],
+    [user, powerups, stats, persistGuest, applyProfile, toast, fail],
   );
 
   const onUsePowerup = useCallback(
@@ -291,7 +335,19 @@ export default function App() {
 
   const buyCosmetic = useCallback(
     (key: string) => {
-      if (!user) return;
+      if (!user) {
+        const def = cosmeticByKey(key);
+        if (!def || cosmetics.includes(key)) return;
+        if (stats.totalCoins < def.cost) return toast.error('Not enough coins.');
+        const nextStats = { ...stats, totalCoins: stats.totalCoins - def.cost };
+        const nextCosmetics = [...cosmetics, key];
+        setStats(nextStats);
+        saveStats(nextStats);
+        setCosmetics(nextCosmetics);
+        persistGuest({ cosmetics: nextCosmetics });
+        toast.success('Gear unlocked — check your Closet.');
+        return;
+      }
       apiBuyCosmetic(key)
         .then((p) => {
           applyProfile(p);
@@ -299,14 +355,16 @@ export default function App() {
         })
         .catch(fail);
     },
-    [user, applyProfile, toast, fail],
+    [user, cosmetics, stats, persistGuest, applyProfile, toast, fail],
   );
 
   const equipCharacter = useCallback(
     (next: CharacterLoadout) => {
       if (!user) {
-        setCharacter(normalizeCharacter(next));
-        toast.success('Guest look equipped for this visit.');
+        const look = normalizeCharacter(next);
+        setCharacter(look);
+        persistGuest({ character: look });
+        toast.success('Look equipped.');
         return;
       }
       apiEquipCharacter(next)
@@ -316,7 +374,7 @@ export default function App() {
         })
         .catch(fail);
     },
-    [user, applyProfile, toast, fail],
+    [user, persistGuest, applyProfile, toast, fail],
   );
 
   // Optional rewarded ad → bonus coins. Server-authoritative for accounts;

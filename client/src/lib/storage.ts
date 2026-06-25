@@ -1,7 +1,8 @@
 // ---------------------------------------------------------------------------
 // localStorage persistence. Functions accept an injectable Storage for tests.
 // ---------------------------------------------------------------------------
-import type { GameStats, HighScore, Settings, Upgrades } from '../types';
+import type { CharacterLoadout, GameStats, HighScore, Settings, Upgrades } from '../types';
+import { DEFAULT_CHARACTER, DEFAULT_COSMETICS } from '../data/cosmetics';
 
 const KEYS = {
   stats: 'ztr.stats',
@@ -11,6 +12,7 @@ const KEYS = {
   settings: 'ztr.settings',
   highscores: 'ztr.highscores',
   daily: 'ztr.daily',
+  guest: 'ztr.guest',
 } as const;
 
 export const DEFAULT_STATS: GameStats = {
@@ -101,6 +103,30 @@ export const saveUpgradeGames = (v: number, store?: Storage) => saveJSON(KEYS.up
 
 export const loadSettings = (store?: Storage) => loadJSON(KEYS.settings, DEFAULT_SETTINGS, store);
 export const saveSettings = (v: Settings, store?: Storage) => saveJSON(KEYS.settings, v, store);
+
+/**
+ * A guest's locally-owned inventory (no account). Guests can buy cosmetics,
+ * power-ups and upgrades with their local coins; it all lives here on the device.
+ * (Coins live in stats; coin packs and maps still require signing in.)
+ */
+export interface GuestProfile {
+  cosmetics: string[];
+  powerups: Record<string, number>;
+  upgrades: Upgrades;
+  upgradeGames: number;
+  character: CharacterLoadout;
+}
+
+export const DEFAULT_GUEST: GuestProfile = {
+  cosmetics: [...DEFAULT_COSMETICS],
+  powerups: {},
+  upgrades: DEFAULT_UPGRADES,
+  upgradeGames: 0,
+  character: DEFAULT_CHARACTER,
+};
+
+export const loadGuest = (store?: Storage) => loadJSON(KEYS.guest, DEFAULT_GUEST, store);
+export const saveGuest = (v: GuestProfile, store?: Storage) => saveJSON(KEYS.guest, v, store);
 
 export const loadHighScores = (store?: Storage) => loadJSON<HighScore[]>(KEYS.highscores, [], store);
 

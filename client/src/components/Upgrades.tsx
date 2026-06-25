@@ -84,7 +84,7 @@ export function Upgrades({
             <CharacterAvatar character={preview} armed={false} className="h-32 w-full -translate-y-1" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-black text-neon-pink">{item.name}</h3>
+            <h3 className="text-sm font-black text-neon-green">{item.name}</h3>
             <p className="mt-1 text-[11px] leading-snug text-white/65">{item.description}</p>
             {item.outfitReactive && (
               <span className="mt-1.5 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-neon-cyan">
@@ -94,16 +94,12 @@ export function Upgrades({
           </div>
         </div>
         <button
-          disabled={isOwned || (signedIn && !affordable)}
-          onClick={() =>
-            signedIn
-              ? setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })
-              : onRequireSignIn()
-          }
+          disabled={isOwned || !affordable}
+          onClick={() => setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })}
           className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black ${
             isOwned
               ? 'border-neon-cyan/45 bg-neon-cyan/10 text-neon-cyan'
-              : signedIn && !affordable
+              : !affordable
                 ? 'cursor-not-allowed border-white/15 text-white/45'
                 : 'border-neon-green/60 bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
           }`}
@@ -133,7 +129,8 @@ export function Upgrades({
           onClick={onRequireSignIn}
           className="rounded-lg border border-neon-pink/50 bg-neon-pink/10 px-4 py-2 text-left text-sm text-neon-pink hover:bg-neon-pink/20"
         >
-          🔒 You’re playing as a guest. <span className="font-bold underline">Sign in</span> to buy from the store.
+          👻 Playing as a guest — purchases save on this device only and may not stick.{' '}
+          <span className="font-bold underline">Sign in</span> to save your progress (and to buy coin packs).
         </button>
       )}
 
@@ -198,14 +195,10 @@ export function Upgrades({
                 <p className="mt-1 text-sm text-white/60">{def.description}</p>
               </div>
               <button
-                disabled={signedIn && !affordable}
-                onClick={() =>
-                  signedIn
-                    ? setPending({ kind: 'powerup', id: def.key, label: def.name, cost: `${def.cost} 🪙` })
-                    : onRequireSignIn()
-                }
+                disabled={!affordable}
+                onClick={() => setPending({ kind: 'powerup', id: def.key, label: def.name, cost: `${def.cost} 🪙` })}
                 className={`mt-3 rounded-lg border px-4 py-2 text-sm font-bold transition-all ${
-                  signedIn && !affordable
+                  !affordable
                     ? 'cursor-not-allowed border-white/10 text-white/30'
                     : 'border-neon-green bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
                 }`}
@@ -254,19 +247,17 @@ export function Upgrades({
                 <p className="mt-1 text-sm text-white/60">{def.description}</p>
               </div>
               <button
-                disabled={signedIn && !affordable}
+                disabled={!affordable}
                 onClick={() =>
-                  signedIn
-                    ? setPending({
-                        kind: 'upgrade',
-                        id: def.key,
-                        label: def.name,
-                        cost: `${cost} 🪙 · +${UPGRADE_LIFESPAN} games`,
-                      })
-                    : onRequireSignIn()
+                  setPending({
+                    kind: 'upgrade',
+                    id: def.key,
+                    label: def.name,
+                    cost: `${cost} 🪙 · +${UPGRADE_LIFESPAN} games`,
+                  })
                 }
                 className={`mt-3 rounded-lg border px-4 py-2 text-sm font-bold transition-all ${
-                  signedIn && !affordable
+                  !affordable
                     ? 'cursor-not-allowed border-white/10 text-white/30'
                     : 'border-neon-green bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
                 }`}
