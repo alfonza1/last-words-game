@@ -179,6 +179,15 @@ production secrets or deploy anything until the environment is approved.
 Create the following values in both GitHub environments. Values named `vars`
 are configuration; values named `secrets` are credentials.
 
+The committed deployment workflows also require this repository-level variable:
+
+| Name | Value |
+|---|---|
+| `CD_DEPLOYMENTS_ENABLED` | Set to `true` only after both environments are fully configured |
+
+Until that variable is enabled, validation runs but deployment jobs are safely
+skipped.
+
 ### GitHub environment variables
 
 | Name | UAT example | Production example |
@@ -401,7 +410,10 @@ GitHub environment variable named `API_BASE`.
 
 ## Workflow 1: Pull request CI
 
-Create `.github/workflows/ci.yml`:
+The committed files under `.github/workflows/` are the source of truth. The
+examples below explain their structure.
+
+`.github/workflows/ci.yml`:
 
 ```yaml
 name: CI

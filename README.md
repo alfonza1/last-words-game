@@ -35,4 +35,7 @@ and runs without saving progress).
 For protected branches and free-tier UAT/production automation, see
 [`CI_CD_PIPELINE.md`](CI_CD_PIPELINE.md).
 
+For remaining accounts, credentials, dashboard settings, and unfinished
+integrations, see [`REMAINING_SETUP.md`](REMAINING_SETUP.md).
+
 See `client/README.md` and `server/README.md` for module details.
