@@ -315,7 +315,7 @@ export class GameEngine {
         s.input = '';
         return;
       }
-      this.registerMistake(candidate);
+      this.registerMistake(riddle.answer);
       s.input = candidate;
       return;
     }
@@ -333,7 +333,7 @@ export class GameEngine {
 
     // 4) Otherwise it's a miss. Keep the typed text (minus the trailing space)
     // so the player can fix a typo instead of losing the whole word.
-    this.registerMistake(candidate);
+    this.registerMistake(first);
     s.input = candidate;
   }
 
@@ -628,7 +628,7 @@ export class GameEngine {
     this.checkFinishers();
   }
 
-  private registerMistake(candidate = '') {
+  private registerMistake(target = '') {
     const s = this.state;
     const strict = this.matchOptions.strict ?? false;
     s.mistakes += 1;
@@ -636,7 +636,7 @@ export class GameEngine {
     s.noMistakeStreak = 0;
     s.combo = 0;
     s.flash = Math.max(s.flash, 0.3);
-    this.noteMissedWord(candidate);
+    this.noteMissedWord(target);
   }
 
   private checkPowerups() {
