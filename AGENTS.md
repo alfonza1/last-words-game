@@ -1,5 +1,13 @@
 # Repository Working Agreement
 
+## Report the active branch
+
+- Begin every user-facing progress update and final response with
+  `Branch: <branch-name>.`
+- Check the current branch before reporting it, and check again after any operation
+  that may change `HEAD`.
+- If `HEAD` is detached, report the short commit SHA instead.
+
 ## Commit frequently
 
 Treat this as standing authorization to create local Git commits while implementing
