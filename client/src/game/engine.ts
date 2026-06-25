@@ -91,6 +91,7 @@ export class GameEngine {
   state: GameState;
   private rng: () => number;
   private wordStartMs = 0;
+  private typingElapsedMs = 0;
   private slowMoCooldown = 0;
   private recentWords: Array<{ t: number; chars: number }> = []; // rolling WPM window
   // Puzzle Mode: parallels wordQueue (which holds answers) with the full puzzles,
@@ -273,7 +274,7 @@ export class GameEngine {
       s.input = '';
       return;
     }
-    if (s.input.trim().length === 0 && raw.trim().length > 0) this.wordStartMs = s.elapsedMs;
+    if (s.input.trim().length === 0 && raw.trim().length > 0) this.wordStartMs = this.typingElapsedMs;
 
     // No submit until a space is pressed: just accumulate keystrokes.
     if (!raw.endsWith(' ')) {
@@ -349,6 +350,9 @@ export class GameEngine {
     const realMs = dt * 1000;
 
     s.elapsedMs += realMs;
+    // Survival time includes wave breaks, but WPM should only measure periods
+    // when the typing prompt is active.
+    if (s.betweenWaves <= 0) this.typingElapsedMs += realMs;
     tickPowerups(s.powerups, realMs);
     this.slowMoCooldown = Math.max(0, this.slowMoCooldown - realMs);
     s.shake = Math.max(0, s.shake - dt * 60);
@@ -607,11 +611,11 @@ export class GameEngine {
 
   private registerCorrect(word: string) {
     const s = this.state;
-    const clearedMs = s.elapsedMs - this.wordStartMs;
+    const clearedMs = this.typingElapsedMs - this.wordStartMs;
     const charCount = word.replace(/\s+/g, '').length;
     s.correctWords += 1;
     s.charsTyped += charCount;
-    this.recentWords.push({ t: s.elapsedMs, chars: charCount });
+    this.recentWords.push({ t: this.typingElapsedMs, chars: charCount });
     s.combo += 1;
     s.streak += 1;
     s.noMistakeStreak += 1;
@@ -711,10 +715,10 @@ export class GameEngine {
     s.accuracy = calcAccuracy(s.correctWords, s.mistakes);
     // Live WPM over a rolling window so it responds to current typing speed.
     const windowMs = 6000;
-    const cutoff = s.elapsedMs - windowMs;
+    const cutoff = this.typingElapsedMs - windowMs;
     this.recentWords = this.recentWords.filter((r) => r.t >= cutoff);
     const chars = this.recentWords.reduce((a, r) => a + r.chars, 0);
-    const span = Math.min(windowMs, Math.max(1000, s.elapsedMs));
+    const span = Math.min(windowMs, Math.max(1000, this.typingElapsedMs));
     s.wpm = calcWpm(chars, span);
     s.maxWpm = Math.max(s.maxWpm, s.wpm);
   }

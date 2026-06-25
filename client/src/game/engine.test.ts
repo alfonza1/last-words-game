@@ -204,6 +204,20 @@ describe('live WPM', () => {
     expect(e.state.wpm).toBeGreaterThan(0);
     expect(e.state.maxWpm).toBeGreaterThanOrEqual(e.state.wpm);
   });
+
+  it('does not fall during the wave-complete break', () => {
+    const e = makeEngine();
+    e.state.zombies = [zombie({ y: 400 })];
+    e.handleInput(firstWord(e) + ' ');
+    e.update(0.1);
+    const beforeBreak = e.state.wpm;
+
+    expect(e.state.betweenWaves).toBeGreaterThan(0);
+    for (let i = 0; i < 20; i++) e.update(0.05);
+
+    expect(e.state.wpm).toBe(beforeBreak);
+    expect(e.state.elapsedMs).toBeGreaterThan(100);
+  });
 });
 
 describe('difficulty rewards', () => {
