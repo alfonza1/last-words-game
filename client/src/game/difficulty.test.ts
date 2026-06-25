@@ -33,6 +33,10 @@ describe('difficulty scaling', () => {
     expect(getDifficultyConfig('nightmare').coinMult).toBe(2);
     expect(getDifficultyConfig('nightmare').scoreMult).toBe(2);
   });
+  it('Normal pays 1.25x coins and score', () => {
+    expect(getDifficultyConfig('normal').coinMult).toBe(1.25);
+    expect(getDifficultyConfig('normal').scoreMult).toBe(1.25);
+  });
 });
 
 describe('word tiers & boss waves', () => {

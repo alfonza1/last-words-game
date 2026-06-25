@@ -8,6 +8,7 @@
 import type { CharacterLoadout, GameStats, Upgrades } from '../types';
 import type { GuestProgressSnapshot } from './storage';
 import { auth } from './firebase';
+import { withRequestTimeout } from './requestTimeout';
 
 const BASE = (import.meta.env.VITE_API_BASE ?? '') + '/api';
 
@@ -87,26 +88,33 @@ async function authHeader(): Promise<Record<string, string>> {
 }
 
 async function apost<T>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(BASE + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
-    body: body === undefined ? undefined : JSON.stringify(body),
+  return withRequestTimeout(async (signal) => {
+    const res = await fetch(BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal,
+    });
+    if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
+    return res.json() as Promise<T>;
   });
-  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
-  return res.json() as Promise<T>;
 }
 
 async function aget<T>(path: string): Promise<T> {
-  const res = await fetch(BASE + path, { headers: await authHeader() });
-  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
-  return res.json() as Promise<T>;
+  return withRequestTimeout(async (signal) => {
+    const res = await fetch(BASE + path, { headers: await authHeader(), signal });
+    if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
+    return res.json() as Promise<T>;
+  });
 }
 
 /** Public GET — no auth (leaderboard is read-only public data). */
 async function jget<T>(path: string): Promise<T> {
-  const res = await fetch(BASE + path);
-  if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
-  return res.json() as Promise<T>;
+  return withRequestTimeout(async (signal) => {
+    const res = await fetch(BASE + path, { signal });
+    if (!res.ok) throw new ApiError(await errorMessage(res), res.status);
+    return res.json() as Promise<T>;
+  });
 }
 
 /** Pull the server's friendly { error } message out of a failed response. */

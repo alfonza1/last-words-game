@@ -67,8 +67,8 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     powerupChance: 0.25,
     strict: false,
     wordLengthBias: 0,
-    coinMult: 1,
-    scoreMult: 1,
+    coinMult: 1.25,
+    scoreMult: 1.25,
     riddleKills: 8,
   },
   nightmare: {

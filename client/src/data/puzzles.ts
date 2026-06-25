@@ -70,8 +70,8 @@ function ri(rng: () => number, min: number, max: number): number {
 /** Generate an arithmetic puzzle scaled by difficulty (answers are always ≥ 0). */
 function makeMath(rng: () => number, difficulty: Difficulty): Puzzle {
   if (difficulty === 'easy') {
-    const a = ri(rng, 1, 12);
-    const b = ri(rng, 1, 12);
+    const a = ri(rng, 20, 99);
+    const b = ri(rng, 20, 99);
     if (rng() < 0.5) return { prompt: `${a} + ${b}`, answer: String(a + b) };
     const [hi, lo] = a >= b ? [a, b] : [b, a];
     return { prompt: `${hi} − ${lo}`, answer: String(hi - lo) };

@@ -42,6 +42,7 @@ import { useAuth } from './lib/auth';
 import { useToast } from './lib/toast';
 import { MainMenu } from './components/MainMenu';
 import { CoinPackModal } from './components/CoinPackModal';
+import { ConnectingScreen } from './components/ConnectingScreen';
 import { ServerDown } from './components/ServerDown';
 import type { RunResult } from './components/GameScreen';
 
@@ -637,11 +638,7 @@ export default function App() {
   }, [screen]);
 
   if (loading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <div className="animate-pulse text-lg font-bold tracking-widest text-neon-green">CONNECTING…</div>
-      </div>
-    );
+    return <ConnectingScreen />;
   }
 
   // A signed-in player's progress lives on our servers. If we couldn't load it,
