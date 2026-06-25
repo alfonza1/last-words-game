@@ -32,4 +32,7 @@ The client's Vite dev server proxies `/api` and `/health` to the server on
 `:4100`, so start the server first (or the game shows a "Backend offline" banner
 and runs without saving progress).
 
+For protected branches and free-tier UAT/production automation, see
+[`CI_CD_PIPELINE.md`](CI_CD_PIPELINE.md).
+
 See `client/README.md` and `server/README.md` for module details.

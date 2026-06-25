@@ -8,6 +8,7 @@ export type Screen =
   | 'game'
   | 'gameover'
   | 'upgrades'
+  | 'closet'
   | 'howto'
   | 'settings'
   | 'signin'
@@ -30,6 +31,14 @@ export type ZombieType =
 export type Weather = 'clear' | 'fog' | 'rain';
 
 export type WeaponType = 'pistol' | 'shotgun' | 'rifle' | 'smg';
+
+export interface CharacterLoadout {
+  skinTone: string;
+  hair: string;
+  hairColor: string;
+  outfit: string;
+  accessory: string;
+}
 
 export interface Reward {
   score: number;
@@ -95,6 +104,8 @@ export interface GameStats {
   totalKills: number;
   bossesDefeated: number;
   longestStreak: number;
+  /** Lifetime coins earned from runs in this play style, before purchases. */
+  coinsEarned: number;
   totalCoins: number;
   gamesPlayed: number;
   missedWords: Record<string, number>;
@@ -113,6 +124,9 @@ export interface Upgrades {
 
 export type UpgradeKey = keyof Upgrades;
 
+/** Puzzle play styles (riddleMode = true). All fire a multi-kill volley per solve. */
+export type PuzzleStyle = 'riddles' | 'math' | 'trivia';
+
 export interface Settings {
   difficulty: Difficulty;
   map: string; // selected map theme id
@@ -122,6 +136,10 @@ export interface Settings {
   sound: boolean; // sound effects enabled
   sfxVolume: number; // 0..1
   weapon: WeaponType;
+  /** Puzzle Mode: solve prompts (instead of typing words) to fire a multi-kill volley. */
+  riddleMode: boolean;
+  /** Which puzzle to solve when riddleMode is on. */
+  puzzleStyle: PuzzleStyle;
 }
 
 export interface HighScore {
@@ -161,6 +179,13 @@ export interface GameState {
   wordQueue: string[];
   input: string;
 
+  /** Puzzle Mode: solve a prompt to fire a multi-kill volley. */
+  riddleMode: boolean;
+  /** Which puzzle style is active (riddles/math/trivia) when riddleMode is on. */
+  puzzleStyle: PuzzleStyle;
+  /** The active puzzle's prompt to display (answer lives in wordQueue[0]). */
+  riddlePrompt: string | null;
+
   elapsedMs: number;
   correctWords: number;
   mistakes: number;
@@ -181,6 +206,8 @@ export interface GameState {
   weather: Weather;
   bossActive: boolean;
   bossWarning: number; // seconds remaining of the warning overlay
+  /** Brief visual trace from the survivor to the zombie targeted by a completed word. */
+  survivorShot: { x: number; y: number; life: number; ttl: number } | null;
 
   missedWords: Record<string, number>;
   upgrades: Upgrades;

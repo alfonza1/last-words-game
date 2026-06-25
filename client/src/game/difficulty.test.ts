@@ -29,6 +29,10 @@ describe('difficulty scaling', () => {
       getDifficultyConfig('easy').baseSpeed,
     );
   });
+  it('Nightmare doubles both coins and score', () => {
+    expect(getDifficultyConfig('nightmare').coinMult).toBe(2);
+    expect(getDifficultyConfig('nightmare').scoreMult).toBe(2);
+  });
 });
 
 describe('word tiers & boss waves', () => {

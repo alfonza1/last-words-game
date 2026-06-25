@@ -8,6 +8,7 @@ import type {
   GameEvent,
   GameMode,
   GameState,
+  PuzzleStyle,
   Settings,
   Upgrades,
   Zombie,
@@ -27,6 +28,7 @@ import {
   waveZombieCount,
   wordTierForWave,
 } from './difficulty';
+import { makePuzzle, puzzleKills, puzzleSpeedMult, type Puzzle } from '../data/puzzles';
 import {
   createScreamerAdd,
   createZombie,
@@ -65,6 +67,10 @@ export interface EngineOptions {
   seed?: number;
   /** Consumable powerup charges the player owns (grenade/freeze). */
   powerups?: Record<string, number>;
+  /** Puzzle Mode: solve prompts to fire a multi-kill volley. */
+  riddleMode?: boolean;
+  /** Which puzzle to solve when riddleMode is on (default 'riddles'). */
+  puzzleStyle?: PuzzleStyle;
 }
 
 const DOUBLE_DAMAGE_MS = 5000;
@@ -77,6 +83,11 @@ const MEDKIT_HEAL = 35; // health restored by a med kit
 // further down (so a fast typer can't snipe them the instant they appear).
 const SPAWN_FRAC = 0.24;
 const MIN_TARGET_FRAC = 0.29;
+// Vertical movement is scaled to the play-field height so a zombie takes the same
+// time to reach the base on any screen size. Without this, a shorter viewport
+// (e.g. dev tools docked at the bottom) shrinks the distance and zombies arrive
+// sooner. The difficulty speeds (px/sec) are tuned against this reference height.
+const REFERENCE_HEIGHT = 600;
 
 export class GameEngine {
   state: GameState;
@@ -84,9 +95,14 @@ export class GameEngine {
   private wordStartMs = 0;
   private slowMoCooldown = 0;
   private recentWords: Array<{ t: number; chars: number }> = []; // rolling WPM window
+  // Puzzle Mode: parallels wordQueue (which holds answers) with the full puzzles,
+  // so we can show prompts and accept synonyms while reusing the typing pipeline.
+  private riddleQueue: Puzzle[] = [];
+  private puzzleStyle: PuzzleStyle = 'riddles';
 
   constructor(opts: EngineOptions) {
     this.rng = mulberry32(opts.seed ?? hashSeed(`${Date.now()}-${Math.random()}`));
+    this.puzzleStyle = opts.puzzleStyle ?? 'riddles';
     const cfg = getDifficultyConfig(opts.difficulty);
     const maxHealth = cfg.startHealth + maxHealthBonus(opts.upgrades);
     this.state = {
@@ -112,6 +128,9 @@ export class GameEngine {
       zombies: [],
       wordQueue: [],
       input: '',
+      riddleMode: !!opts.riddleMode,
+      puzzleStyle: opts.puzzleStyle ?? 'riddles',
+      riddlePrompt: null,
       elapsedMs: 0,
       correctWords: 0,
       mistakes: 0,
@@ -129,12 +148,14 @@ export class GameEngine {
       weather: 'clear',
       bossActive: false,
       bossWarning: 0,
+      survivorShot: null,
       missedWords: {},
       upgrades: opts.upgrades,
       settings: opts.settings,
     };
-    // Fill the initial word queue.
-    for (let i = 0; i < QUEUE_SIZE; i++) this.state.wordQueue.push(this.makeWord());
+    // Fill the initial queue (words, or riddle answers in Riddle Mode).
+    for (let i = 0; i < QUEUE_SIZE; i++) this.enqueueItem();
+    this.syncRiddlePrompt();
   }
 
   /** Generate one queue word for the current difficulty + a rising tier by wave. */
@@ -148,6 +169,41 @@ export class GameEngine {
       word = generateToken(this.rng, this.state.difficulty, tier);
     }
     return word;
+  }
+
+  /** Append one item to the queue — a word, or a riddle (answer + prompt) in Riddle Mode. */
+  private enqueueItem() {
+    if (this.state.riddleMode) {
+      const riddle = this.pickRiddle();
+      this.riddleQueue.push(riddle);
+      this.state.wordQueue.push(riddle.answer);
+    } else {
+      this.state.wordQueue.push(this.makeWord());
+    }
+  }
+
+  /** Drop the consumed first item from the queue and append a fresh one. */
+  private cycleQueue() {
+    this.state.wordQueue.shift();
+    if (this.state.riddleMode) this.riddleQueue.shift();
+    this.enqueueItem();
+    this.syncRiddlePrompt();
+  }
+
+  /** Make a puzzle for the current style + wave tier, avoiding answers already queued. */
+  private pickRiddle(): Puzzle {
+    const cfg = getDifficultyConfig(this.state.difficulty);
+    const tier = wordTierForWave(Math.max(1, this.state.wave), cfg.wordLengthBias);
+    let puzzle = makePuzzle(this.puzzleStyle, this.rng, this.state.difficulty, tier);
+    let guard = 0;
+    while (this.state.wordQueue.includes(puzzle.answer) && guard++ < 8) {
+      puzzle = makePuzzle(this.puzzleStyle, this.rng, this.state.difficulty, tier);
+    }
+    return puzzle;
+  }
+
+  private syncRiddlePrompt() {
+    this.state.riddlePrompt = this.state.riddleMode ? this.riddleQueue[0]?.prompt ?? null : null;
   }
 
   // --- Public API ---------------------------------------------------------
@@ -185,7 +241,8 @@ export class GameEngine {
     const s = this.state;
     const raw = s.input.trim();
     if (raw.length === 0) return false;
-    const opts = this.matchOptions;
+    // Riddle answers are matched case-insensitively, so don't tint red on case.
+    const opts = s.riddleMode ? { strict: false } : this.matchOptions;
     const cmdPrefix = this.activeCommands().some((c) => isPrefix(raw, c, opts));
     const first = s.wordQueue[0];
     const wordPrefix = first ? isPrefix(raw, first, opts) : false;
@@ -242,20 +299,35 @@ export class GameEngine {
       }
     }
 
-    // 2) You must type the words IN ORDER — only the first word counts. On a hit
-    // the queue shifts left and a fresh word is appended, so the order is stable
-    // and typing fast can never jump ahead to the second word.
+    // 2) Riddle Mode: solving the current riddle fires a multi-kill volley
+    // (sized so kills/min ≈ typing — see DifficultyConfig.riddleKills).
+    if (s.riddleMode) {
+      const riddle = this.riddleQueue[0];
+      if (riddle && this.riddleMatches(candidate, riddle)) {
+        const answer = riddle.answer;
+        this.cycleQueue();
+        this.fireRiddleVolley();
+        this.registerCorrect(answer);
+        s.input = '';
+        return;
+      }
+      this.registerMistake(candidate);
+      s.input = candidate;
+      return;
+    }
+
+    // 3) Type the words IN ORDER — only the first counts. On a hit the queue
+    // shifts left and a fresh word appends, so typing fast can't jump ahead.
     const first = s.wordQueue[0];
     if (first && matchesTarget(candidate, first, opts)) {
-      s.wordQueue.shift();
-      s.wordQueue.push(this.makeWord());
+      this.cycleQueue();
       this.fireAtNearest();
       this.registerCorrect(first);
       s.input = '';
       return;
     }
 
-    // 3) Otherwise it's a miss. Keep the typed text (minus the trailing space)
+    // 4) Otherwise it's a miss. Keep the typed text (minus the trailing space)
     // so the player can fix a typo instead of losing the whole word.
     this.registerMistake(candidate);
     s.input = candidate;
@@ -278,6 +350,10 @@ export class GameEngine {
     s.shake = Math.max(0, s.shake - dt * 60);
     s.flash = Math.max(0, s.flash - dt * 4);
     s.bossWarning = Math.max(0, s.bossWarning - dt);
+    if (s.survivorShot) {
+      s.survivorShot.life -= dt;
+      if (s.survivorShot.life <= 0) s.survivorShot = null;
+    }
 
     this.updateFloating(dt);
     this.updateEvents(dt);
@@ -337,6 +413,8 @@ export class GameEngine {
     if (s.wave <= 3 && s.upgrades.slowWaves > 0) {
       speed *= 1 - Math.min(0.45, s.upgrades.slowWaves * 0.15);
     }
+    // Puzzle Mode slows zombies — kills come in bursts after each solve.
+    if (s.riddleMode) speed *= puzzleSpeedMult(this.puzzleStyle);
 
     const spawnY = s.height * SPAWN_FRAC; // appear just below the word panel
     const bossWave = s.mode === 'bossrush' || isBossWave(s.wave);
@@ -358,6 +436,8 @@ export class GameEngine {
   private updateZombies(dt: number) {
     const s = this.state;
     const baseY = s.height - 70;
+    // Keep time-to-base constant across screen sizes (see REFERENCE_HEIGHT).
+    const speedScale = s.height / REFERENCE_HEIGHT;
     const survivors: Zombie[] = [];
 
     for (const z of s.zombies) {
@@ -374,7 +454,7 @@ export class GameEngine {
         }
       }
 
-      z.y += z.speed * dt;
+      z.y += z.speed * speedScale * dt;
 
       if (z.y >= baseY) {
         this.zombieReachedBase(z);
@@ -426,6 +506,7 @@ export class GameEngine {
     const minY = s.height * MIN_TARGET_FRAC;
     const target = s.zombies.filter((z) => z.y >= minY).sort((a, b) => b.y - a.y)[0];
     if (!target) return; // nothing visible to shoot yet — the shot misses
+    s.survivorShot = { x: target.x, y: target.y, life: 0.18, ttl: 0.18 };
     let dmg = SHOT_DAMAGE * damageMultiplier(s.powerups);
     if (target.isBoss) dmg += bossDamageBonus(s.upgrades);
     target.hp -= dmg;
@@ -436,15 +517,38 @@ export class GameEngine {
     if (target.hp <= 0) this.killZombie(target);
   }
 
+  /** A solved puzzle fires several shots at once — the small survivor's volley. */
+  private fireRiddleVolley() {
+    const shots = puzzleKills(this.puzzleStyle, this.state.difficulty);
+    for (let i = 0; i < shots; i++) this.fireAtNearest();
+  }
+
+  /** Puzzle answers match case-insensitively, ignore spaces/articles, accept synonyms. */
+  private riddleMatches(candidate: string, riddle: Puzzle): boolean {
+    const got = this.normalizeAnswer(candidate);
+    if (got.length === 0) return false;
+    if (got === this.normalizeAnswer(riddle.answer)) return true;
+    return (riddle.accept ?? []).some((alt) => this.normalizeAnswer(alt) === got);
+  }
+
+  private normalizeAnswer(value: string): string {
+    return value
+      .trim()
+      .toLowerCase()
+      .replace(/^(a|an|the)\s+/, '')
+      .replace(/[^a-z0-9]+/g, '');
+  }
+
   private killZombie(z: Zombie, silent = false) {
     const s = this.state;
     s.zombies = s.zombies.filter((other) => other.id !== z.id);
     s.kills += 1;
 
     const comboBonus = 1 + Math.min(1.5, s.combo * 0.02);
-    const score = Math.round(z.reward.score * comboBonus);
+    const difficulty = getDifficultyConfig(s.difficulty);
+    const score = Math.round(z.reward.score * comboBonus * difficulty.scoreMult);
     s.score += score;
-    const coinMult = coinMultiplier(s.upgrades) * getDifficultyConfig(s.difficulty).coinMult;
+    const coinMult = coinMultiplier(s.upgrades) * difficulty.coinMult;
     s.coins += Math.round(z.reward.coins * coinMult);
     s.xp += z.reward.xp;
 
@@ -484,7 +588,7 @@ export class GameEngine {
 
     // Headshot bonus.
     if (isHeadshot(word.replace(/\s+/g, '').length, clearedMs)) {
-      const bonus = 50;
+      const bonus = 50 * getDifficultyConfig(s.difficulty).scoreMult;
       s.score += bonus;
       this.addFloating(s.width / 2, s.height * 0.4, 'HEADSHOT', '#ff2bd6', 26);
     }

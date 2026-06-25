@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Difficulty, GameMode, GameState, Settings, Upgrades } from '../types';
+import type { CharacterLoadout, Difficulty, GameMode, GameState, PuzzleStyle, Settings, Upgrades } from '../types';
 import { GameEngine } from '../game/engine';
 import { drawGame } from '../game/render';
 import { getMap } from '../data/maps';
@@ -20,6 +20,9 @@ export interface RunResult {
   streak: number;
   coins: number;
   missedWords: Record<string, number>;
+  riddle: boolean;
+  /** Play style of this run: 'typing' | 'riddles' | 'math' | 'trivia'. */
+  style: string;
 }
 
 interface Props {
@@ -29,6 +32,9 @@ interface Props {
   powerups: Record<string, number>;
   upgradesActive: boolean;
   settings: Settings;
+  character: CharacterLoadout;
+  riddleMode: boolean;
+  puzzleStyle: PuzzleStyle;
   onGameOver: (result: RunResult) => void;
   onUsePowerup: (key: string) => void;
   /** Quit/restart pass the partial run so its stats still save. */
@@ -46,6 +52,9 @@ export function GameScreen({
   powerups,
   upgradesActive,
   settings,
+  character,
+  riddleMode,
+  puzzleStyle,
   onGameOver,
   onUsePowerup,
   onQuit,
@@ -77,6 +86,8 @@ export function GameScreen({
       upgrades,
       powerups,
       settings,
+      riddleMode,
+      puzzleStyle,
       width: 960,
       height: 600,
     });
@@ -118,16 +129,27 @@ export function GameScreen({
     inputRef.current?.focus();
   }, []);
 
+  // In puzzle modes the horde keeps advancing while the menu is open (anti-cheat —
+  // you can't pause to think); only Typing Defense actually freezes the sim.
+  const pausedRef = useRef(false);
+  const freezeOnPause = !riddleMode;
   const doPause = () => {
-    engine.pause();
+    if (pausedRef.current) return;
+    pausedRef.current = true;
     setPaused(true);
-    audio.pause();
+    if (freezeOnPause) {
+      engine.pause();
+      audio.pause();
+    }
   };
   const doResume = () => {
-    engine.resume();
+    pausedRef.current = false;
     setPaused(false);
     setConfirmExit(null);
-    audio.resume();
+    if (freezeOnPause) {
+      engine.resume();
+      audio.resume();
+    }
     inputRef.current?.focus();
   };
 
@@ -135,12 +157,34 @@ export function GameScreen({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Tab') e.preventDefault();
       if (e.key === 'Escape') {
-        if (engine.state.status === 'playing') doPause();
-        else if (engine.state.status === 'paused') doResume();
+        if (pausedRef.current) doResume();
+        else doPause();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engine]);
+
+  // A full page reload can't resume a live action run (that's non-standard and
+  // would invite save-scumming), so instead: warn before a refresh/close throws
+  // the run away, and auto-pause when the tab is hidden so the player isn't
+  // overrun while away. GameScreen is only mounted during a run.
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (engine.state.status === 'gameover') return;
+      e.preventDefault();
+      e.returnValue = ''; // shows the browser's "leave site?" confirmation
+    };
+    const onVisibility = () => {
+      if (document.hidden && engine.state.status === 'playing') doPause();
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine]);
 
@@ -174,7 +218,9 @@ export function GameScreen({
   useGameLoop((dt) => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-    if (!paused) engine.update(dt);
+    // engine.update self-gates on status: Typing pause sets status='paused' (frozen);
+    // puzzle pause leaves it 'playing' so the horde keeps advancing under the menu.
+    engine.update(dt);
 
     // Hand off to the Game Over screen FIRST, so even a draw hiccup can't trap
     // the player on a frozen/black canvas.
@@ -186,7 +232,7 @@ export function GameScreen({
 
     // Draw is best-effort — never let a render error break the loop.
     try {
-      drawGame(ctx, engine.state, theme);
+      drawGame(ctx, engine.state, theme, character);
     } catch (err) {
       console.error('[dk] draw error', err);
     }
@@ -222,7 +268,11 @@ export function GameScreen({
       {s.status === 'playing' && (
         <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex flex-col items-center gap-2 px-4">
           <div className="rounded-2xl border border-white/10 bg-black/55 px-5 py-2.5 backdrop-blur-sm">
-            <TypeBar s={s} opts={engine.matchOptions} input={s.input} />
+            {s.riddleMode ? (
+              <RiddlePrompt prompt={s.riddlePrompt} wrong={wrong} />
+            ) : (
+              <TypeBar s={s} opts={engine.matchOptions} input={s.input} />
+            )}
           </div>
           <EventTicker events={s.events} />
         </div>
@@ -246,6 +296,14 @@ export function GameScreen({
               engine.handleInput(e.target.value);
               setTick((t) => t + 1);
             }}
+            onKeyDown={(e) => {
+              // Puzzle modes can also fire with ENTER (Typing only fires on SPACE).
+              if (riddleMode && e.key === 'Enter' && !paused) {
+                e.preventDefault();
+                engine.handleInput(engine.state.input + ' ');
+                setTick((t) => t + 1);
+              }
+            }}
             // Keep focus during play, but don't fight the pause overlay for it.
             onBlur={() => {
               if (!paused) setTimeout(() => inputRef.current?.focus(), 0);
@@ -253,15 +311,15 @@ export function GameScreen({
             spellCheck={false}
             autoComplete="off"
             autoCapitalize="off"
-            placeholder="type a word, then SPACE to fire…"
+            placeholder={riddleMode ? 'type the answer, then SPACE or ENTER…' : 'type a word, then SPACE to fire…'}
             className={`w-full bg-transparent text-lg outline-none placeholder:text-neon-green/30 ${
               wrong ? 'text-neon-red' : 'text-neon-green'
             }`}
           />
         </div>
         <div className="flex gap-3 text-[11px] text-white/40">
-          <span>SPACE = fire (kills nearest)</span>
-          <span>Esc / ⏸ = pause</span>
+          <span>{riddleMode ? 'SPACE / ENTER = submit answer (volley fire)' : 'SPACE = fire (kills nearest)'}</span>
+          <span>{riddleMode ? 'Esc / ⏸ = menu (horde keeps coming)' : 'Esc / ⏸ = pause'}</span>
         </div>
       </div>
 
@@ -289,7 +347,12 @@ export function GameScreen({
             </div>
           ) : (
             <>
-              <h2 className="text-4xl font-black tracking-widest text-neon-green">PAUSED</h2>
+              <h2 className="text-4xl font-black tracking-widest text-neon-green">{freezeOnPause ? 'PAUSED' : 'MENU'}</h2>
+              {!freezeOnPause && (
+                <p className="-mt-2 max-w-xs text-center text-xs font-bold text-neon-amber">
+                  ⚠ The horde keeps advancing — this isn’t a safe pause.
+                </p>
+              )}
               <div className="flex w-full max-w-xs flex-col gap-3">
                 <button className="menu-btn text-center" onClick={doResume}>
                   ▶ Resume
@@ -337,6 +400,18 @@ export function GameScreen({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Puzzle prompt panel — shows the prompt (not the answer). */
+function RiddlePrompt({ prompt, wrong }: { prompt: string | null; wrong: boolean }) {
+  return (
+    <div className="flex w-full max-w-2xl flex-col items-center gap-1 text-center">
+      <span className="text-[10px] uppercase tracking-[0.35em] text-neon-pink">Solve to fire</span>
+      <p className={`max-w-xl text-lg font-bold leading-snug ${wrong ? 'text-neon-red' : 'text-white/90'}`}>
+        {prompt ?? '—'}
+      </p>
     </div>
   );
 }
@@ -402,5 +477,7 @@ function toResult(s: GameState): RunResult {
     streak: s.bestStreak,
     coins: s.coins,
     missedWords: s.missedWords,
+    riddle: s.riddleMode,
+    style: s.riddleMode ? s.puzzleStyle : 'typing',
   };
 }

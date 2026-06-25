@@ -63,6 +63,7 @@ describe('word queue is independent of zombies', () => {
     expect(e.state.zombies).not.toContain(near); // nearest died
     expect(e.state.wordQueue).toHaveLength(5);
     expect(e.state.input).toBe('');
+    expect(e.state.survivorShot).toMatchObject({ x: near.x, y: near.y });
   });
 
   it('does not shoot zombies still above the play field (must be visible first)', () => {
@@ -94,6 +95,55 @@ describe('word queue is independent of zombies', () => {
   });
 });
 
+describe('riddle mode', () => {
+  function riddleEngine() {
+    return new GameEngine({
+      mode: 'survival', difficulty: 'normal', upgrades: DEFAULT_UPGRADES,
+      settings: DEFAULT_SETTINGS, width: 960, height: 600, seed: 1, riddleMode: true,
+    });
+  }
+
+  it('exposes a prompt and hides the answer behind it', () => {
+    const e = riddleEngine();
+    expect(e.state.riddleMode).toBe(true);
+    expect(e.state.riddlePrompt).toBeTruthy();
+    expect(e.state.wordQueue[0]).toBeTruthy(); // the answer lives here
+  });
+
+  it('solving a riddle fires a volley (normal = 8 kills) and refreshes the prompt', () => {
+    const e = riddleEngine();
+    const prompt = e.state.riddlePrompt;
+    e.state.zombies = Array.from({ length: 12 }, () => zombie({ y: 400 }));
+    e.handleInput(firstWord(e) + ' '); // type the answer
+    expect(e.state.kills).toBe(8); // riddleKills for normal
+    expect(e.state.zombies).toHaveLength(4);
+    expect(e.state.input).toBe('');
+    expect(e.state.riddlePrompt).not.toBe(prompt); // next riddle queued
+  });
+
+  it('a wrong answer is a mistake and keeps the typed text', () => {
+    const e = riddleEngine();
+    e.state.zombies = [zombie({ y: 400 })];
+    e.handleInput('definitelywrong ');
+    expect(e.state.mistakes).toBe(1);
+    expect(e.state.kills).toBe(0);
+    expect(e.state.input).toBe('definitelywrong');
+  });
+
+  it('math style fires its own (smaller) volley — normal = 4 kills', () => {
+    const e = new GameEngine({
+      mode: 'survival', difficulty: 'normal', upgrades: DEFAULT_UPGRADES,
+      settings: DEFAULT_SETTINGS, width: 960, height: 600, seed: 1,
+      riddleMode: true, puzzleStyle: 'math',
+    });
+    expect(e.state.riddlePrompt).toBeTruthy(); // an equation
+    e.state.zombies = Array.from({ length: 8 }, () => zombie({ y: 400 }));
+    e.handleInput(firstWord(e) + ' '); // type the math answer
+    expect(e.state.kills).toBe(4); // puzzleKills.math.normal
+    expect(e.state.zombies).toHaveLength(4);
+  });
+});
+
 describe('live WPM', () => {
   it('rises while typing', () => {
     const e = makeEngine();
@@ -102,6 +152,29 @@ describe('live WPM', () => {
     e.update(0.1);
     expect(e.state.wpm).toBeGreaterThan(0);
     expect(e.state.maxWpm).toBeGreaterThanOrEqual(e.state.wpm);
+  });
+});
+
+describe('Nightmare rewards', () => {
+  it('awards twice the normal kill score and coins', () => {
+    const normal = makeEngine();
+    const nightmare = new GameEngine({
+      mode: 'survival',
+      difficulty: 'nightmare',
+      upgrades: DEFAULT_UPGRADES,
+      settings: { ...DEFAULT_SETTINGS, difficulty: 'nightmare' },
+      width: 960,
+      height: 600,
+      seed: 1,
+    });
+    normal.state.zombies = [zombie({ y: 400 })];
+    nightmare.state.zombies = [zombie({ y: 400 })];
+
+    normal.handleInput(firstWord(normal) + ' ');
+    nightmare.handleInput(firstWord(nightmare) + ' ');
+
+    expect(nightmare.state.score).toBe(normal.state.score * 2);
+    expect(nightmare.state.coins).toBe(normal.state.coins * 2);
   });
 });
 

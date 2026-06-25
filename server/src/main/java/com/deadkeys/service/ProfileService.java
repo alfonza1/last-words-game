@@ -3,7 +3,10 @@ package com.deadkeys.service;
 import com.deadkeys.catalog.MapCatalog;
 import com.deadkeys.catalog.PowerupCatalog;
 import com.deadkeys.catalog.UpgradeCatalog;
+import com.deadkeys.catalog.CharacterCatalog;
 import com.deadkeys.exception.BadRequestException;
+import com.deadkeys.model.CharacterLoadout;
+import com.deadkeys.model.Dtos.GuestProgressImport;
 import com.deadkeys.model.Dtos.LeaderboardEntry;
 import com.deadkeys.model.Dtos.RunResult;
 import com.deadkeys.model.Profile;
@@ -16,6 +19,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 /**
  * Domain logic for a player's profile: merging finished runs (with anti-cheat
@@ -24,6 +29,8 @@ import java.util.Map;
  */
 @Service
 public class ProfileService {
+  public record ProfileBootstrap(Profile profile, boolean created, boolean imported) {}
+
   private static final Logger log = LoggerFactory.getLogger(ProfileService.class);
   private static final long USERNAME_COOLDOWN_MS = 7L * 24 * 60 * 60 * 1000; // once per week
   private static final long REWARD_COOLDOWN_MS = 20_000; // limit rewarded-ad spam
@@ -38,6 +45,13 @@ public class ProfileService {
   private static final int MAX_BOSSES = 5_000;
   private static final int MAX_STREAK = 200_000;
   private static final int MAX_COINS = 1_000_000;
+  private static final int MAX_IMPORTED_COINS = 10_000_000;
+  private static final int MAX_IMPORTED_GAMES = 100_000;
+  private static final int MAX_IMPORTED_KILLS = 20_000_000;
+  private static final int MAX_IMPORTED_BOSSES = 500_000;
+  private static final int MAX_IMPORTED_POWERUPS = 1_000;
+  private static final int MAX_IMPORTED_MISSED_WORDS = 10_000;
+  private static final int MAX_IMPORTED_MISSED_PER_WORD = 1_000_000;
 
   private final ProfileStore store;
   private final String grantUser;
@@ -57,24 +71,91 @@ public class ProfileService {
 
   /** The current account's profile (created on first sign-in), grant applied. */
   public Profile getOrCreate(String uid, String name) {
-    Profile p = store.ensureProfile(uid, name);
+    return bootstrapProfile(uid, name, null).profile();
+  }
+
+  /**
+   * Load the account and optionally transfer local guest progress. The transfer
+   * is accepted only when this same request creates the server profile, so an
+   * existing account can never absorb unrelated device-local guest data.
+   */
+  public ProfileBootstrap bootstrapProfile(String uid, String name, GuestProgressImport guest) {
+    ProfileStore.EnsuredProfile ensured = store.ensureProfile(uid, name);
+    Profile p = ensured.profile();
+    boolean changed = normalizeProfile(p);
     if (!p.granted) {
       maybeGrant(p);
-      if (p.granted) store.save(p);
+      changed = changed || p.granted;
     }
-    return p;
+    boolean imported = false;
+    if (ensured.created() && guest != null) {
+      mergeGuestProgress(p, guest);
+      imported = true;
+      changed = true;
+    }
+    if (changed) store.save(p);
+    return new ProfileBootstrap(p, ensured.created(), imported);
+  }
+
+  private void mergeGuestProgress(Profile profile, GuestProgressImport guest) {
+    normalizeProfile(profile);
+
+    mergeImportedStats(profile.stats, guest.stats());
+    mergeImportedStats(profile.riddleStats, guest.riddleStats());
+
+    if (guest.upgrades() != null) {
+      for (UpgradeCatalog.Def def : UpgradeCatalog.DEFS) {
+        int imported = clampInt(guest.upgrades().get(def.key()), def.maxLevel());
+        profile.upgrades.set(def.key(), Math.max(profile.upgrades.get(def.key()), imported));
+      }
+    }
+    profile.upgradeGames = Math.max(
+        profile.upgradeGames,
+        clampInt(guest.upgradeGames(), UpgradeCatalog.LIFESPAN));
+
+    if (guest.powerups() != null) {
+      for (PowerupCatalog.Def def : PowerupCatalog.DEFS) {
+        int imported = clampInt(guest.powerups().getOrDefault(def.key(), 0), MAX_IMPORTED_POWERUPS);
+        if (imported > 0) {
+          profile.powerups.put(
+              def.key(),
+              cappedAdd(profile.powerups.getOrDefault(def.key(), 0), imported, Integer.MAX_VALUE));
+        }
+      }
+    }
+
+    if (guest.maps() != null) {
+      for (String mapId : guest.maps()) {
+        if (MapCatalog.find(mapId) != null && !profile.maps.contains(mapId)) profile.maps.add(mapId);
+      }
+    }
+    if (guest.cosmetics() != null) {
+      for (String key : guest.cosmetics()) {
+        if (CharacterCatalog.find(key) != null && !profile.cosmetics.contains(key)) profile.cosmetics.add(key);
+      }
+    }
+
+    applyImportedCharacter(profile, guest.character());
+    profile.guestProgressImported = true;
+    log.info("guest progress imported uid={} games={} coins={} maps={} cosmetics={}",
+        profile.guestId, profile.stats.gamesPlayed, profile.stats.totalCoins,
+        profile.maps.size(), profile.cosmetics.size());
   }
 
   /** Merge a finished (or abandoned) run into the profile + leaderboard. */
   public boolean applyRun(Profile profile, RunResult run) {
     RunResult safe = clamp(run);
-    boolean isHighScore = safe.score() > profile.stats.bestScore && safe.score() > 0;
-    mergeStats(profile.stats, safe);
+    normalizeProfile(profile);
+    Stats recordStats = safe.riddle() ? profile.riddleStats : profile.stats;
+    boolean isHighScore = safe.score() > recordStats.bestScore && safe.score() > 0;
+    mergeStats(recordStats, safe);
+    // Coins are one shared wallet even though the record panels are separate.
+    if (safe.riddle()) profile.stats.totalCoins += safe.coins();
     consumeUpgradeLife(profile);
     // One leaderboard row per player — only updated on a new personal best.
     store.upsertLeaderboard(profile.guestId, new LeaderboardEntry(
         null, profile.name, safe.score(), safe.wave(), safe.wpm(),
-        safe.accuracy(), safe.mode(), safe.difficulty(), 0));
+        safe.accuracy(), safe.mode(), safe.difficulty(), safe.riddle(), safe.style(), 0));
     store.save(profile);
     log.info("run applied uid={} score={} wave={} kills={} coins+={} highScore={}",
         profile.guestId, safe.score(), safe.wave(), safe.kills(), safe.coins(), isHighScore);
@@ -105,11 +186,80 @@ public class ProfileService {
         clampInt(r.bossesDefeated(), MAX_BOSSES),
         clampInt(r.streak(), MAX_STREAK),
         clampInt(r.coins(), MAX_COINS),
-        r.missedWords(), r.mode(), r.difficulty());
+        r.missedWords(), r.mode(), r.difficulty(), r.riddle(), r.style());
   }
 
   private static int clampInt(int v, int max) {
     return Math.max(0, Math.min(max, v));
+  }
+
+  private static int cappedAdd(int current, int added, int max) {
+    return (int) Math.min(max, (long) Math.max(0, current) + Math.max(0, added));
+  }
+
+  private static void mergeImportedStats(Stats target, Stats imported) {
+    if (imported == null) return;
+    target.bestScore = Math.max(target.bestScore, clampInt(imported.bestScore, MAX_SCORE));
+    target.longestSurvivalMs = Math.max(
+        target.longestSurvivalMs,
+        Math.max(0, Math.min(MAX_SURVIVAL_MS, imported.longestSurvivalMs)));
+    target.highestWpm = Math.max(target.highestWpm, clampInt(imported.highestWpm, MAX_WPM));
+    target.bestAccuracy = Math.max(target.bestAccuracy, Math.max(0, Math.min(100, imported.bestAccuracy)));
+    target.totalKills = cappedAdd(
+        target.totalKills,
+        clampInt(imported.totalKills, MAX_IMPORTED_KILLS),
+        Integer.MAX_VALUE);
+    target.bossesDefeated = cappedAdd(
+        target.bossesDefeated,
+        clampInt(imported.bossesDefeated, MAX_IMPORTED_BOSSES),
+        Integer.MAX_VALUE);
+    target.longestStreak = Math.max(target.longestStreak, clampInt(imported.longestStreak, MAX_STREAK));
+    target.coinsEarned = cappedAdd(
+        target.coinsEarned,
+        clampInt(imported.coinsEarned, MAX_IMPORTED_COINS),
+        Integer.MAX_VALUE);
+    target.totalCoins = cappedAdd(
+        target.totalCoins,
+        clampInt(imported.totalCoins, MAX_IMPORTED_COINS),
+        Integer.MAX_VALUE);
+    target.gamesPlayed = cappedAdd(
+        target.gamesPlayed,
+        clampInt(imported.gamesPlayed, MAX_IMPORTED_GAMES),
+        Integer.MAX_VALUE);
+
+    if (imported.missedWords != null) {
+      int accepted = 0;
+      for (Map.Entry<String, Integer> missed : imported.missedWords.entrySet()) {
+        String word = missed.getKey();
+        if (accepted >= MAX_IMPORTED_MISSED_WORDS) break;
+        if (word == null || word.isBlank() || word.length() > 80 || missed.getValue() == null) continue;
+        int count = clampInt(missed.getValue(), MAX_IMPORTED_MISSED_PER_WORD);
+        if (count <= 0) continue;
+        target.missedWords.put(
+            word,
+            cappedAdd(target.missedWords.getOrDefault(word, 0), count, Integer.MAX_VALUE));
+        accepted++;
+      }
+    }
+  }
+
+  private static void applyImportedCharacter(Profile profile, CharacterLoadout imported) {
+    if (imported == null) return;
+    if (CharacterCatalog.SKIN_TONES.contains(imported.skinTone)) profile.character.skinTone = imported.skinTone;
+    if (CharacterCatalog.HAIR_STYLES.contains(imported.hair)) profile.character.hair = imported.hair;
+    if (CharacterCatalog.HAIR_COLORS.contains(imported.hairColor)) profile.character.hairColor = imported.hairColor;
+    CharacterCatalog.Def outfit = CharacterCatalog.find(imported.outfit);
+    if (outfit != null
+        && CharacterCatalog.OUTFIT.equals(outfit.slot())
+        && profile.cosmetics.contains(imported.outfit)) {
+      profile.character.outfit = imported.outfit;
+    }
+    CharacterCatalog.Def accessory = CharacterCatalog.find(imported.accessory);
+    if (accessory != null
+        && CharacterCatalog.ACCESSORY.equals(accessory.slot())
+        && profile.cosmetics.contains(imported.accessory)) {
+      profile.character.accessory = imported.accessory;
+    }
   }
 
   private static void mergeStats(Stats stats, RunResult run) {
@@ -120,6 +270,7 @@ public class ProfileService {
     stats.totalKills += run.kills();
     stats.bossesDefeated += run.bossesDefeated();
     stats.longestStreak = Math.max(stats.longestStreak, run.streak());
+    stats.coinsEarned += run.coins();
     stats.totalCoins += run.coins();
     stats.gamesPlayed += 1;
     if (run.missedWords() != null) {
@@ -143,16 +294,18 @@ public class ProfileService {
     if (def == null) throw new BadRequestException("unknown upgrade key: " + key);
 
     int currentLevel = profile.upgrades.get(key);
-    if (currentLevel >= def.maxLevel()) throw new BadRequestException("upgrade already maxed");
-
-    int cost = UpgradeCatalog.cost(def, currentLevel);
+    int costLevel = Math.min(currentLevel, def.maxLevel() - 1);
+    int cost = UpgradeCatalog.cost(def, costLevel);
     if (profile.stats.totalCoins < cost) throw new BadRequestException("not enough coins");
 
-    profile.upgrades.set(key, currentLevel + 1);
+    if (currentLevel < def.maxLevel()) {
+      profile.upgrades.set(key, currentLevel + 1);
+    }
     profile.stats.totalCoins -= cost;
-    profile.upgradeGames = UpgradeCatalog.LIFESPAN; // a purchase (re)starts the timer
+    profile.upgradeGames += UpgradeCatalog.LIFESPAN;
     store.save(profile);
-    log.info("upgrade bought uid={} key={} level={} cost={}", profile.guestId, key, currentLevel + 1, cost);
+    log.info("upgrade bought uid={} key={} strength={} games={} cost={}",
+        profile.guestId, key, profile.upgrades.get(key), profile.upgradeGames, cost);
   }
 
   /** Update the display name. Limited to once per week per account. */
@@ -183,6 +336,53 @@ public class ProfileService {
     profile.maps.add(mapId);
     store.save(profile);
     log.info("map bought uid={} map={} cost={}", profile.guestId, mapId, def.cost());
+  }
+
+  /** Buy a permanent outfit or accessory. */
+  public void buyCosmetic(Profile profile, String key) {
+    CharacterCatalog.Def def = CharacterCatalog.find(key);
+    if (def == null) throw new BadRequestException("unknown cosmetic");
+    normalizeProfile(profile);
+    if (profile.cosmetics.contains(key)) return;
+    if (profile.stats.totalCoins < def.cost()) throw new BadRequestException("not enough coins");
+    profile.stats.totalCoins -= def.cost();
+    profile.cosmetics.add(key);
+    store.save(profile);
+    log.info("cosmetic bought uid={} key={} cost={}", profile.guestId, key, def.cost());
+  }
+
+  /** Equip a complete validated survivor appearance. */
+  public void equipCharacter(
+      Profile profile,
+      String skinTone,
+      String hair,
+      String hairColor,
+      String outfit,
+      String accessory) {
+    normalizeProfile(profile);
+    if (!CharacterCatalog.SKIN_TONES.contains(skinTone)) throw new BadRequestException("unknown skin tone");
+    if (!CharacterCatalog.HAIR_STYLES.contains(hair)) throw new BadRequestException("unknown hair style");
+    if (!CharacterCatalog.HAIR_COLORS.contains(hairColor)) throw new BadRequestException("unknown hair color");
+
+    CharacterCatalog.Def outfitDef = CharacterCatalog.find(outfit);
+    if (outfitDef == null || !CharacterCatalog.OUTFIT.equals(outfitDef.slot())) {
+      throw new BadRequestException("unknown outfit");
+    }
+    CharacterCatalog.Def accessoryDef = CharacterCatalog.find(accessory);
+    if (accessoryDef == null || !CharacterCatalog.ACCESSORY.equals(accessoryDef.slot())) {
+      throw new BadRequestException("unknown accessory");
+    }
+    if (!profile.cosmetics.contains(outfit) || !profile.cosmetics.contains(accessory)) {
+      throw new BadRequestException("cosmetic is not owned");
+    }
+
+    profile.character.skinTone = skinTone;
+    profile.character.hair = hair;
+    profile.character.hairColor = hairColor;
+    profile.character.outfit = outfit;
+    profile.character.accessory = accessory;
+    store.save(profile);
+    log.info("character equipped uid={} outfit={} accessory={}", profile.guestId, outfit, accessory);
   }
 
   /** Buy one charge of a consumable powerup. */
@@ -218,5 +418,77 @@ public class ProfileService {
     if (!grantUser.equalsIgnoreCase(profile.name)) return;
     profile.stats.totalCoins += grantCoins;
     profile.granted = true;
+  }
+
+  /** Backfill fields for profiles saved before newer profile features existed. */
+  private static boolean normalizeProfile(Profile profile) {
+    boolean changed = false;
+    if (profile.stats == null) {
+      profile.stats = new Stats();
+      changed = true;
+    }
+    if (profile.riddleStats == null) {
+      profile.riddleStats = new Stats();
+      changed = true;
+    }
+    if (profile.stats.missedWords == null) {
+      profile.stats.missedWords = new LinkedHashMap<>();
+      changed = true;
+    }
+    if (profile.riddleStats.missedWords == null) {
+      profile.riddleStats.missedWords = new LinkedHashMap<>();
+      changed = true;
+    }
+    if (profile.upgrades == null) {
+      profile.upgrades = new Upgrades();
+      changed = true;
+    }
+    if (profile.powerups == null) {
+      profile.powerups = new LinkedHashMap<>();
+      changed = true;
+    }
+    if (profile.maps == null) {
+      profile.maps = new ArrayList<>();
+      changed = true;
+    }
+    if (!profile.maps.contains("graveyard")) {
+      profile.maps.add("graveyard");
+      changed = true;
+    }
+    if (profile.cosmetics == null) {
+      profile.cosmetics = new ArrayList<>();
+      changed = true;
+    }
+    for (String key : CharacterCatalog.DEFAULT_OWNED) {
+      if (!profile.cosmetics.contains(key)) {
+        profile.cosmetics.add(key);
+        changed = true;
+      }
+    }
+    if (profile.character == null) {
+      profile.character = new CharacterLoadout();
+      changed = true;
+    }
+    if (!CharacterCatalog.SKIN_TONES.contains(profile.character.skinTone)) {
+      profile.character.skinTone = "warm";
+      changed = true;
+    }
+    if (!CharacterCatalog.HAIR_STYLES.contains(profile.character.hair)) {
+      profile.character.hair = "undercut";
+      changed = true;
+    }
+    if (!CharacterCatalog.HAIR_COLORS.contains(profile.character.hairColor)) {
+      profile.character.hairColor = "charcoal";
+      changed = true;
+    }
+    if (!profile.cosmetics.contains(profile.character.outfit)) {
+      profile.character.outfit = "outfit-field";
+      changed = true;
+    }
+    if (!profile.cosmetics.contains(profile.character.accessory)) {
+      profile.character.accessory = "accessory-none";
+      changed = true;
+    }
+    return changed;
   }
 }

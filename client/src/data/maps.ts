@@ -56,47 +56,48 @@ export const MAPS: MapTheme[] = [
   {
     id: 'tundra',
     name: 'Frozen Outpost',
-    description: 'A howling blizzard under a shimmering aurora.',
+    description: 'A polar listening station swallowed by ice, silence, and the northern lights.',
     cost: 150,
     palette: {
-      skyTop: '#03101e', skyHorizon: '#0e3450', ground1: '#22323e', ground2: '#0a141c',
-      fog: '210,230,250', moon: '#eaf6ff', glow: 'rgba(150,220,255,0.4)', accent: '#8fd8ff',
+      skyTop: '#020814', skyHorizon: '#12344b', ground1: '#1b303e', ground2: '#050c12',
+      fog: '180,225,245', moon: '#edf8ff', glow: 'rgba(120,210,255,0.38)', accent: '#84f7e5',
     },
-    features: { ...NONE, snow: true, deadTrees: true },
+    features: { ...NONE, snow: true },
   },
   {
     id: 'city',
     name: 'Dead City',
-    description: 'Neon-drenched ruins of a fallen metropolis.',
+    description: 'Fight down the last evacuation route beneath a poisoned electric storm.',
     cost: 350,
     palette: {
-      skyTop: '#070417', skyHorizon: '#2a0f44', ground1: '#181230', ground2: '#070512',
-      fog: '150,90,210', moon: '#a9e0ff', glow: 'rgba(150,120,255,0.4)', accent: '#00f0ff',
+      skyTop: '#03070d', skyHorizon: '#18333a', ground1: '#151b20', ground2: '#05080b',
+      fog: '70,190,190', moon: '#b9e7df', glow: 'rgba(70,220,205,0.32)', accent: '#20f2c2',
     },
-    // Skyline is drawn bespoke in drawThemeScenery (richer than the generic one).
+    // The ruined evacuation corridor is drawn bespoke in drawThemeScenery.
+    features: { ...NONE },
+  },
+  {
+    id: 'forest',
+    name: 'Bleeding Forest',
+    description: 'Enter the heartwood cathedral, where ancient roots drink from a river that never runs dry.',
+    cost: 900,
+    palette: {
+      skyTop: '#050204', skyHorizon: '#3b0711', ground1: '#21080d', ground2: '#080204',
+      fog: '170,22,52', moon: '#f3d1c4', glow: 'rgba(255,28,62,0.46)', accent: '#ff244f',
+    },
+    // Entirely bespoke: heartwood cathedral, blood river, ward arches, and root shrine.
     features: { ...NONE },
   },
   {
     id: 'lab',
     name: 'Area 67',
-    description: 'A classified containment site gone dark.',
+    description: 'A desert black site where the runway ends at something buried too deep.',
     cost: 600,
     palette: {
-      skyTop: '#021410', skyHorizon: '#0a2e2a', ground1: '#0c2220', ground2: '#03100e',
-      fog: '70,230,200', moon: '#aeffee', glow: 'rgba(0,255,200,0.3)', accent: '#00ffc8',
+      skyTop: '#030711', skyHorizon: '#1d2330', ground1: '#29271f', ground2: '#090a0b',
+      fog: '128,160,140', moon: '#d9dfc7', glow: 'rgba(170,205,170,0.28)', accent: '#9dff4f',
     },
-    features: { ...NONE, hazard: true },
-  },
-  {
-    id: 'forest',
-    name: 'Bleeding Forest',
-    description: 'Crimson mist between endless skeletal trees.',
-    cost: 900,
-    palette: {
-      skyTop: '#1a0707', skyHorizon: '#3a0d0d', ground1: '#240e0e', ground2: '#0c0303',
-      fog: '180,60,60', moon: '#ff6f5e', glow: 'rgba(255,50,50,0.45)', accent: '#ff3860',
-    },
-    features: { ...NONE, tombstones: true, deadTrees: true },
+    features: { ...NONE },
   },
   {
     id: 'arena',
@@ -113,14 +114,14 @@ export const MAPS: MapTheme[] = [
   {
     id: 'inferno',
     name: 'The Inferno',
-    description: 'A burning hellscape of ash and ember. Free — Nightmare only.',
+    description: 'Descend beneath the black sun, where the Ash Cathedral is still awake.',
     cost: 0,
     nightmareOnly: true,
     palette: {
-      skyTop: '#1a0500', skyHorizon: '#5a1500', ground1: '#2a0a04', ground2: '#0c0301',
-      fog: '255,110,30', moon: '#ffd27a', glow: 'rgba(255,90,20,0.55)', accent: '#ff6a00',
+      skyTop: '#090101', skyHorizon: '#3b0704', ground1: '#1b0705', ground2: '#050101',
+      fog: '210,48,22', moon: '#ffb347', glow: 'rgba(255,55,15,0.48)', accent: '#ff3b12',
     },
-    features: { ...NONE, embers: true, skyline: true, deadTrees: true },
+    features: { ...NONE, embers: true },
   },
 ];
 
