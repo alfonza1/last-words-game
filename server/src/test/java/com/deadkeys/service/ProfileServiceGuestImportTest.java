@@ -37,12 +37,14 @@ class ProfileServiceGuestImportTest {
   void importsGuestProgressOnceAndKeepsAccountName() {
     Stats stats = new Stats();
     stats.bestScore = 1_200;
+    stats.bestMode = "typing";
     stats.totalKills = 45;
     stats.coinsEarned = 900;
     stats.totalCoins = 275;
     stats.gamesPlayed = 4;
     Stats riddleStats = new Stats();
     riddleStats.bestScore = 500;
+    riddleStats.bestMode = "trivia";
     riddleStats.gamesPlayed = 2;
 
     Upgrades upgrades = new Upgrades();
@@ -75,9 +77,11 @@ class ProfileServiceGuestImportTest {
     assertTrue(first.imported());
     assertEquals("account-name", profile.name);
     assertEquals(1_200, profile.stats.bestScore);
+    assertEquals("typing", profile.stats.bestMode);
     assertEquals(275, profile.stats.totalCoins);
     assertEquals(4, profile.stats.gamesPlayed);
     assertEquals(500, profile.riddleStats.bestScore);
+    assertEquals("trivia", profile.riddleStats.bestMode);
     assertEquals(2, profile.upgrades.maxHealth);
     assertEquals(1, profile.upgrades.startShield);
     assertEquals(4, profile.upgradeGames);

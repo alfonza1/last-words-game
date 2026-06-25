@@ -196,7 +196,11 @@ public class ProfileService {
 
   private static void mergeImportedStats(Stats target, Stats imported) {
     if (imported == null) return;
-    target.bestScore = Math.max(target.bestScore, clampInt(imported.bestScore, MAX_SCORE));
+    int importedBestScore = clampInt(imported.bestScore, MAX_SCORE);
+    if (importedBestScore > target.bestScore || (importedBestScore == target.bestScore && target.bestMode.isBlank())) {
+      target.bestMode = normalizeBestMode(imported.bestMode);
+    }
+    target.bestScore = Math.max(target.bestScore, importedBestScore);
     target.longestSurvivalMs = Math.max(
         target.longestSurvivalMs,
         Math.max(0, Math.min(MAX_SURVIVAL_MS, imported.longestSurvivalMs)));
@@ -246,6 +250,9 @@ public class ProfileService {
   }
 
   private static void mergeStats(Stats stats, RunResult run) {
+    if (run.score() > stats.bestScore || (run.score() == stats.bestScore && stats.bestMode.isBlank())) {
+      stats.bestMode = normalizeBestMode(run.style());
+    }
     stats.bestScore = Math.max(stats.bestScore, run.score());
     stats.longestSurvivalMs = Math.max(stats.longestSurvivalMs, run.survivalMs());
     stats.highestWpm = Math.max(stats.highestWpm, run.wpm());
@@ -256,6 +263,14 @@ public class ProfileService {
     stats.coinsEarned += run.coins();
     stats.totalCoins += run.coins();
     stats.gamesPlayed += 1;
+  }
+
+  private static String normalizeBestMode(String style) {
+    if (style == null) return "";
+    return switch (style) {
+      case "typing", "riddles", "math", "trivia" -> style;
+      default -> "";
+    };
   }
 
   /** Each finished/abandoned run consumes one game of the upgrade lifespan. */
@@ -407,6 +422,14 @@ public class ProfileService {
     }
     if (profile.riddleStats == null) {
       profile.riddleStats = new Stats();
+      changed = true;
+    }
+    if (profile.stats.bestMode == null) {
+      profile.stats.bestMode = "";
+      changed = true;
+    }
+    if (profile.riddleStats.bestMode == null) {
+      profile.riddleStats.bestMode = "";
       changed = true;
     }
     if (profile.upgrades == null) {
