@@ -79,10 +79,8 @@ const INTER_WAVE_BREATHER = 2.4;
 const QUEUE_SIZE = 5; // words shown / typeable at once
 const SHOT_DAMAGE = 2; // base damage a completed word deals to the nearest zombie
 const MEDKIT_HEAL = 35; // health restored by a med kit
-// Zombies spawn just below the on-screen word panel, and become shootable a bit
-// further down (so a fast typer can't snipe them the instant they appear).
+// Zombies spawn just below the on-screen word panel.
 const SPAWN_FRAC = 0.24;
-const MIN_TARGET_FRAC = 0.29;
 // Vertical movement is scaled to the play-field height so a zombie takes the same
 // time to reach the base on any screen size. Without this, a shorter viewport
 // (e.g. dev tools docked at the bottom) shrinks the distance and zombies arrive
@@ -95,9 +93,6 @@ export class GameEngine {
   private wordStartMs = 0;
   private slowMoCooldown = 0;
   private recentWords: Array<{ t: number; chars: number }> = []; // rolling WPM window
-  // Preserve shots completed before a zombie is visible, including the damage
-  // multiplier active when each word was completed.
-  private pendingShots: Array<{ damage: number; combo: number }> = [];
   // Puzzle Mode: parallels wordQueue (which holds answers) with the full puzzles,
   // so we can show prompts and accept synonyms while reusing the typing pipeline.
   private riddleQueue: Puzzle[] = [];
@@ -153,7 +148,6 @@ export class GameEngine {
       bossWarning: 0,
       survivorShot: null,
       shotsFired: 0,
-      pendingShots: 0,
       missedWords: {},
       upgrades: opts.upgrades,
       settings: opts.settings,
@@ -273,7 +267,10 @@ export class GameEngine {
   handleInput(raw: string) {
     const s = this.state;
     if (s.status !== 'playing') {
-      s.input = raw;
+      return;
+    }
+    if (s.wave > 0 && s.betweenWaves > 0) {
+      s.input = '';
       return;
     }
     if (s.input.trim().length === 0 && raw.trim().length > 0) this.wordStartMs = s.elapsedMs;
@@ -313,7 +310,7 @@ export class GameEngine {
       if (riddle && this.riddleMatches(candidate, riddle)) {
         const answer = riddle.answer;
         this.cycleQueue();
-        this.queueShots(puzzleKills(this.puzzleStyle, s.difficulty));
+        this.fireShots(puzzleKills(this.puzzleStyle, s.difficulty));
         this.registerCorrect(answer);
         s.input = '';
         return;
@@ -328,7 +325,7 @@ export class GameEngine {
     const first = s.wordQueue[0];
     if (first && matchesTarget(candidate, first, opts)) {
       this.cycleQueue();
-      this.queueShots(1);
+      this.fireShots(1);
       this.registerCorrect(first);
       s.input = '';
       return;
@@ -367,7 +364,6 @@ export class GameEngine {
 
     this.updateSpawning(sdt);
     this.updateZombies(sdt);
-    if (s.status === 'playing') this.drainPendingShots();
     this.recomputeMetrics();
   }
 
@@ -406,11 +402,7 @@ export class GameEngine {
         const cfg = getDifficultyConfig(s.difficulty);
         s.spawnCooldown = waveSpawnInterval(cfg, s.wave);
       }
-    } else if (s.zombies.length === 0) {
-      // Wave cleared.
-      s.betweenWaves = INTER_WAVE_BREATHER;
-      this.addEvent(`WAVE ${s.wave} CLEARED`, 'finisher');
-    }
+    } else if (s.zombies.length === 0) this.completeWave();
   }
 
   private spawnNext() {
@@ -506,41 +498,20 @@ export class GameEngine {
 
   // --- Hits, kills, scoring ----------------------------------------------
 
-  /**
-   * Queue completed-word shots so fast typing is never wasted while the field is
-   * temporarily empty. Damage is captured now so an active damage boost applies
-   * to the word that earned the shot, even if the target appears later.
-   */
-  private queueShots(count: number) {
+  /** Fire a completed word or puzzle volley at zombies currently on the field. */
+  private fireShots(count: number) {
     const damage = SHOT_DAMAGE * damageMultiplier(this.state.powerups);
     const combo = this.state.combo;
-    for (let i = 0; i < count; i++) this.pendingShots.push({ damage, combo });
-    this.syncPendingShots();
-    this.drainPendingShots();
-  }
-
-  /** Fire every reserved shot that currently has a visible target. */
-  private drainPendingShots() {
-    while (this.pendingShots.length > 0) {
-      const shot = this.pendingShots[0];
-      if (!this.fireAtNearest(shot.damage, shot.combo)) break;
-      this.pendingShots.shift();
+    for (let i = 0; i < count; i++) {
+      if (!this.fireAtNearest(damage, combo)) break;
     }
-    this.syncPendingShots();
+    this.prepareTargetForNextSubmission();
   }
 
-  private syncPendingShots() {
-    this.state.pendingShots = this.pendingShots.length;
-  }
-
-  /** Fire at the nearest visible zombie. Returns false if no target is ready. */
+  /** Fire at the nearest zombie. Returns false if the field is empty. */
   private fireAtNearest(damage: number, combo: number): boolean {
     const s = this.state;
-    // Only target zombies that have entered the play field — prevents fast
-    // typers from killing zombies before they're on screen. Their shot remains
-    // queued and fires as soon as a target crosses this line.
-    const minY = s.height * MIN_TARGET_FRAC;
-    const target = s.zombies.filter((z) => z.y >= minY).sort((a, b) => b.y - a.y)[0];
+    const target = [...s.zombies].sort((a, b) => b.y - a.y)[0];
     if (!target) return false;
     s.survivorShot = { x: target.x, y: target.y, life: 0.18, ttl: 0.18 };
     s.shotsFired += 1;
@@ -553,6 +524,34 @@ export class GameEngine {
     }
     if (target.hp <= 0) this.killZombie(target, false, combo);
     return true;
+  }
+
+  /**
+   * Keep a live wave populated after a successful submission. If the wave quota
+   * is exhausted, enter the break immediately so another word cannot slip in.
+   */
+  private prepareTargetForNextSubmission() {
+    const s = this.state;
+    if (s.zombies.length > 0 || (s.wave > 0 && s.betweenWaves > 0)) return;
+    if (s.wave === 0) {
+      s.betweenWaves = 0;
+      this.startWave(1);
+    }
+    if (s.waveZombiesSpawned < s.waveZombiesToSpawn) {
+      this.spawnNext();
+      const cfg = getDifficultyConfig(s.difficulty);
+      s.spawnCooldown = waveSpawnInterval(cfg, s.wave);
+      return;
+    }
+    if (s.wave > 0) this.completeWave();
+  }
+
+  private completeWave() {
+    const s = this.state;
+    if (s.wave <= 0 || s.betweenWaves > 0) return;
+    s.input = '';
+    s.betweenWaves = INTER_WAVE_BREATHER;
+    this.addEvent(`WAVE ${s.wave} CLEARED`, 'finisher');
   }
 
   /** Puzzle answers match case-insensitively, ignore spaces/articles, accept synonyms. */

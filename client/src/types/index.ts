@@ -210,9 +210,6 @@ export interface GameState {
   survivorShot: { x: number; y: number; life: number; ttl: number } | null;
   /** Monotonic count of shots that actually reached a visible target. */
   shotsFired: number;
-  /** Completed-word shots waiting for a zombie to become visible. */
-  pendingShots: number;
-
   missedWords: Record<string, number>;
   upgrades: Upgrades;
   settings: Settings;

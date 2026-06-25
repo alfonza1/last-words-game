@@ -129,27 +129,21 @@ export function GameScreen({
     inputRef.current?.focus();
   }, []);
 
-  // In puzzle modes the horde keeps advancing while the menu is open (anti-cheat —
-  // you can't pause to think); only Typing Defense actually freezes the sim.
+  // Every mode uses a real pause so the controls behave consistently.
   const pausedRef = useRef(false);
-  const freezeOnPause = !riddleMode;
   const doPause = () => {
     if (pausedRef.current) return;
     pausedRef.current = true;
     setPaused(true);
-    if (freezeOnPause) {
-      engine.pause();
-      audio.pause();
-    }
+    engine.pause();
+    audio.pause();
   };
   const doResume = () => {
     pausedRef.current = false;
     setPaused(false);
     setConfirmExit(null);
-    if (freezeOnPause) {
-      engine.resume();
-      audio.resume();
-    }
+    engine.resume();
+    audio.resume();
     inputRef.current?.focus();
   };
 
@@ -218,8 +212,7 @@ export function GameScreen({
   useGameLoop((dt) => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-    // engine.update self-gates on status: Typing pause sets status='paused' (frozen);
-    // puzzle pause leaves it 'playing' so the horde keeps advancing under the menu.
+    // engine.update self-gates while paused.
     engine.update(dt);
 
     // Hand off to the Game Over screen FIRST, so even a draw hiccup can't trap
@@ -256,6 +249,12 @@ export function GameScreen({
 
   const s = engine.state;
   const wrong = engine.inputWrong;
+  const waveBreak = s.wave > 0 && s.betweenWaves > 0;
+  const acceptingInput = s.status === 'playing' && !waveBreak;
+
+  useEffect(() => {
+    if (acceptingInput && !paused) inputRef.current?.focus();
+  }, [acceptingInput, paused]);
 
   return (
     <div className="crt relative h-full w-full overflow-hidden">
@@ -267,9 +266,8 @@ export function GameScreen({
 
       {/* Words to type — pinned at the TOP; zombies spawn below this panel.
           Status events (WAVE CLEARED, etc.) sit UNDER the box so it never hides them. */}
-      {s.status === 'playing' && (
+      {acceptingInput && (
         <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex flex-col items-center gap-2 px-4">
-          {s.pendingShots > 0 && <ShotsReadyBanner count={s.pendingShots} />}
           <div className="rounded-2xl border border-white/10 bg-black/55 px-5 py-2.5 backdrop-blur-sm">
             {s.riddleMode ? (
               <RiddlePrompt prompt={s.riddlePrompt} wrong={wrong} />
@@ -281,50 +279,53 @@ export function GameScreen({
         </div>
       )}
 
+      {waveBreak && !paused && <WaveBreakOverlay wave={s.wave} seconds={s.betweenWaves} />}
+
       {/* Input + powerups, at the bottom. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 p-4">
-        <PowerupBar consumables={s.powerups.consumables} />
-        <div
-          className={`pointer-events-auto flex w-full max-w-xl items-center gap-2 rounded-lg border bg-black/70 px-3 py-2 transition-colors ${
-            wrong ? 'border-neon-red shadow-[0_0_12px_rgba(255,56,96,0.6)]' : 'border-neon-green/40 shadow-neon'
-          }`}
-        >
-          <span className={wrong ? 'text-neon-red' : 'text-neon-green'}>›</span>
-          <input
-            ref={inputRef}
-            value={s.input}
-            disabled={paused}
-            onChange={(e) => {
-              if (paused) return; // ignore stray keystrokes while the pause overlay is up
-              engine.handleInput(e.target.value);
-              setTick((t) => t + 1);
-            }}
-            onKeyDown={(e) => {
-              // Puzzle modes can also fire with ENTER (Typing only fires on SPACE).
-              if (riddleMode && e.key === 'Enter' && !paused) {
-                e.preventDefault();
-                engine.handleInput(engine.state.input + ' ');
-                setTick((t) => t + 1);
-              }
-            }}
-            // Keep focus during play, but don't fight the pause overlay for it.
-            onBlur={() => {
-              if (!paused) setTimeout(() => inputRef.current?.focus(), 0);
-            }}
-            spellCheck={false}
-            autoComplete="off"
-            autoCapitalize="off"
-            placeholder={riddleMode ? 'type the answer, then SPACE or ENTER…' : 'type a word, then SPACE to fire…'}
-            className={`w-full bg-transparent text-lg outline-none placeholder:text-neon-green/30 ${
-              wrong ? 'text-neon-red' : 'text-neon-green'
+      {acceptingInput && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 p-4">
+          <PowerupBar consumables={s.powerups.consumables} />
+          <div
+            className={`pointer-events-auto flex w-full max-w-xl items-center gap-2 rounded-lg border bg-black/70 px-3 py-2 transition-colors ${
+              wrong ? 'border-neon-red shadow-[0_0_12px_rgba(255,56,96,0.6)]' : 'border-neon-green/40 shadow-neon'
             }`}
-          />
+          >
+            <span className={wrong ? 'text-neon-red' : 'text-neon-green'}>›</span>
+            <input
+              ref={inputRef}
+              value={s.input}
+              disabled={!acceptingInput || paused}
+              onChange={(e) => {
+                if (!acceptingInput || paused) return;
+                engine.handleInput(e.target.value);
+                setTick((t) => t + 1);
+              }}
+              onKeyDown={(e) => {
+                // Puzzle modes can also fire with ENTER (Typing only fires on SPACE).
+                if (riddleMode && e.key === 'Enter' && acceptingInput && !paused) {
+                  e.preventDefault();
+                  engine.handleInput(engine.state.input + ' ');
+                  setTick((t) => t + 1);
+                }
+              }}
+              onBlur={() => {
+                if (acceptingInput && !paused) setTimeout(() => inputRef.current?.focus(), 0);
+              }}
+              spellCheck={false}
+              autoComplete="off"
+              autoCapitalize="off"
+              placeholder={riddleMode ? 'type the answer, then SPACE or ENTER…' : 'type a word, then SPACE to fire…'}
+              className={`w-full bg-transparent text-lg outline-none placeholder:text-neon-green/30 ${
+                wrong ? 'text-neon-red' : 'text-neon-green'
+              }`}
+            />
+          </div>
+          <div className="flex gap-3 text-[11px] text-white/40">
+            <span>{riddleMode ? 'SPACE / ENTER = submit answer (volley fire)' : 'SPACE = fire (kills nearest)'}</span>
+            <span>Esc / ⏸ = pause</span>
+          </div>
         </div>
-        <div className="flex gap-3 text-[11px] text-white/40">
-          <span>{riddleMode ? 'SPACE / ENTER = submit answer (volley fire)' : 'SPACE = fire (kills nearest)'}</span>
-          <span>{riddleMode ? 'Esc / ⏸ = menu (horde keeps coming)' : 'Esc / ⏸ = pause'}</span>
-        </div>
-      </div>
+      )}
 
       {/* Pause overlay */}
       {paused && (
@@ -350,12 +351,7 @@ export function GameScreen({
             </div>
           ) : (
             <>
-              <h2 className="text-4xl font-black tracking-widest text-neon-green">{freezeOnPause ? 'PAUSED' : 'MENU'}</h2>
-              {!freezeOnPause && (
-                <p className="-mt-2 max-w-xs text-center text-xs font-bold text-neon-amber">
-                  ⚠ The horde keeps advancing — this isn’t a safe pause.
-                </p>
-              )}
+              <h2 className="text-4xl font-black tracking-widest text-neon-green">PAUSED</h2>
               <div className="flex w-full max-w-xs flex-col gap-3">
                 <button className="menu-btn text-center" onClick={doResume}>
                   ▶ Resume
@@ -407,15 +403,27 @@ export function GameScreen({
   );
 }
 
-/** Puzzle prompt panel — shows the prompt (not the answer). */
-function ShotsReadyBanner({ count }: { count: number }) {
+/** Full inter-wave lockout so the next prompt cannot be typed early. */
+function WaveBreakOverlay({ wave, seconds }: { wave: number; seconds: number }) {
   return (
-    <div className="rounded-full border border-neon-amber bg-black/75 px-4 py-1 text-xs font-black tracking-[0.22em] text-neon-amber shadow-[0_0_14px_rgba(255,209,102,0.45)]">
-      SHOTS READY x{count}
+    <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/30 px-4 backdrop-blur-[2px]">
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-neon-green/35 bg-black/80 p-6 text-center shadow-[0_0_40px_rgba(57,255,20,0.18)]">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-neon-green to-transparent" />
+        <div className="text-[10px] font-black uppercase tracking-[0.35em] text-white/35">Sector secured</div>
+        <div className="mt-2 text-4xl font-black tracking-[0.12em] text-neon-green drop-shadow-[0_0_14px_rgba(57,255,20,0.65)]">
+          WAVE {wave} CLEARED
+        </div>
+        <div className="mx-auto mt-4 h-px w-28 bg-neon-pink/50" />
+        <p className="mt-4 text-xs uppercase tracking-[0.22em] text-white/50">
+          Next breach in <span className="font-black text-neon-amber">{Math.max(1, Math.ceil(seconds))}</span>
+        </p>
+        <p className="mt-2 text-[10px] uppercase tracking-wider text-neon-cyan/70">Reload. Breathe. Hold the line.</p>
+      </div>
     </div>
   );
 }
 
+/** Puzzle prompt panel — shows the prompt (not the answer). */
 function RiddlePrompt({ prompt, wrong }: { prompt: string | null; wrong: boolean }) {
   return (
     <div className="flex w-full max-w-2xl flex-col items-center gap-1 text-center">

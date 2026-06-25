@@ -7,7 +7,7 @@ interface Props {
 type GuideSection = 'defense' | 'rules' | 'zombies' | 'powerups';
 
 const DEFENSE: [string, string][] = [
-  ['Typing Defense', 'Type the highlighted word, then press SPACE. Each completed word fires one shot; shots wait in reserve when no zombie is visible.'],
+  ['Typing Defense', 'Type the highlighted word, then press SPACE. Each completed word fires at the nearest zombie; an empty field pulls the next threat in immediately.'],
   ['Riddle Defense', 'Solve the riddle, then press SPACE. A solve fires a volley: 5 / 8 / 12 shots on Easy / Normal / Nightmare.'],
   ['Math Defense', 'Solve the arithmetic, then press SPACE. Harder math each difficulty; a solve fires 3 / 4 / 6 shots.'],
   ['Trivia Defense', 'Answer the question, then press SPACE. Tougher questions each difficulty; a solve fires 3 / 5 / 8 shots.'],
@@ -157,7 +157,7 @@ export function HowToPlay({ onBack }: Props) {
               <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-pink">Riddle · Math · Trivia</h3>
               <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
                 <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> or </span><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">ENTER</kbd><span className="text-white/60"> — submit your answer (fires a volley).</span></li>
-                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — opens the menu, but the horde keeps advancing — no safe pause.</span></li>
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — pause (the horde freezes).</span></li>
               </ul>
             </div>
           </div>
