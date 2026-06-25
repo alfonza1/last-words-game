@@ -98,6 +98,8 @@ export interface GameEvent {
 
 export interface GameStats {
   bestScore: number;
+  /** Play style responsible for the best score. */
+  bestMode: string;
   longestSurvivalMs: number;
   highestWpm: number;
   bestAccuracy: number;

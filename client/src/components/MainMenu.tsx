@@ -21,7 +21,7 @@ interface Props {
 
 /** A play style for the menu: plain typing, or one of the puzzle styles. */
 type Style = 'typing' | PuzzleStyle;
-const STYLE_ORDER: Style[] = ['typing', 'riddles', 'math', 'trivia'];
+const STYLE_ORDER: Style[] = ['typing', 'trivia', 'math', 'riddles'];
 
 const STYLE_META: Record<Style, { label: string; icon: string; active: string; blurb: string; tagWord: string }> = {
   typing: {
@@ -213,6 +213,7 @@ function Records({
   riddleMode: boolean;
 }) {
   const selected = riddleMode ? riddleStats : stats;
+  const bestMode = STYLE_META[(riddleStats.bestMode as Style) || 'riddles']?.label ?? '—';
   return (
     <div className="rounded-xl border border-neon-pink/25 bg-ink-800/70 p-4">
       <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-neon-pink">
@@ -222,7 +223,7 @@ function Records({
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
         <Row k="Longest Survival" v={formatTime(selected.longestSurvivalMs)} />
         {riddleMode ? (
-          <Row k="Total Runs" v={selected.gamesPlayed} />
+          <Row k="Best Mode" v={riddleStats.bestMode ? bestMode : '—'} />
         ) : (
           <Row k="Highest WPM" v={selected.highestWpm} />
         )}

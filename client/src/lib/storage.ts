@@ -17,6 +17,7 @@ const KEYS = {
 
 export const DEFAULT_STATS: GameStats = {
   bestScore: 0,
+  bestMode: '',
   longestSurvivalMs: 0,
   highestWpm: 0,
   bestAccuracy: 0,
@@ -254,10 +255,13 @@ export function mergeRunIntoStats(
     bossesDefeated: number;
     streak: number;
     coins: number;
+    style: string;
   },
 ): GameStats {
+  const isNewBest = run.score > prev.bestScore || (run.score === prev.bestScore && !prev.bestMode);
   return {
     bestScore: Math.max(prev.bestScore, run.score),
+    bestMode: isNewBest ? run.style : prev.bestMode,
     longestSurvivalMs: Math.max(prev.longestSurvivalMs, run.survivalMs),
     highestWpm: Math.max(prev.highestWpm, run.wpm),
     bestAccuracy: Math.max(prev.bestAccuracy, run.accuracy),

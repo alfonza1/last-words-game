@@ -138,11 +138,13 @@ describe('mergeRunIntoStats', () => {
       bossesDefeated: 1,
       streak: 20,
       coins: 40,
+      style: 'trivia',
     });
     expect(merged.bestScore).toBe(500);
     expect(merged.totalKills).toBe(12);
     expect(merged.totalCoins).toBe(40);
     expect(merged.gamesPlayed).toBe(1);
+    expect(merged.bestMode).toBe('trivia');
 
     const again = mergeRunIntoStats(merged, {
       score: 200,
@@ -153,11 +155,13 @@ describe('mergeRunIntoStats', () => {
       bossesDefeated: 0,
       streak: 5,
       coins: 10,
+      style: 'riddles',
     });
     expect(again.bestScore).toBe(500); // keeps the higher
     expect(again.highestWpm).toBe(70); // new record
     expect(again.totalKills).toBe(15);
     expect(again.gamesPlayed).toBe(2);
+    expect(again.bestMode).toBe('trivia');
   });
 });
 
