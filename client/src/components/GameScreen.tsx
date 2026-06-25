@@ -129,21 +129,27 @@ export function GameScreen({
     inputRef.current?.focus();
   }, []);
 
-  // Every mode uses a real pause so the controls behave consistently.
+  // Typing Defense gets a safe pause. Puzzle modes only open the menu; their
+  // horde keeps advancing so the player cannot pause indefinitely to solve.
   const pausedRef = useRef(false);
+  const freezeOnPause = !riddleMode;
   const doPause = () => {
     if (pausedRef.current) return;
     pausedRef.current = true;
     setPaused(true);
-    engine.pause();
-    audio.pause();
+    if (freezeOnPause) {
+      engine.pause();
+      audio.pause();
+    }
   };
   const doResume = () => {
     pausedRef.current = false;
     setPaused(false);
     setConfirmExit(null);
-    engine.resume();
-    audio.resume();
+    if (freezeOnPause) {
+      engine.resume();
+      audio.resume();
+    }
     inputRef.current?.focus();
   };
 
@@ -212,7 +218,8 @@ export function GameScreen({
   useGameLoop((dt) => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-    // engine.update self-gates while paused.
+    // Typing Defense self-gates in the engine while paused. Puzzle modes keep
+    // updating behind the menu.
     engine.update(dt);
 
     // Hand off to the Game Over screen FIRST, so even a draw hiccup can't trap
@@ -351,7 +358,12 @@ export function GameScreen({
             </div>
           ) : (
             <>
-              <h2 className="text-4xl font-black tracking-widest text-neon-green">PAUSED</h2>
+              <h2 className="text-4xl font-black tracking-widest text-neon-green">{freezeOnPause ? 'PAUSED' : 'MENU'}</h2>
+              {!freezeOnPause && (
+                <p className="-mt-2 max-w-xs text-center text-xs font-bold text-neon-amber">
+                  ⚠ The horde keeps advancing — this isn’t a safe pause.
+                </p>
+              )}
               <div className="flex w-full max-w-xs flex-col gap-3">
                 <button className="menu-btn text-center" onClick={doResume}>
                   ▶ Resume

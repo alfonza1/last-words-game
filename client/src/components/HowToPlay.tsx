@@ -157,7 +157,7 @@ export function HowToPlay({ onBack }: Props) {
               <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-pink">Riddle · Math · Trivia</h3>
               <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
                 <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> or </span><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">ENTER</kbd><span className="text-white/60"> — submit your answer (fires a volley).</span></li>
-                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — pause (the horde freezes).</span></li>
+                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — opens the menu, but the horde keeps advancing.</span></li>
               </ul>
             </div>
           </div>

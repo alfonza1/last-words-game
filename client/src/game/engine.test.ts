@@ -189,20 +189,6 @@ describe('riddle mode', () => {
   });
 });
 
-describe('pause behavior', () => {
-  it('freezes puzzle-mode zombies until the run resumes', () => {
-    const e = new GameEngine({
-      mode: 'survival', difficulty: 'normal', upgrades: DEFAULT_UPGRADES,
-      settings: DEFAULT_SETTINGS, width: 960, height: 600, seed: 1, riddleMode: true,
-    });
-    e.state.zombies = [zombie({ y: 250, speed: 80 })];
-    e.pause();
-    e.update(1);
-    expect(e.state.zombies[0]?.y).toBe(250);
-    expect(e.state.status).toBe('paused');
-  });
-});
-
 describe('live WPM', () => {
   it('rises while typing', () => {
     const e = makeEngine();
