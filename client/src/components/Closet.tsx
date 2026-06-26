@@ -75,27 +75,29 @@ export function Closet({
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4">
-      <div className="flex items-start gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         <button
           onClick={requestBack}
           className="rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
         >
           ← Back
         </button>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[210px] flex-1">
           <h1 className="text-2xl font-black tracking-widest text-neon-cyan">{username}’s Closet</h1>
-          <div className="flex items-center gap-3">
-            <p className="min-w-0 text-[8px] uppercase tracking-[0.2em] text-white/35 sm:text-[10px] sm:tracking-[0.28em]">
-              Build your last known look
-            </p>
-            <button
-              onClick={onOpenStore}
-              className="ml-auto flex-none rounded-md border border-neon-pink/60 bg-neon-pink/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-neon-pink hover:bg-neon-pink/20 sm:px-3"
-            >
-              Open Shop
-            </button>
-          </div>
+          <p className="text-[8px] uppercase tracking-[0.2em] text-white/35 sm:text-[10px] sm:tracking-[0.28em]">
+            Build your last known look
+          </p>
         </div>
+        <button
+          onClick={onOpenStore}
+          className="group ml-auto flex min-h-11 flex-none items-center gap-2 rounded-xl border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-4 py-2 text-left shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)]"
+        >
+          <span className="h-2 w-2 rounded-full bg-neon-pink shadow-[0_0_12px_rgba(255,43,214,0.9)] transition group-hover:bg-neon-cyan group-hover:shadow-[0_0_14px_rgba(0,240,255,0.9)]" />
+          <span className="flex flex-col leading-none">
+            <span className="text-[11px] font-black uppercase tracking-[0.24em] text-neon-pink">Open Shop</span>
+            <span className="mt-1 text-[8px] font-bold uppercase tracking-[0.2em] text-white/35">Gear market</span>
+          </span>
+        </button>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[300px_1fr] lg:gap-4">
