@@ -270,6 +270,27 @@ function drawCombatFace(
     ctx.lineTo(41 * scale, -25 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
+  } else if (expression === 'grave-grin') {
+    ctx.strokeStyle = '#6d211c';
+    ctx.lineWidth = Math.max(1.1, 1.45 * scale);
+    ctx.beginPath();
+    ctx.moveTo(29 * scale, -36 * scale);
+    ctx.lineTo(40 * scale, -22 * scale);
+    ctx.moveTo(31 * scale, -28 * scale);
+    ctx.lineTo(27 * scale, -25 * scale);
+    ctx.moveTo(35 * scale, -31 * scale);
+    ctx.lineTo(40 * scale, -34 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = '#111719';
+    ctx.lineWidth = Math.max(0.9, 1.15 * scale);
+    ctx.beginPath();
+    ctx.moveTo(31 * scale, -32 * scale);
+    ctx.lineTo(38 * scale, -30 * scale);
+    ctx.stroke();
+    ctx.fillStyle = '#111719';
+    ctx.beginPath();
+    ctx.arc(eyeX + 0.6 * scale, eyeY, 1.45 * scale, 0, Math.PI * 2);
+    ctx.fill();
   } else {
     ctx.fillStyle = '#111719';
     ctx.beginPath();
@@ -373,70 +394,104 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, s
     ctx.closePath();
     ctx.fill();
   } else if (style === 'ponytail') {
-    ctx.strokeStyle = color;
     ctx.lineCap = 'round';
-    ctx.lineWidth = 4.2 * scale;
-    ctx.beginPath();
-    ctx.moveTo(15 * scale, -35 * scale);
-    ctx.quadraticCurveTo(8 * scale, -20 * scale, 7 * scale, -6 * scale);
-    ctx.moveTo(18 * scale, -33 * scale);
-    ctx.quadraticCurveTo(14 * scale, -18 * scale, 13 * scale, -3 * scale);
-    ctx.moveTo(28 * scale, -33 * scale);
-    ctx.quadraticCurveTo(34 * scale, -18 * scale, 33 * scale, -3 * scale);
-    ctx.moveTo(31 * scale, -35 * scale);
-    ctx.quadraticCurveTo(40 * scale, -20 * scale, 40 * scale, -6 * scale);
-    ctx.stroke();
-    ctx.strokeStyle = shadow;
-    ctx.lineWidth = Math.max(1, 1.1 * scale);
-    ctx.stroke();
+    const locs: Array<[number, number, number, number, number, number]> = [
+      [13, -35, 7, -21, 5, -5],
+      [17, -33, 13, -18, 12, -1],
+      [22, -34, 21, -18, 20, 1],
+      [27, -34, 31, -18, 31, 1],
+      [31, -33, 38, -18, 38, -1],
+      [34, -35, 43, -20, 42, -5],
+    ];
+    for (const pass of [shadow, color]) {
+      ctx.strokeStyle = pass;
+      ctx.lineWidth = pass === shadow ? 5.8 * scale : 4.2 * scale;
+      ctx.globalAlpha = pass === shadow ? 0.45 : 1;
+      ctx.beginPath();
+      for (const [x1, y1, cx, cy, x2, y2] of locs) {
+        ctx.moveTo(x1 * scale, y1 * scale);
+        ctx.quadraticCurveTo(cx * scale, cy * scale, x2 * scale, y2 * scale);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(23 * scale, -28 * scale, 11 * scale, Math.PI, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = shadow;
-    ctx.lineWidth = Math.max(1, 1.2 * scale);
-    ctx.beginPath();
-    ctx.moveTo(14 * scale, -28 * scale);
-    ctx.quadraticCurveTo(23 * scale, -22 * scale, 33 * scale, -28 * scale);
-    ctx.stroke();
     ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(1.8, 3.4 * scale);
+    ctx.lineWidth = Math.max(2, 3.5 * scale);
     ctx.beginPath();
-    ctx.moveTo(13 * scale, -28 * scale);
-    ctx.quadraticCurveTo(23 * scale, -34 * scale, 34 * scale, -28 * scale);
+    ctx.moveTo(12 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -35 * scale, 35 * scale, -28 * scale);
     ctx.stroke();
     ctx.strokeStyle = shadow;
     ctx.lineWidth = Math.max(1, scale);
     ctx.beginPath();
-    ctx.moveTo(14 * scale, -28 * scale);
-    ctx.quadraticCurveTo(23 * scale, -32 * scale, 33 * scale, -28 * scale);
+    ctx.moveTo(13 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -31 * scale, 34 * scale, -28 * scale);
     ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,.18)';
     ctx.lineWidth = Math.max(1, 0.8 * scale);
     ctx.beginPath();
     ctx.moveTo(11 * scale, -19 * scale);
-    ctx.quadraticCurveTo(9 * scale, -12 * scale, 8 * scale, -7 * scale);
-    ctx.moveTo(17 * scale, -19 * scale);
-    ctx.quadraticCurveTo(15 * scale, -12 * scale, 14 * scale, -6 * scale);
-    ctx.moveTo(31 * scale, -19 * scale);
-    ctx.quadraticCurveTo(33 * scale, -12 * scale, 33 * scale, -6 * scale);
+    ctx.quadraticCurveTo(9 * scale, -12 * scale, 7 * scale, -6 * scale);
+    ctx.moveTo(21 * scale, -20 * scale);
+    ctx.quadraticCurveTo(20 * scale, -12 * scale, 19 * scale, -4 * scale);
+    ctx.moveTo(31 * scale, -20 * scale);
+    ctx.quadraticCurveTo(34 * scale, -12 * scale, 35 * scale, -4 * scale);
     ctx.stroke();
+    for (const [x, y] of [[14, -28], [19, -32], [27, -32], [33, -28]]) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x * scale, y * scale, 1.9 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = shadow;
+      ctx.lineWidth = Math.max(0.8, 0.8 * scale);
+      ctx.stroke();
+    }
   } else if (style === 'undercut') {
+    ctx.fillStyle = shadow;
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.moveTo(13 * scale, -30 * scale);
+    ctx.quadraticCurveTo(16 * scale, -22 * scale, 13 * scale, -16 * scale);
+    ctx.quadraticCurveTo(20 * scale, -20 * scale, 21 * scale, -29 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.moveTo(13 * scale, -31 * scale);
-    ctx.quadraticCurveTo(20 * scale, -46 * scale, 36 * scale, -39 * scale);
-    ctx.quadraticCurveTo(30 * scale, -37 * scale, 18 * scale, -27 * scale);
+    ctx.quadraticCurveTo(21 * scale, -47 * scale, 39 * scale, -40 * scale);
+    ctx.quadraticCurveTo(31 * scale, -38 * scale, 18 * scale, -25 * scale);
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.moveTo(15 * scale, -27 * scale);
-    ctx.quadraticCurveTo(26 * scale, -40 * scale, 38 * scale, -36 * scale);
-    ctx.quadraticCurveTo(31 * scale, -31 * scale, 18 * scale, -22 * scale);
+    ctx.quadraticCurveTo(27 * scale, -43 * scale, 41 * scale, -36 * scale);
+    ctx.quadraticCurveTo(31 * scale, -31 * scale, 17 * scale, -18 * scale);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = shadow;
     ctx.lineWidth = Math.max(1, 1.2 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.18)';
+    ctx.lineWidth = Math.max(0.9, 0.9 * scale);
+    ctx.beginPath();
+    ctx.moveTo(18 * scale, -28 * scale);
+    ctx.quadraticCurveTo(27 * scale, -39 * scale, 38 * scale, -36 * scale);
+    ctx.moveTo(20 * scale, -22 * scale);
+    ctx.quadraticCurveTo(29 * scale, -32 * scale, 37 * scale, -31 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = shadow;
+    ctx.lineWidth = Math.max(0.8, 0.75 * scale);
+    ctx.beginPath();
+    ctx.moveTo(14 * scale, -24 * scale);
+    ctx.lineTo(20 * scale, -22 * scale);
+    ctx.moveTo(14 * scale, -28 * scale);
+    ctx.lineTo(23 * scale, -27 * scale);
     ctx.stroke();
   } else {
     ctx.beginPath();

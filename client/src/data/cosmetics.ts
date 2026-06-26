@@ -51,9 +51,9 @@ export const SKIN_TONES = [
 
 export const HAIR_STYLES = [
   { key: 'buzz', label: 'Buzz' },
-  { key: 'undercut', label: 'Swept Fringe' },
+  { key: 'undercut', label: 'Side-Swept Undercut' },
   { key: 'mohawk', label: 'Mohawk' },
-  { key: 'ponytail', label: 'Crow Locs' },
+  { key: 'ponytail', label: 'Dread Locs' },
   { key: 'bald', label: 'Bald' },
 ] as const;
 
@@ -75,9 +75,9 @@ export const EXPRESSIONS: ExpressionDef[] = [
   },
   {
     key: 'grave-grin',
-    label: 'Grave Grin',
-    icon: '¬‿¬',
-    description: 'A crooked smile for impossible odds.',
+    label: 'Scarred Smirk',
+    icon: '/¬_¬',
+    description: 'A cut through the stare and a smile that says keep coming.',
   },
   {
     key: 'dead-calm',

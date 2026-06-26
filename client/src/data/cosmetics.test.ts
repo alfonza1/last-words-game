@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CHARACTER, EXPRESSIONS, lipColorForSkinTone, normalizeCharacter, skinColor } from './cosmetics';
+import { DEFAULT_CHARACTER, EXPRESSIONS, HAIR_STYLES, lipColorForSkinTone, normalizeCharacter, skinColor } from './cosmetics';
 
 describe('default character', () => {
   it('selects buzz hair for new survivors', () => {
@@ -12,6 +12,12 @@ describe('default character', () => {
     expect(normalizeCharacter({ hair: 'mohawk' }).expression).toBe('last-light');
     expect(EXPRESSIONS.map((expression) => expression.key)).toContain('not-yet-dead');
     expect(EXPRESSIONS.find((expression) => expression.key === 'not-yet-dead')?.outfitReactive).toBe(true);
+  });
+
+  it('uses the updated survivor cosmetic names', () => {
+    expect(HAIR_STYLES.find((style) => style.key === 'undercut')?.label).toBe('Side-Swept Undercut');
+    expect(HAIR_STYLES.find((style) => style.key === 'ponytail')?.label).toBe('Dread Locs');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'grave-grin')?.label).toBe('Scarred Smirk');
   });
 
   it('derives lips from the selected skin tone', () => {
