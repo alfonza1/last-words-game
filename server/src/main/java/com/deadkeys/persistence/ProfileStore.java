@@ -67,21 +67,28 @@ public class ProfileStore {
 
   /**
    * Record a run on the leaderboard, keeping only ONE row per player (their best
-   * leaderboard run). Typers are ranked by WPM; solvers are ranked by score.
+   * score run). WPM is kept as that leaderboard player's highest submitted WPM.
    */
   @Transactional
   public void upsertLeaderboard(String ownerId, LeaderboardEntry run) {
     // Two independent boards keyed by run.riddle(): Typers (false) and Riddlers (true).
     boolean riddle = run.riddle();
     LeaderboardEntity e = leaderboard.findByOwnerIdAndRiddle(ownerId, riddle).orElse(null);
-    if (e != null && !outranks(run, e)) {
-      return; // not a new personal best on this board — leave the row untouched
+    if (e != null && run.score() <= e.score) {
+      int bestWpm = Math.max(e.wpm, run.wpm());
+      if (bestWpm > e.wpm) {
+        e.wpm = bestWpm;
+        e.name = run.name();
+        e.at = System.currentTimeMillis();
+        leaderboard.save(e);
+      }
+      return; // score did not improve; WPM was already refreshed if needed.
     }
     if (e == null) {
       // Brand-new entrant: only store them if they'd crack this board's top N,
       // so the table never grows beyond the leaderboards we actually show.
-      List<LeaderboardEntity> top = orderedBoard(riddle, PageRequest.of(0, MAX_ENTRIES));
-      if (top.size() >= MAX_ENTRIES && !outranks(run, top.get(top.size() - 1))) {
+      List<LeaderboardEntity> top = leaderboard.findByRiddleOrderByScoreDesc(riddle, PageRequest.of(0, MAX_ENTRIES));
+      if (top.size() >= MAX_ENTRIES && run.score() <= top.get(top.size() - 1).score) {
         return;
       }
       e = new LeaderboardEntity();
@@ -91,7 +98,7 @@ public class ProfileStore {
     e.name = run.name();
     e.score = run.score();
     e.wave = run.wave();
-    e.wpm = run.wpm();
+    e.wpm = Math.max(e.wpm, run.wpm());
     e.accuracy = run.accuracy();
     e.mode = run.mode();
     e.difficulty = run.difficulty();
@@ -103,7 +110,7 @@ public class ProfileStore {
 
   /** Keep only the top {@link #MAX_ENTRIES} rows on one board. */
   private void pruneLeaderboard(boolean riddle) {
-    List<LeaderboardEntity> all = orderedBoard(riddle);
+    List<LeaderboardEntity> all = leaderboard.findByRiddleOrderByScoreDesc(riddle);
     if (all.size() > MAX_ENTRIES) {
       leaderboard.deleteAll(all.subList(MAX_ENTRIES, all.size()));
     }
@@ -111,7 +118,7 @@ public class ProfileStore {
 
   @Transactional(readOnly = true)
   public List<LeaderboardEntry> topLeaderboard(boolean riddle, int limit) {
-    return orderedBoard(riddle, PageRequest.of(0, limit)).stream().map(this::toDto).toList();
+    return leaderboard.findByRiddleOrderByScoreDesc(riddle, PageRequest.of(0, limit)).stream().map(this::toDto).toList();
   }
 
   public long countProfiles() {
@@ -143,25 +150,6 @@ public class ProfileStore {
   private LeaderboardEntry toDto(LeaderboardEntity e) {
     return new LeaderboardEntry("lb-" + e.id, e.name, e.score, e.wave, e.wpm,
         e.accuracy, e.mode, e.difficulty, e.riddle, e.style, e.at);
-  }
-
-  private List<LeaderboardEntity> orderedBoard(boolean riddle, PageRequest page) {
-    if (riddle) return leaderboard.findByRiddleOrderByScoreDesc(riddle, page);
-    return leaderboard.findByRiddleOrderByWpmDescScoreDesc(riddle, page);
-  }
-
-  private List<LeaderboardEntity> orderedBoard(boolean riddle) {
-    if (riddle) return leaderboard.findByRiddleOrderByScoreDesc(riddle);
-    return leaderboard.findByRiddleOrderByWpmDescScoreDesc(riddle);
-  }
-
-  private static boolean outranks(LeaderboardEntry run, LeaderboardEntity existing) {
-    if (run.riddle()) {
-      if (run.score() != existing.score) return run.score() > existing.score;
-      return run.wpm() > existing.wpm;
-    }
-    if (run.wpm() != existing.wpm) return run.wpm() > existing.wpm;
-    return run.score() > existing.score;
   }
 
   private static String randomHandle() {

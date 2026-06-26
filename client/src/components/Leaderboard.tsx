@@ -32,9 +32,7 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
   }, []);
 
   const entries = data ? data[board] ?? null : null; // tolerate an older API response
-  const cols = board === 'typers'
-    ? 'grid-cols-[2.75rem_1fr_4rem_5rem_3.5rem]'
-    : 'grid-cols-[2.75rem_1fr_5rem_3.5rem_4rem]';
+  const cols = 'grid-cols-[2.75rem_1fr_5rem_4rem]';
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-2xl flex-col gap-4 overflow-y-auto p-6">
@@ -72,7 +70,7 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
         </button>
       </div>
       <p className="-mt-2 text-center text-[11px] text-white/35">
-        {board === 'typers' ? 'Highest WPM - Typing Defense.' : 'Sharpest minds — Riddle, Math & Trivia Defense.'}
+        {board === 'typers' ? "Top scores - WPM shows each player's best." : 'Sharpest minds — Riddle, Math & Trivia Defense.'}
       </p>
 
       {error && <p className="text-center text-sm text-neon-red">Couldn’t load the leaderboard right now.</p>}
@@ -92,14 +90,12 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
             <span>Player</span>
             {board === 'typers' ? (
               <>
-                <span className="text-right">WPM</span>
                 <span className="text-right">Score</span>
-                <span className="text-right">Wave</span>
+                <span className="text-right">WPM</span>
               </>
             ) : (
               <>
                 <span className="text-right">Score</span>
-                <span className="text-right">Wave</span>
                 <span className="text-right">Mode</span>
               </>
             )}
@@ -129,14 +125,12 @@ function Row({ e, rank, board, cols }: { e: LeaderboardEntry; rank: number; boar
       <span className="truncate font-bold text-white/90">{e.name}</span>
       {board === 'typers' ? (
         <>
-          <span className="text-right font-black text-neon-cyan">{e.wpm}</span>
-          <span className="text-right text-neon-amber">{e.score.toLocaleString()}</span>
-          <span className="text-right text-white/60">{e.wave}</span>
+          <span className="text-right font-black text-neon-amber">{e.score.toLocaleString()}</span>
+          <span className="text-right text-neon-cyan">{e.wpm}</span>
         </>
       ) : (
         <>
           <span className="text-right font-black text-neon-amber">{e.score.toLocaleString()}</span>
-          <span className="text-right text-white/60">{e.wave}</span>
           <span className="text-right text-xs font-bold uppercase tracking-wide text-neon-cyan">{modeLabel(e)}</span>
         </>
       )}
