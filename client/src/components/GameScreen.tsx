@@ -20,6 +20,7 @@ export interface RunResult {
   streak: number;
   coins: number;
   riddle: boolean;
+  survived: boolean;
   /** Play style of this run: 'typing' | 'riddles' | 'math' | 'trivia'. */
   style: string;
 }
@@ -507,6 +508,7 @@ function toResult(s: GameState): RunResult {
     streak: s.bestStreak,
     coins: s.coins,
     riddle: s.riddleMode,
+    survived: s.survived,
     style: s.riddleMode ? s.puzzleStyle : 'typing',
   };
 }

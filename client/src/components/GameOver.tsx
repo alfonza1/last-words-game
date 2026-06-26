@@ -20,6 +20,7 @@ export function GameOver({ result, mode, isHighScore, rewardCoins, onWatchAd, on
   const [adPhase, setAdPhase] = useState<'idle' | 'playing' | 'claimed'>('idle');
   const [earned, setEarned] = useState(0);
   const [adError, setAdError] = useState<string | null>(null);
+  const survived = result.survived;
 
   const watchAd = async () => {
     setAdError(null);
@@ -37,8 +38,14 @@ export function GameOver({ result, mode, isHighScore, rewardCoins, onWatchAd, on
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-3xl flex-col items-center justify-center gap-6 p-6 text-center">
-      <h1 className="text-6xl font-black tracking-widest text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.8)]">
-        GAME OVER
+      <h1
+        className={`text-6xl font-black tracking-widest ${
+          survived
+            ? 'text-neon-green drop-shadow-[0_0_20px_rgba(57,255,20,0.8)]'
+            : 'text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.8)]'
+        }`}
+      >
+        {survived ? 'YOU SURVIVED' : 'GAME OVER'}
       </h1>
       {isHighScore && <div className="animate-pulse text-xl font-bold text-neon-amber">★ NEW HIGH SCORE ★</div>}
 

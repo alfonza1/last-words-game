@@ -187,6 +187,8 @@ export interface GameState {
   puzzleStyle: PuzzleStyle;
   /** The active puzzle's prompt to display (answer lives in wordQueue[0]). */
   riddlePrompt: string | null;
+  /** True when a finite puzzle pool was fully solved instead of the base being lost. */
+  survived: boolean;
 
   elapsedMs: number;
   correctWords: number;

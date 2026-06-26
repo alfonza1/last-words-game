@@ -223,7 +223,21 @@ export default function App() {
       const records = r.riddle ? riddleStats : stats;
       const high = r.score > records.bestScore && r.score > 0;
       if (user) {
-        const payload: RunPayload = { ...r, mode, difficulty: settings.difficulty, riddle: r.riddle };
+        const payload: RunPayload = {
+          score: r.score,
+          wave: r.wave,
+          wpm: r.wpm,
+          accuracy: r.accuracy,
+          survivalMs: r.survivalMs,
+          kills: r.kills,
+          bossesDefeated: r.bossesDefeated,
+          streak: r.streak,
+          coins: r.coins,
+          mode,
+          difficulty: settings.difficulty,
+          riddle: r.riddle,
+          style: r.style,
+        };
         apiSubmitRun(payload)
           .then(({ profile, isHighScore }) => {
             applyProfile(profile);

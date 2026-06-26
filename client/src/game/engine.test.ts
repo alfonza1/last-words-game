@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { GameEngine } from './engine';
 import { DEFAULT_SETTINGS, DEFAULT_UPGRADES } from '../lib/storage';
+import { puzzlePoolSize } from '../data/puzzles';
 import type { Zombie } from '../types';
 
 function makeEngine() {
@@ -173,6 +174,27 @@ describe('riddle mode', () => {
     expect(e.state.kills).toBe(0);
     expect(e.state.input).toBe('definitelywrong');
     expect(e.inputWrong).toBe(false);
+  });
+
+  it('shows a survived result after every finite puzzle in the session is solved', () => {
+    const e = riddleEngine();
+    e.state.wave = 1;
+    e.state.betweenWaves = 0;
+    e.state.waveZombiesToSpawn = 1000;
+    e.state.waveZombiesSpawned = 0;
+    e.state.zombies = [];
+
+    const prompts = new Set<string>();
+    for (let i = 0; i < 40 && e.state.status !== 'gameover'; i++) {
+      const prompt = e.state.riddlePrompt;
+      expect(prompt).toBeTruthy();
+      prompts.add(prompt!);
+      e.handleInput(firstWord(e) + ' ');
+    }
+
+    expect(prompts.size).toBe(puzzlePoolSize('riddles', 'easy'));
+    expect(e.state.status).toBe('gameover');
+    expect(e.state.survived).toBe(true);
   });
 
   it('math style fires its own (smaller) volley — normal = 4 kills', () => {

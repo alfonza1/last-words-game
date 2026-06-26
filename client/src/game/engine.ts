@@ -28,12 +28,13 @@ import {
   waveZombieCount,
   wordTierForWave,
 } from './difficulty';
-import { makePuzzle, puzzleKills, puzzleSpeedMult, type Puzzle } from '../data/puzzles';
+import { makePuzzle, puzzleKills, puzzlePoolSize, puzzleSpeedMult, type Puzzle } from '../data/puzzles';
 import {
   createScreamerAdd,
   createZombie,
   zombieTypeForWave,
 } from './spawn';
+import type { WordTier } from '../data/words';
 import { generateToken } from './wordgen';
 import { createBossZombie, pickBoss } from './boss';
 import {
@@ -101,6 +102,8 @@ export class GameEngine {
   // so we can show prompts and accept synonyms while reusing the typing pipeline.
   private riddleQueue: Puzzle[] = [];
   private puzzleStyle: PuzzleStyle = 'riddles';
+  private solvedPuzzlePrompts = new Set<string>();
+  private finitePuzzleGoal: number | null = null;
 
   constructor(opts: EngineOptions) {
     this.rng = mulberry32(opts.seed ?? hashSeed(`${Date.now()}-${Math.random()}`));
@@ -133,6 +136,7 @@ export class GameEngine {
       riddleMode: !!opts.riddleMode,
       puzzleStyle: opts.puzzleStyle ?? 'riddles',
       riddlePrompt: null,
+      survived: false,
       elapsedMs: 0,
       correctWords: 0,
       mistakes: 0,
@@ -155,6 +159,7 @@ export class GameEngine {
       upgrades: opts.upgrades,
       settings: opts.settings,
     };
+    this.finitePuzzleGoal = this.computeFinitePuzzleGoal();
     // Fill the initial queue (words, or riddle answers in Riddle Mode).
     for (let i = 0; i < QUEUE_SIZE; i++) this.enqueueItem();
     this.syncRiddlePrompt();
@@ -176,6 +181,7 @@ export class GameEngine {
   /** Append one item to the queue — a word, or a riddle (answer + prompt) in Riddle Mode. */
   private enqueueItem() {
     if (this.state.riddleMode) {
+      if (this.hasQueuedAllFinitePuzzles()) return;
       const riddle = this.pickRiddle();
       this.riddleQueue.push(riddle);
       this.state.wordQueue.push(riddle.answer);
@@ -192,16 +198,55 @@ export class GameEngine {
     this.syncRiddlePrompt();
   }
 
-  /** Make a puzzle for the current style + wave tier, avoiding answers already queued. */
+  /** Make a puzzle for the current style + wave tier, avoiding answers already solved/queued. */
   private pickRiddle(): Puzzle {
-    const cfg = getDifficultyConfig(this.state.difficulty);
-    const tier = wordTierForWave(Math.max(1, this.state.wave), cfg.wordLengthBias);
+    const tier = this.currentPuzzleTier();
     let puzzle = makePuzzle(this.puzzleStyle, this.rng, this.state.difficulty, tier);
+    const poolSize = puzzlePoolSize(this.puzzleStyle, tier);
+    const guardLimit = Math.max(8, (poolSize ?? 30) * 3);
     let guard = 0;
-    while (this.state.wordQueue.includes(puzzle.answer) && guard++ < 8) {
+    while (
+      (this.state.wordQueue.includes(puzzle.answer) ||
+        this.riddleQueue.some((queued) => queued.prompt === puzzle.prompt) ||
+        this.solvedPuzzlePrompts.has(puzzle.prompt)) &&
+      guard++ < guardLimit
+    ) {
       puzzle = makePuzzle(this.puzzleStyle, this.rng, this.state.difficulty, tier);
     }
     return puzzle;
+  }
+
+  private currentPuzzleTier(): WordTier {
+    const cfg = getDifficultyConfig(this.state.difficulty);
+    return wordTierForWave(Math.max(1, this.state.wave), cfg.wordLengthBias);
+  }
+
+  private computeFinitePuzzleGoal(): number | null {
+    if (!this.state.riddleMode) return null;
+    return puzzlePoolSize(this.puzzleStyle, this.currentPuzzleTier());
+  }
+
+  private hasQueuedAllFinitePuzzles(): boolean {
+    return (
+      this.finitePuzzleGoal !== null &&
+      this.solvedPuzzlePrompts.size + this.riddleQueue.length >= this.finitePuzzleGoal
+    );
+  }
+
+  private hasSolvedFinitePuzzlePool(): boolean {
+    return this.finitePuzzleGoal !== null && this.solvedPuzzlePrompts.size >= this.finitePuzzleGoal;
+  }
+
+  private survivePuzzlePool() {
+    const s = this.state;
+    if (s.status === 'gameover') return;
+    s.survived = true;
+    s.status = 'gameover';
+    s.input = '';
+    s.wordQueue = [];
+    this.riddleQueue = [];
+    this.syncRiddlePrompt();
+    this.addEvent('YOU SURVIVED', 'finisher');
   }
 
   private syncRiddlePrompt() {
@@ -312,10 +357,12 @@ export class GameEngine {
       const riddle = this.riddleQueue[0];
       if (riddle && this.riddleMatches(candidate, riddle)) {
         const answer = riddle.answer;
+        this.solvedPuzzlePrompts.add(riddle.prompt);
         this.cycleQueue();
         this.fireShots(puzzleKills(this.puzzleStyle, s.difficulty));
         this.registerCorrect(answer);
         s.input = '';
+        if (this.hasSolvedFinitePuzzlePool()) this.survivePuzzlePool();
         return;
       }
       this.registerMistake();
