@@ -117,9 +117,9 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
         <path d="M95 68 Q100 66 105 68 M117 69 Q123 67 128 69" fill="none" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
         <circle cx="101" cy="68" r="1.7" fill={ink} />
         <circle cx="123" cy="69" r="1.7" fill={ink} />
-        <path d="M94 55 L108 78" fill="none" stroke="#6d211c" strokeWidth="3.1" strokeLinecap="round" />
-        <path d="M95 55 L108 78" fill="none" stroke="#c46d61" strokeWidth="1.15" strokeLinecap="round" opacity=".72" />
-        <path d="M95 66 L90 71 M101 63 L107 58 M103 73 L110 69" fill="none" stroke="#6d211c" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M106 52 L113 44 L111 55 L118 50" fill="none" stroke="#6d211c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M106.5 52 L113 44.5 L111.5 54.5 L117.5 50" fill="none" stroke="#d28a78" strokeWidth="1.05" strokeLinecap="round" strokeLinejoin="round" opacity=".78" />
+        <path d="M109 48 L106 46 M114 52 L119 55" fill="none" stroke="#6d211c" strokeWidth="1.15" strokeLinecap="round" opacity=".5" />
         <path d="M99 84 Q112 91 124 80" fill="none" stroke={lips} strokeWidth="2.8" strokeLinecap="round" />
         <path d="M111 87 Q117 87 122 82" fill="none" stroke="#f1d8cb" strokeWidth="1.35" strokeLinecap="round" opacity=".75" />
       </g>

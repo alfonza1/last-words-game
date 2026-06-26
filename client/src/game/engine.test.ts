@@ -49,6 +49,20 @@ describe('word queue is independent of zombies', () => {
     expect(e.state.wordQueue).toHaveLength(5);
   });
 
+  it('forces boss rush to normal difficulty', () => {
+    const e = new GameEngine({
+      mode: 'bossrush',
+      difficulty: 'nightmare',
+      upgrades: DEFAULT_UPGRADES,
+      settings: { ...DEFAULT_SETTINGS, difficulty: 'nightmare' },
+      width: 960,
+      height: 600,
+      seed: 1,
+    });
+
+    expect(e.state.difficulty).toBe('normal');
+  });
+
   it('does not fire until space is pressed', () => {
     const e = makeEngine();
     e.state.zombies = [zombie()];
