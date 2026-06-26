@@ -26,6 +26,7 @@ node_modules/.tmp/
 # NB: scope this to the server only — a bare `data/` also ignored the client's
 # game-data source dir (client/src/data), which must be tracked.
 dk-data.json
+/data/
 /server/data/
 
 # Logs
