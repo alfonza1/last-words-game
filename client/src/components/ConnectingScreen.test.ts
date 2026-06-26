@@ -1,26 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { CONNECTION_GAME_DELAY_MS, scoreSignalKey } from './ConnectingScreen';
+import { CONNECTION_FACT_DELAY_MS, nextScaryFactIndex, SCARY_FACTS } from './ConnectingScreen';
 
-describe('cold-start signal game', () => {
-  it('starts after four seconds', () => {
-    expect(CONNECTION_GAME_DELAY_MS).toBe(4_000);
+describe('cold-start scary facts', () => {
+  it('reveals a fact after three seconds', () => {
+    expect(CONNECTION_FACT_DELAY_MS).toBe(3_000);
   });
 
-  it('scores matching keys and builds a streak', () => {
-    expect(scoreSignalKey('D', 'd', 200, 2, 1)).toEqual({
-      score: 350,
-      streak: 3,
-      misses: 1,
-      hit: true,
-    });
+  it('rotates to a different fact', () => {
+    expect(nextScaryFactIndex(2, 0, SCARY_FACTS.length)).toBe(3);
+    expect(nextScaryFactIndex(2, 0.999, SCARY_FACTS.length)).not.toBe(2);
   });
 
-  it('counts a breach and breaks the streak on a miss', () => {
-    expect(scoreSignalKey('D', 'x', 200, 4, 1)).toEqual({
-      score: 200,
-      streak: 0,
-      misses: 2,
-      hit: false,
-    });
+  it('keeps selected facts inside the available list', () => {
+    const next = nextScaryFactIndex(SCARY_FACTS.length - 1, 0.45, SCARY_FACTS.length);
+    expect(next).toBeGreaterThanOrEqual(0);
+    expect(next).toBeLessThan(SCARY_FACTS.length);
   });
 });

@@ -29,6 +29,7 @@ class ProfileServiceRunStatsTest {
     assertEquals(0, profile.stats.bestScore);
     assertEquals(120, profile.stats.totalCoins);
     assertEquals(500, profile.riddleStats.bestScore);
+    assertEquals("riddles", profile.riddleStats.bestMode);
     assertEquals(8, profile.riddleStats.totalKills);
     assertEquals(20, profile.riddleStats.coinsEarned);
     assertEquals(20, profile.riddleStats.totalCoins);
@@ -40,6 +41,7 @@ class ProfileServiceRunStatsTest {
     service.applyRun(profile, run(300, 2, 10, false));
 
     assertEquals(300, profile.stats.bestScore);
+    assertEquals("typing", profile.stats.bestMode);
     assertEquals(2, profile.stats.totalKills);
     assertEquals(10, profile.stats.coinsEarned);
     assertEquals(110, profile.stats.totalCoins);

@@ -37,6 +37,7 @@ class ProfileServiceCharacterTest {
   @Test
   void newProfilesDefaultToBuzzHair() {
     assertEquals("buzz", profile.character.hair);
+    assertEquals("last-light", profile.character.expression);
   }
 
   @Test
@@ -53,11 +54,12 @@ class ProfileServiceCharacterTest {
     profile.cosmetics.add("outfit-neon");
     profile.cosmetics.add("accessory-goggles");
 
-    service.equipCharacter(profile, "deep", "mohawk", "cyan", "outfit-neon", "accessory-goggles");
+    service.equipCharacter(profile, "deep", "mohawk", "cyan", "blood-rush", "outfit-neon", "accessory-goggles");
 
     assertEquals("deep", profile.character.skinTone);
     assertEquals("mohawk", profile.character.hair);
     assertEquals("cyan", profile.character.hairColor);
+    assertEquals("blood-rush", profile.character.expression);
     assertEquals("outfit-neon", profile.character.outfit);
     assertEquals("accessory-goggles", profile.character.accessory);
     verify(store).save(profile);
@@ -68,6 +70,14 @@ class ProfileServiceCharacterTest {
     assertThrows(
         BadRequestException.class,
         () -> service.equipCharacter(
-            profile, "warm", "buzz", "charcoal", "outfit-inferno", "accessory-none"));
+            profile, "warm", "buzz", "charcoal", "last-light", "outfit-inferno", "accessory-none"));
+  }
+
+  @Test
+  void rejectsUnknownExpressions() {
+    assertThrows(
+        BadRequestException.class,
+        () -> service.equipCharacter(
+            profile, "warm", "buzz", "charcoal", "possessed", "outfit-field", "accessory-none"));
   }
 }

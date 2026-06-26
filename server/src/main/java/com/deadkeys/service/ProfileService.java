@@ -196,7 +196,11 @@ public class ProfileService {
 
   private static void mergeImportedStats(Stats target, Stats imported) {
     if (imported == null) return;
-    target.bestScore = Math.max(target.bestScore, clampInt(imported.bestScore, MAX_SCORE));
+    int importedBestScore = clampInt(imported.bestScore, MAX_SCORE);
+    if (importedBestScore > target.bestScore || (importedBestScore == target.bestScore && target.bestMode.isBlank())) {
+      target.bestMode = normalizeBestMode(imported.bestMode);
+    }
+    target.bestScore = Math.max(target.bestScore, importedBestScore);
     target.longestSurvivalMs = Math.max(
         target.longestSurvivalMs,
         Math.max(0, Math.min(MAX_SURVIVAL_MS, imported.longestSurvivalMs)));
@@ -231,6 +235,7 @@ public class ProfileService {
     if (CharacterCatalog.SKIN_TONES.contains(imported.skinTone)) profile.character.skinTone = imported.skinTone;
     if (CharacterCatalog.HAIR_STYLES.contains(imported.hair)) profile.character.hair = imported.hair;
     if (CharacterCatalog.HAIR_COLORS.contains(imported.hairColor)) profile.character.hairColor = imported.hairColor;
+    if (CharacterCatalog.EXPRESSIONS.contains(imported.expression)) profile.character.expression = imported.expression;
     CharacterCatalog.Def outfit = CharacterCatalog.find(imported.outfit);
     if (outfit != null
         && CharacterCatalog.OUTFIT.equals(outfit.slot())
@@ -246,6 +251,9 @@ public class ProfileService {
   }
 
   private static void mergeStats(Stats stats, RunResult run) {
+    if (run.score() > stats.bestScore || (run.score() == stats.bestScore && stats.bestMode.isBlank())) {
+      stats.bestMode = normalizeBestMode(run.style());
+    }
     stats.bestScore = Math.max(stats.bestScore, run.score());
     stats.longestSurvivalMs = Math.max(stats.longestSurvivalMs, run.survivalMs());
     stats.highestWpm = Math.max(stats.highestWpm, run.wpm());
@@ -256,6 +264,14 @@ public class ProfileService {
     stats.coinsEarned += run.coins();
     stats.totalCoins += run.coins();
     stats.gamesPlayed += 1;
+  }
+
+  private static String normalizeBestMode(String style) {
+    if (style == null) return "";
+    return switch (style) {
+      case "typing", "riddles", "math", "trivia" -> style;
+      default -> "";
+    };
   }
 
   /** Each finished/abandoned run consumes one game of the upgrade lifespan. */
@@ -335,12 +351,15 @@ public class ProfileService {
       String skinTone,
       String hair,
       String hairColor,
+      String expression,
       String outfit,
       String accessory) {
     normalizeProfile(profile);
     if (!CharacterCatalog.SKIN_TONES.contains(skinTone)) throw new BadRequestException("unknown skin tone");
     if (!CharacterCatalog.HAIR_STYLES.contains(hair)) throw new BadRequestException("unknown hair style");
     if (!CharacterCatalog.HAIR_COLORS.contains(hairColor)) throw new BadRequestException("unknown hair color");
+    String safeExpression = expression == null ? "last-light" : expression;
+    if (!CharacterCatalog.EXPRESSIONS.contains(safeExpression)) throw new BadRequestException("unknown expression");
 
     CharacterCatalog.Def outfitDef = CharacterCatalog.find(outfit);
     if (outfitDef == null || !CharacterCatalog.OUTFIT.equals(outfitDef.slot())) {
@@ -357,6 +376,7 @@ public class ProfileService {
     profile.character.skinTone = skinTone;
     profile.character.hair = hair;
     profile.character.hairColor = hairColor;
+    profile.character.expression = safeExpression;
     profile.character.outfit = outfit;
     profile.character.accessory = accessory;
     store.save(profile);
@@ -409,6 +429,14 @@ public class ProfileService {
       profile.riddleStats = new Stats();
       changed = true;
     }
+    if (profile.stats.bestMode == null) {
+      profile.stats.bestMode = "";
+      changed = true;
+    }
+    if (profile.riddleStats.bestMode == null) {
+      profile.riddleStats.bestMode = "";
+      changed = true;
+    }
     if (profile.upgrades == null) {
       profile.upgrades = new Upgrades();
       changed = true;
@@ -449,6 +477,10 @@ public class ProfileService {
     }
     if (!CharacterCatalog.HAIR_COLORS.contains(profile.character.hairColor)) {
       profile.character.hairColor = "charcoal";
+      changed = true;
+    }
+    if (!CharacterCatalog.EXPRESSIONS.contains(profile.character.expression)) {
+      profile.character.expression = "last-light";
       changed = true;
     }
     if (!profile.cosmetics.contains(profile.character.outfit)) {

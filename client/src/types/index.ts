@@ -36,6 +36,7 @@ export interface CharacterLoadout {
   skinTone: string;
   hair: string;
   hairColor: string;
+  expression: string;
   outfit: string;
   accessory: string;
 }
@@ -98,6 +99,8 @@ export interface GameEvent {
 
 export interface GameStats {
   bestScore: number;
+  /** Play style responsible for the best score. */
+  bestMode: string;
   longestSurvivalMs: number;
   highestWpm: number;
   bestAccuracy: number;

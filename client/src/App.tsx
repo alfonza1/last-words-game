@@ -395,22 +395,31 @@ export default function App() {
   );
 
   const equipCharacter = useCallback(
-    (next: CharacterLoadout) => {
+    async (next: CharacterLoadout): Promise<void> => {
+      const look = normalizeCharacter(next);
       if (!user) {
-        const look = normalizeCharacter(next);
         setCharacter(look);
         persistGuest({ character: look });
         toast.success('Survivor look equipped!');
         return;
       }
-      apiEquipCharacter(next)
-        .then((p) => {
-          applyProfile(p);
-          toast.success('Survivor look equipped!');
-        })
-        .catch(fail);
+      const previous = character;
+      setCharacter(look);
+      try {
+        const profile = await apiEquipCharacter(look);
+        const persisted = normalizeCharacter(profile.character);
+        if (persisted.expression !== look.expression) {
+          throw new Error('Face expression could not be saved. Please try again.');
+        }
+        applyProfile(profile);
+        toast.success('Survivor look equipped!');
+      } catch (error) {
+        setCharacter(previous);
+        fail(error);
+        throw error;
+      }
     },
-    [user, persistGuest, applyProfile, toast, fail],
+    [user, character, persistGuest, applyProfile, toast, fail],
   );
 
   // Optional rewarded ad → bonus coins. Server-authoritative for accounts;

@@ -3,6 +3,8 @@ package com.deadkeys.model;
 /** Lifetime player stats. Mirrors the frontend GameStats. */
 public class Stats {
   public int bestScore = 0;
+  /** Play style responsible for the best score. */
+  public String bestMode = "";
   public long longestSurvivalMs = 0;
   public int highestWpm = 0;
   public double bestAccuracy = 0;

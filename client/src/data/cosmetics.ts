@@ -20,10 +20,20 @@ export interface OutfitPalette {
   glow?: string;
 }
 
+export interface ExpressionDef {
+  key: string;
+  label: string;
+  icon: string;
+  description: string;
+  /** Expression accents follow the equipped outfit's glow color. */
+  outfitReactive?: boolean;
+}
+
 export const DEFAULT_CHARACTER: CharacterLoadout = {
   skinTone: 'warm',
   hair: 'buzz',
   hairColor: 'charcoal',
+  expression: 'last-light',
   outfit: 'outfit-field',
   accessory: 'accessory-none',
 };
@@ -55,6 +65,46 @@ export const HAIR_COLORS = [
   { key: 'cyan', label: 'Cyan', color: '#00d9d9' },
   { key: 'pink', label: 'Pink', color: '#ff4db8' },
 ] as const;
+
+export const EXPRESSIONS: ExpressionDef[] = [
+  {
+    key: 'last-light',
+    label: 'Last Light',
+    icon: '•_•',
+    description: 'Focused. Breathing. Still human.',
+  },
+  {
+    key: 'grave-grin',
+    label: 'Grave Grin',
+    icon: '¬‿¬',
+    description: 'A crooked smile for impossible odds.',
+  },
+  {
+    key: 'dead-calm',
+    label: 'Dead Calm',
+    icon: '—_—',
+    description: 'Nothing left to fear. Nothing left to prove.',
+  },
+  {
+    key: 'haunted',
+    label: 'Haunted',
+    icon: '◉_◉',
+    description: 'You saw what moved beyond the barricade.',
+  },
+  {
+    key: 'blood-rush',
+    label: 'Blood Rush',
+    icon: '▼皿▼',
+    description: 'Teeth clenched. Trigger ready.',
+  },
+  {
+    key: 'not-yet-dead',
+    label: 'Not Yet Dead',
+    icon: '◉‿◌',
+    description: 'One eye changed. You insist it is fine.',
+    outfitReactive: true,
+  },
+];
 
 export const COSMETICS: CosmeticDef[] = [
   {
@@ -189,10 +239,26 @@ export function skinColor(key: string): string {
   return SKIN_TONES.find((tone) => tone.key === key)?.color ?? SKIN_TONES[1].color;
 }
 
+export function lipColorForSkinTone(key: string): string {
+  return darkenHex(skinColor(key), 0.62);
+}
+
 export function hairColor(key: string): string {
   return HAIR_COLORS.find((color) => color.key === key)?.color ?? HAIR_COLORS[0].color;
 }
 
 export function normalizeCharacter(value?: Partial<CharacterLoadout> | null): CharacterLoadout {
   return { ...DEFAULT_CHARACTER, ...(value ?? {}) };
+}
+
+function darkenHex(hex: string, factor: number): string {
+  const clean = hex.replace('#', '');
+  const value = Number.parseInt(clean.length === 3 ? clean.split('').map((char) => char + char).join('') : clean, 16);
+  if (Number.isNaN(value)) return '#512c28';
+
+  const r = Math.max(0, Math.min(255, Math.round(((value >> 16) & 255) * factor)));
+  const g = Math.max(0, Math.min(255, Math.round(((value >> 8) & 255) * factor)));
+  const b = Math.max(0, Math.min(255, Math.round((value & 255) * factor)));
+
+  return `#${[r, g, b].map((part) => part.toString(16).padStart(2, '0')).join('')}`;
 }
