@@ -223,7 +223,21 @@ export default function App() {
       const records = r.riddle ? riddleStats : stats;
       const high = r.score > records.bestScore && r.score > 0;
       if (user) {
-        const payload: RunPayload = { ...r, mode, difficulty: settings.difficulty, riddle: r.riddle };
+        const payload: RunPayload = {
+          score: r.score,
+          wave: r.wave,
+          wpm: r.wpm,
+          accuracy: r.accuracy,
+          survivalMs: r.survivalMs,
+          kills: r.kills,
+          bossesDefeated: r.bossesDefeated,
+          streak: r.streak,
+          coins: r.coins,
+          mode,
+          difficulty: settings.difficulty,
+          riddle: r.riddle,
+          style: r.style,
+        };
         apiSubmitRun(payload)
           .then(({ profile, isHighScore }) => {
             applyProfile(profile);
@@ -395,22 +409,31 @@ export default function App() {
   );
 
   const equipCharacter = useCallback(
-    (next: CharacterLoadout) => {
+    async (next: CharacterLoadout): Promise<void> => {
+      const look = normalizeCharacter(next);
       if (!user) {
-        const look = normalizeCharacter(next);
         setCharacter(look);
         persistGuest({ character: look });
         toast.success('Survivor look equipped!');
         return;
       }
-      apiEquipCharacter(next)
-        .then((p) => {
-          applyProfile(p);
-          toast.success('Survivor look equipped!');
-        })
-        .catch(fail);
+      const previous = character;
+      setCharacter(look);
+      try {
+        const profile = await apiEquipCharacter(look);
+        const persisted = normalizeCharacter(profile.character);
+        if (persisted.expression !== look.expression) {
+          throw new Error('Face expression could not be saved. Please try again.');
+        }
+        applyProfile(profile);
+        toast.success('Survivor look equipped!');
+      } catch (error) {
+        setCharacter(previous);
+        fail(error);
+        throw error;
+      }
     },
-    [user, persistGuest, applyProfile, toast, fail],
+    [user, character, persistGuest, applyProfile, toast, fail],
   );
 
   // Optional rewarded ad → bonus coins. Server-authoritative for accounts;

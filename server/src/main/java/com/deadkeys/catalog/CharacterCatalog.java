@@ -36,6 +36,8 @@ public final class CharacterCatalog {
       Set.of("buzz", "undercut", "mohawk", "ponytail", "bald");
   public static final Set<String> HAIR_COLORS =
       Set.of("charcoal", "brown", "blonde", "red", "cyan", "pink");
+  public static final Set<String> EXPRESSIONS =
+      Set.of("last-light", "grave-grin", "dead-calm", "haunted", "blood-rush", "not-yet-dead");
 
   public static Def find(String key) {
     return DEFS.stream().filter(d -> d.key().equals(key)).findFirst().orElse(null);

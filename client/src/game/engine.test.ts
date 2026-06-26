@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { GameEngine } from './engine';
 import { DEFAULT_SETTINGS, DEFAULT_UPGRADES } from '../lib/storage';
+import { puzzlePoolSize } from '../data/puzzles';
 import type { Zombie } from '../types';
 
 function makeEngine() {
-  return new GameEngine({
+  const engine = new GameEngine({
     mode: 'survival',
     difficulty: 'normal',
     upgrades: DEFAULT_UPGRADES,
@@ -13,6 +14,11 @@ function makeEngine() {
     height: 600,
     seed: 1,
   });
+  engine.state.wave = 1;
+  engine.state.betweenWaves = 0;
+  engine.state.waveZombiesToSpawn = 1;
+  engine.state.waveZombiesSpawned = 1;
+  return engine;
 }
 
 function zombie(opts: Partial<Zombie> & { y?: number } = {}): Zombie {
@@ -66,57 +72,51 @@ describe('word queue is independent of zombies', () => {
     expect(e.state.survivorShot).toMatchObject({ x: near.x, y: near.y });
   });
 
-  it('reserves a shot until a newly spawned zombie becomes visible', () => {
+  it('spawns the next zombie immediately when a completed word finds an empty field', () => {
     const e = makeEngine();
-    e.state.zombies = [zombie({ y: 5 })]; // just spawned, off-screen at the top
+    e.state.waveZombiesToSpawn = 3;
+    e.state.waveZombiesSpawned = 1;
+    e.state.zombies = [];
+
     e.handleInput(firstWord(e) + ' ');
+
     expect(e.state.kills).toBe(0);
     expect(e.state.shotsFired).toBe(0);
     expect(e.state.zombies).toHaveLength(1);
-    expect(e.state.pendingShots).toBe(1);
-
-    e.state.zombies[0].y = 400;
-    e.update(0.01);
-
-    expect(e.state.kills).toBe(1);
-    expect(e.state.shotsFired).toBe(1);
-    expect(e.state.pendingShots).toBe(0);
+    expect(e.state.waveZombiesSpawned).toBe(2);
   });
 
-  it('banks multiple fast words and spends every shot when targets appear', () => {
+  it('uses the following word to shoot the zombie that was pulled in', () => {
     const e = makeEngine();
+    e.state.waveZombiesToSpawn = 3;
+    e.state.waveZombiesSpawned = 1;
     e.state.zombies = [];
 
     e.handleInput(firstWord(e) + ' ');
+    const spawnedId = e.state.zombies[0]?.id;
     e.handleInput(firstWord(e) + ' ');
 
     expect(e.state.correctWords).toBe(2);
-    expect(e.state.pendingShots).toBe(2);
-    expect(e.state.score).toBe(0);
-
-    e.state.zombies = [zombie({ type: 'tank', hp: 4, maxHp: 4, y: 400 })];
-    e.update(0.01);
-
-    expect(e.state.pendingShots).toBe(0);
     expect(e.state.kills).toBe(1);
-    expect(e.state.score).toBe(128);
-    expect(e.state.coins).toBe(6);
+    expect(e.state.shotsFired).toBe(1);
+    expect(e.state.zombies).toHaveLength(1);
+    expect(e.state.zombies[0]?.id).not.toBe(spawnedId);
   });
 
-  it('preserves the damage boost active when a reserved shot was earned', () => {
+  it('locks input as soon as the final zombie clears the wave', () => {
     const e = makeEngine();
-    e.state.zombies = [];
-    e.state.powerups.doubleDamageMs = 1000;
-
-    e.handleInput(firstWord(e) + ' ');
-    expect(e.state.pendingShots).toBe(1);
-
-    e.state.powerups.doubleDamageMs = 0;
-    e.state.zombies = [zombie({ hp: 4, maxHp: 4, y: 400 })];
-    e.update(0.01);
+    e.state.zombies = [zombie({ y: 400 })];
+    const word = firstWord(e);
+    e.handleInput(word + ' ');
 
     expect(e.state.kills).toBe(1);
-    expect(e.state.pendingShots).toBe(0);
+    expect(e.state.betweenWaves).toBeGreaterThan(0);
+    const correctWords = e.state.correctWords;
+
+    e.handleInput(firstWord(e) + ' ');
+
+    expect(e.state.correctWords).toBe(correctWords);
+    expect(e.state.input).toBe('');
   });
 
   it('a wrong word is a mistake but keeps the typed text', () => {
@@ -176,6 +176,27 @@ describe('riddle mode', () => {
     expect(e.inputWrong).toBe(false);
   });
 
+  it('shows a survived result after every finite puzzle in the session is solved', () => {
+    const e = riddleEngine();
+    e.state.wave = 1;
+    e.state.betweenWaves = 0;
+    e.state.waveZombiesToSpawn = 1000;
+    e.state.waveZombiesSpawned = 0;
+    e.state.zombies = [];
+
+    const prompts = new Set<string>();
+    for (let i = 0; i < 40 && e.state.status !== 'gameover'; i++) {
+      const prompt = e.state.riddlePrompt;
+      expect(prompt).toBeTruthy();
+      prompts.add(prompt!);
+      e.handleInput(firstWord(e) + ' ');
+    }
+
+    expect(prompts.size).toBe(puzzlePoolSize('riddles', 'easy'));
+    expect(e.state.status).toBe('gameover');
+    expect(e.state.survived).toBe(true);
+  });
+
   it('math style fires its own (smaller) volley — normal = 4 kills', () => {
     const e = new GameEngine({
       mode: 'survival', difficulty: 'normal', upgrades: DEFAULT_UPGRADES,
@@ -198,6 +219,20 @@ describe('live WPM', () => {
     e.update(0.1);
     expect(e.state.wpm).toBeGreaterThan(0);
     expect(e.state.maxWpm).toBeGreaterThanOrEqual(e.state.wpm);
+  });
+
+  it('does not fall during the wave-complete break', () => {
+    const e = makeEngine();
+    e.state.zombies = [zombie({ y: 400 })];
+    e.handleInput(firstWord(e) + ' ');
+    e.update(0.1);
+    const beforeBreak = e.state.wpm;
+
+    expect(e.state.betweenWaves).toBeGreaterThan(0);
+    for (let i = 0; i < 20; i++) e.update(0.05);
+
+    expect(e.state.wpm).toBe(beforeBreak);
+    expect(e.state.elapsedMs).toBeGreaterThan(100);
   });
 });
 
@@ -231,11 +266,11 @@ describe('difficulty rewards', () => {
     nightmare.handleInput(firstWord(nightmare) + ' ');
 
     expect(easy.state.score).toBe(100);
-    expect(easy.state.coins).toBe(5);
+    expect(easy.state.coins).toBe(2);
     expect(normal.state.score).toBe(125);
-    expect(normal.state.coins).toBe(6);
+    expect(normal.state.coins).toBe(3);
     expect(nightmare.state.score).toBe(200);
-    expect(nightmare.state.coins).toBe(10);
+    expect(nightmare.state.coins).toBe(4);
   });
 });
 

@@ -6,8 +6,6 @@ import com.deadkeys.persistence.ProfileStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -31,6 +29,7 @@ class ProfileServiceRunStatsTest {
     assertEquals(0, profile.stats.bestScore);
     assertEquals(120, profile.stats.totalCoins);
     assertEquals(500, profile.riddleStats.bestScore);
+    assertEquals("riddles", profile.riddleStats.bestMode);
     assertEquals(8, profile.riddleStats.totalKills);
     assertEquals(20, profile.riddleStats.coinsEarned);
     assertEquals(20, profile.riddleStats.totalCoins);
@@ -42,6 +41,7 @@ class ProfileServiceRunStatsTest {
     service.applyRun(profile, run(300, 2, 10, false));
 
     assertEquals(300, profile.stats.bestScore);
+    assertEquals("typing", profile.stats.bestMode);
     assertEquals(2, profile.stats.totalKills);
     assertEquals(10, profile.stats.coinsEarned);
     assertEquals(110, profile.stats.totalCoins);
@@ -52,6 +52,6 @@ class ProfileServiceRunStatsTest {
   private static RunResult run(int score, int kills, int coins, boolean riddle) {
     return new RunResult(
         score, 3, 42, 96.5, 60_000,
-        kills, 0, 4, coins, Map.of(), "survival", "normal", riddle, riddle ? "riddles" : "typing");
+        kills, 0, 4, coins, "survival", "normal", riddle, riddle ? "riddles" : "typing");
   }
 }

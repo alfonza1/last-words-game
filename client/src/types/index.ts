@@ -36,6 +36,7 @@ export interface CharacterLoadout {
   skinTone: string;
   hair: string;
   hairColor: string;
+  expression: string;
   outfit: string;
   accessory: string;
 }
@@ -98,6 +99,8 @@ export interface GameEvent {
 
 export interface GameStats {
   bestScore: number;
+  /** Play style responsible for the best score. */
+  bestMode: string;
   longestSurvivalMs: number;
   highestWpm: number;
   bestAccuracy: number;
@@ -108,7 +111,6 @@ export interface GameStats {
   coinsEarned: number;
   totalCoins: number;
   gamesPlayed: number;
-  missedWords: Record<string, number>;
 }
 
 export interface Upgrades {
@@ -185,6 +187,8 @@ export interface GameState {
   puzzleStyle: PuzzleStyle;
   /** The active puzzle's prompt to display (answer lives in wordQueue[0]). */
   riddlePrompt: string | null;
+  /** True when a finite puzzle pool was fully solved instead of the base being lost. */
+  survived: boolean;
 
   elapsedMs: number;
   correctWords: number;
@@ -210,10 +214,6 @@ export interface GameState {
   survivorShot: { x: number; y: number; life: number; ttl: number } | null;
   /** Monotonic count of shots that actually reached a visible target. */
   shotsFired: number;
-  /** Completed-word shots waiting for a zombie to become visible. */
-  pendingShots: number;
-
-  missedWords: Record<string, number>;
   upgrades: Upgrades;
   settings: Settings;
 }

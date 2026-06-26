@@ -55,12 +55,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 top-3 z-[100] flex flex-col items-center gap-2 px-3">
+      <div className="pointer-events-none fixed inset-x-0 top-2 z-[100] flex flex-col items-center gap-1.5 px-2">
         {toasts.map((t) => (
           <button
             key={t.id}
             onClick={() => remove(t.id)}
-            className={`pointer-events-auto max-w-md rounded-lg border px-4 py-2 text-sm font-semibold shadow-lg backdrop-blur-sm ${STYLES[t.kind]}`}
+            className={`pointer-events-auto max-w-sm rounded-md border px-3 py-1.5 text-xs font-semibold leading-snug shadow-lg backdrop-blur-sm ${STYLES[t.kind]}`}
           >
             {t.message}
           </button>

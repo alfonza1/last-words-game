@@ -17,13 +17,10 @@ interface Props {
 }
 
 export function GameOver({ result, mode, isHighScore, rewardCoins, onWatchAd, onRestart, onMenu }: Props) {
-  const missed = Object.entries(result.missedWords)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6);
-
   const [adPhase, setAdPhase] = useState<'idle' | 'playing' | 'claimed'>('idle');
   const [earned, setEarned] = useState(0);
   const [adError, setAdError] = useState<string | null>(null);
+  const survived = result.survived && (result.style === 'riddles' || result.style === 'trivia');
 
   const watchAd = async () => {
     setAdError(null);
@@ -41,8 +38,14 @@ export function GameOver({ result, mode, isHighScore, rewardCoins, onWatchAd, on
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-3xl flex-col items-center justify-center gap-6 p-6 text-center">
-      <h1 className="text-6xl font-black tracking-widest text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.8)]">
-        GAME OVER
+      <h1
+        className={`text-6xl font-black tracking-widest ${
+          survived
+            ? 'text-neon-green drop-shadow-[0_0_20px_rgba(57,255,20,0.8)]'
+            : 'text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.8)]'
+        }`}
+      >
+        {survived ? 'YOU SURVIVED' : 'GAME OVER'}
       </h1>
       {isHighScore && <div className="animate-pulse text-xl font-bold text-neon-amber">★ NEW HIGH SCORE ★</div>}
 
@@ -72,19 +75,6 @@ export function GameOver({ result, mode, isHighScore, rewardCoins, onWatchAd, on
             {adPhase === 'playing' ? 'Ad playing…' : `📺 Watch ad for +${rewardCoins} coins (optional)`}
           </button>
           {adError && <span className="text-xs text-neon-red">{adError}</span>}
-        </div>
-      )}
-
-      {missed.length > 0 && (
-        <div className="w-full rounded-xl border border-white/10 bg-ink-800/70 p-4 text-left">
-          <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-neon-red">Weak Words</h3>
-          <div className="flex flex-wrap gap-2">
-            {missed.map(([word, n]) => (
-              <span key={word} className="rounded bg-black/50 px-2 py-1 text-sm text-white/70">
-                {word} <span className="text-neon-red">×{n}</span>
-              </span>
-            ))}
-          </div>
         </div>
       )}
 

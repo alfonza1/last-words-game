@@ -1,22 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { CONNECTION_TIPS, connectingCopy } from './ConnectingScreen';
+import { CONNECTION_FACT_DELAY_MS, nextScaryFactIndex, SCARY_FACTS } from './ConnectingScreen';
 
-describe('connectingCopy', () => {
-  it('keeps the initial connection message concise', () => {
-    expect(connectingCopy(false, 0)).toEqual({
-      status: 'CONNECTING…',
-      title: null,
-      detail: null,
-      tip: null,
-    });
+describe('cold-start scary facts', () => {
+  it('reveals a fact after one second', () => {
+    expect(CONNECTION_FACT_DELAY_MS).toBe(1_000);
   });
 
-  it('shows an engaging cold-start briefing after the delay', () => {
-    const copy = connectingCopy(true, 1);
+  it('rotates to a different fact', () => {
+    expect(nextScaryFactIndex(2, 0, SCARY_FACTS.length)).toBe(3);
+    expect(nextScaryFactIndex(2, 0.999, SCARY_FACTS.length)).not.toBe(2);
+  });
 
-    expect(copy.status).toBe('STILL CONNECTING…');
-    expect(copy.title).toBe('WAKING THE SAFEHOUSE');
-    expect(copy.detail).toContain('first connection after downtime');
-    expect(copy.tip).toBe(CONNECTION_TIPS[1]);
+  it('keeps selected facts inside the available list', () => {
+    const next = nextScaryFactIndex(SCARY_FACTS.length - 1, 0.45, SCARY_FACTS.length);
+    expect(next).toBeGreaterThanOrEqual(0);
+    expect(next).toBeLessThan(SCARY_FACTS.length);
   });
 });

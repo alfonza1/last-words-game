@@ -98,7 +98,7 @@ export function Upgrades({
           onClick={() => setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })}
           className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black ${
             isOwned
-              ? 'border-neon-cyan/45 bg-neon-cyan/10 text-neon-cyan'
+              ? 'border-neon-green/60 bg-neon-green/10 text-neon-green'
               : !affordable
                 ? 'cursor-not-allowed border-white/15 text-white/45'
                 : 'border-neon-green/60 bg-neon-green/10 text-neon-green hover:bg-neon-green/20'

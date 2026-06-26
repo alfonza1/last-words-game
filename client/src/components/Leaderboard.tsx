@@ -63,7 +63,7 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
         <button
           onClick={() => setBoard('solvers')}
           className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
-            board === 'solvers' ? 'bg-neon-pink/15 text-neon-pink shadow-neon' : 'text-white/55 hover:text-white/90'
+            board === 'solvers' ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
           }`}
         >
           🧩 Top Solvers
@@ -120,7 +120,7 @@ function Row({ e, rank, board, cols }: { e: LeaderboardEntry; rank: number; boar
       {board === 'typers' ? (
         <span className="text-right text-neon-cyan">{e.wpm}</span>
       ) : (
-        <span className="text-right text-xs font-bold uppercase tracking-wide text-neon-pink">{modeLabel(e)}</span>
+        <span className="text-right text-xs font-bold uppercase tracking-wide text-neon-cyan">{modeLabel(e)}</span>
       )}
     </div>
   );

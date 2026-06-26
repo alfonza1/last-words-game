@@ -57,7 +57,7 @@ npm run typecheck # type-check only
 
 **Modes**
 - **Survival** — endless waves; zombies get faster & words get harder; a boss every 5 waves.
-- **Practice** — no health loss, slowed zombies; tracks WPM, accuracy & weak words.
+- **Practice** — no health loss, slowed zombies; tracks WPM and accuracy.
 - **Boss Rush** — back-to-back bosses with unique typing mechanics.
 
 **Difficulty** (selectable from the menu or settings) controls word makeup:
