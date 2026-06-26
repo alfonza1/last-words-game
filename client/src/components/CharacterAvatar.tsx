@@ -207,52 +207,34 @@ function Hair({ style, color }: { style: string; color: string }) {
     );
   }
   if (style === 'ponytail') {
-    const locs = [
-      'M86 51 Q76 68 75 92 Q74 112 65 126',
-      'M95 48 Q88 68 89 94 Q89 115 80 132',
-      'M104 47 Q99 68 101 95 Q102 117 93 134',
-      'M116 47 Q122 69 121 96 Q120 118 130 134',
-      'M126 48 Q135 68 134 94 Q134 115 145 132',
-      'M135 51 Q149 69 151 94 Q153 113 163 126',
-    ];
-    const shortLocs = [
-      'M88 58 Q80 73 80 91',
-      'M132 58 Q143 73 144 91',
-      'M110 50 Q109 69 110 88',
-    ];
     return (
       <g>
-        <path d="M78 61 Q82 31 108 25 Q136 27 143 59 Q132 51 110 50 Q91 51 78 61Z" fill={color} stroke={shadow} strokeWidth="1.2" />
-        {locs.map((d) => (
-          <path key={`${d}-shadow`} d={d} fill="none" stroke={shadow} strokeWidth="10" strokeLinecap="round" opacity=".5" />
-        ))}
-        {locs.map((d) => (
-          <path key={d} d={d} fill="none" stroke={color} strokeWidth="7.3" strokeLinecap="round" />
-        ))}
-        {shortLocs.map((d) => (
-          <path key={d} d={d} fill="none" stroke={color} strokeWidth="6" strokeLinecap="round" />
-        ))}
-        <path d="M85 58 Q96 45 111 45 Q126 45 139 58" fill="none" stroke={color} strokeWidth="7" strokeLinecap="round" />
-        <path d="M88 57 Q99 49 111 49 Q123 49 135 57" fill="none" stroke={shadow} strokeWidth="2.3" strokeLinecap="round" opacity=".58" />
-        <path d="M96 37 Q110 30 126 37" fill="none" stroke={sheen} strokeWidth="2.4" strokeLinecap="round" />
-        <path d="M92 68 Q89 87 86 113 M103 65 Q102 86 100 113 M118 65 Q120 87 124 113 M130 68 Q136 88 140 113" fill="none" stroke={sheen} strokeWidth="1.25" strokeLinecap="round" opacity=".72" />
-        <circle cx="92" cy="55" r="3.5" fill={color} stroke={shadow} strokeWidth="1" />
-        <circle cx="103" cy="50" r="3.3" fill={color} stroke={shadow} strokeWidth="1" />
-        <circle cx="116" cy="50" r="3.3" fill={color} stroke={shadow} strokeWidth="1" />
-        <circle cx="128" cy="55" r="3.5" fill={color} stroke={shadow} strokeWidth="1" />
+        <path d="M88 47 Q78 66 75 88 Q73 104 66 116" fill="none" stroke={color} strokeWidth="7.5" strokeLinecap="round" />
+        <path d="M132 47 Q146 64 150 87 Q153 104 160 116" fill="none" stroke={color} strokeWidth="7.5" strokeLinecap="round" />
+        <path d="M79 60 Q83 29 111 26 Q137 30 141 60 Q127 50 111 49 Q95 50 79 60Z" fill={color} />
+        <path d="M94 51 Q88 70 89 91 Q89 108 82 121" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round" />
+        <path d="M104 49 Q99 69 100 91 Q101 109 94 123" fill="none" stroke={color} strokeWidth="7" strokeLinecap="round" />
+        <path d="M119 49 Q126 69 126 91 Q126 109 134 123" fill="none" stroke={color} strokeWidth="7" strokeLinecap="round" />
+        <path d="M129 51 Q137 70 136 91 Q136 108 144 121" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round" />
+        <path d="M88 47 Q78 66 75 88 Q73 104 66 116 M132 47 Q146 64 150 87 Q153 104 160 116 M94 51 Q88 70 89 91 Q89 108 82 121 M104 49 Q99 69 100 91 Q101 109 94 123 M119 49 Q126 69 126 91 Q126 109 134 123 M129 51 Q137 70 136 91 Q136 108 144 121" fill="none" stroke={shadow} strokeWidth="2" strokeLinecap="round" opacity=".62" />
+        <path d="M94 66 Q92 84 91 104 M104 64 Q103 84 102 105 M119 64 Q122 84 124 105 M129 66 Q133 84 136 104" fill="none" stroke={sheen} strokeWidth="1.35" strokeLinecap="round" opacity=".72" />
+        <path d="M84 58 Q96 49 111 49 Q126 49 138 58" fill="none" stroke={color} strokeWidth="6" strokeLinecap="round" />
+        <path d="M86 57 Q98 50 111 50 Q124 50 136 57" fill="none" stroke={shadow} strokeWidth="2.5" strokeLinecap="round" opacity=".55" />
+        <circle cx="94" cy="55" r="3.2" fill={color} stroke={shadow} strokeWidth="1" />
+        <circle cx="104" cy="52" r="3" fill={color} stroke={shadow} strokeWidth="1" />
+        <circle cx="119" cy="52" r="3" fill={color} stroke={shadow} strokeWidth="1" />
+        <circle cx="129" cy="55" r="3.2" fill={color} stroke={shadow} strokeWidth="1" />
+        <path d="M95 39 Q110 33 126 39" fill="none" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
       </g>
     );
   }
-  // Side-swept undercut - textured length on top with tight cropped sides.
+  // Undercut - longer survivor hair falling forward with shaved-tight sides.
   return (
     <g>
-      <path d="M81 62 Q84 39 99 31 Q98 50 90 69 Q84 68 81 62Z" fill={shadow} opacity=".58" />
-      <path d="M137 51 Q142 56 141 65 Q134 62 129 55Z" fill={shadow} opacity=".48" />
-      <path d="M81 60 Q84 35 105 28 Q128 21 143 41 Q130 38 116 43 Q100 49 89 67Z" fill={color} stroke="#050708" strokeWidth="1.2" />
-      <path d="M87 61 Q99 39 121 32 Q139 28 148 45 Q133 46 118 53 Q102 61 89 75 Q85 69 87 61Z" fill={color} />
-      <path d="M85 65 Q91 59 96 53 M133 45 Q139 51 140 62" fill="none" stroke={shadow} strokeWidth="3" strokeLinecap="round" opacity=".72" />
-      <path d="M91 61 Q107 42 132 37 M97 69 Q112 55 134 48 M102 52 Q117 36 137 38" fill="none" stroke={sheen} strokeWidth="2.45" strokeLinecap="round" />
-      <path d="M82 62 L91 66 M82 56 L94 59 M86 49 L97 51" stroke={shadow} strokeWidth="1.3" strokeLinecap="round" opacity=".72" />
+      <path d="M80 60 Q82 32 108 27 Q136 25 144 47 Q130 39 114 43 Q98 47 88 62Z" fill={color} stroke="#050708" strokeWidth="1" />
+      <path d="M86 62 Q98 43 119 37 Q135 34 145 47 Q130 49 112 58 Q99 65 88 72 Q85 68 86 62Z" fill={color} />
+      <path d="M130 47 Q139 52 140 63" fill="none" stroke={shadow} strokeWidth="3" strokeLinecap="round" />
+      <path d="M93 58 Q107 43 130 40 M98 66 Q111 55 128 50" fill="none" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
     </g>
   );
 }
