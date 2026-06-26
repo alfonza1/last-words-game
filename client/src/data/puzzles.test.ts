@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makePuzzle } from './puzzles';
+import { RIDDLES } from './riddles';
+import { TRIVIA } from './trivia';
 
 describe('easy math puzzles', () => {
   it('uses two-digit operands for addition', () => {
@@ -16,5 +18,14 @@ describe('easy math puzzles', () => {
 
     expect(puzzle.prompt).toBe('68 − 28');
     expect(puzzle.answer).toBe('40');
+  });
+});
+
+describe('puzzle content pools', () => {
+  it('keeps at least 30 riddles and trivia questions in every tier', () => {
+    for (const tier of ['easy', 'medium', 'hard'] as const) {
+      expect(RIDDLES[tier].length).toBeGreaterThanOrEqual(30);
+      expect(TRIVIA[tier].length).toBeGreaterThanOrEqual(30);
+    }
   });
 });

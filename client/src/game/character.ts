@@ -362,6 +362,8 @@ function drawOutfitDetails(
 
 function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, scale: number) {
   if (style === 'bald') return;
+  ctx.save();
+  const shadow = 'rgba(0,0,0,.34)';
   ctx.fillStyle = color;
   if (style === 'mohawk') {
     ctx.beginPath();
@@ -371,18 +373,85 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, s
     ctx.closePath();
     ctx.fill();
   } else if (style === 'ponytail') {
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 4.2 * scale;
     ctx.beginPath();
-    ctx.arc(21 * scale, -27 * scale, 10 * scale, Math.PI, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(15 * scale, -35 * scale);
+    ctx.quadraticCurveTo(8 * scale, -20 * scale, 7 * scale, -6 * scale);
+    ctx.moveTo(18 * scale, -33 * scale);
+    ctx.quadraticCurveTo(14 * scale, -18 * scale, 13 * scale, -3 * scale);
+    ctx.moveTo(28 * scale, -33 * scale);
+    ctx.quadraticCurveTo(34 * scale, -18 * scale, 33 * scale, -3 * scale);
+    ctx.moveTo(31 * scale, -35 * scale);
+    ctx.quadraticCurveTo(40 * scale, -20 * scale, 40 * scale, -6 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = shadow;
+    ctx.lineWidth = Math.max(1, 1.1 * scale);
+    ctx.stroke();
+    ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.ellipse(10 * scale, -27 * scale, 5 * scale, 12 * scale, -0.6, 0, Math.PI * 2);
+    ctx.arc(23 * scale, -28 * scale, 11 * scale, Math.PI, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = shadow;
+    ctx.lineWidth = Math.max(1, 1.2 * scale);
+    ctx.beginPath();
+    ctx.moveTo(14 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -22 * scale, 33 * scale, -28 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1.8, 3.4 * scale);
+    ctx.beginPath();
+    ctx.moveTo(13 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -34 * scale, 34 * scale, -28 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = shadow;
+    ctx.lineWidth = Math.max(1, scale);
+    ctx.beginPath();
+    ctx.moveTo(14 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -32 * scale, 33 * scale, -28 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.18)';
+    ctx.lineWidth = Math.max(1, 0.8 * scale);
+    ctx.beginPath();
+    ctx.moveTo(11 * scale, -19 * scale);
+    ctx.quadraticCurveTo(9 * scale, -12 * scale, 8 * scale, -7 * scale);
+    ctx.moveTo(17 * scale, -19 * scale);
+    ctx.quadraticCurveTo(15 * scale, -12 * scale, 14 * scale, -6 * scale);
+    ctx.moveTo(31 * scale, -19 * scale);
+    ctx.quadraticCurveTo(33 * scale, -12 * scale, 33 * scale, -6 * scale);
+    ctx.stroke();
+  } else if (style === 'undercut') {
+    ctx.beginPath();
+    ctx.moveTo(13 * scale, -31 * scale);
+    ctx.quadraticCurveTo(20 * scale, -46 * scale, 36 * scale, -39 * scale);
+    ctx.quadraticCurveTo(30 * scale, -37 * scale, 18 * scale, -27 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(15 * scale, -27 * scale);
+    ctx.quadraticCurveTo(26 * scale, -40 * scale, 38 * scale, -36 * scale);
+    ctx.quadraticCurveTo(31 * scale, -31 * scale, 18 * scale, -22 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = shadow;
+    ctx.lineWidth = Math.max(1, 1.2 * scale);
+    ctx.stroke();
   } else {
     ctx.beginPath();
-    ctx.arc(23 * scale, -27 * scale, 10 * scale, Math.PI, Math.PI * 2);
+    ctx.arc(23 * scale, -28 * scale, 11 * scale, Math.PI, Math.PI * 2);
     ctx.fill();
-    if (style === 'undercut') ctx.fillRect(14 * scale, -28 * scale, 17 * scale, 4 * scale);
+    ctx.strokeStyle = shadow;
+    ctx.lineWidth = Math.max(1, scale);
+    ctx.beginPath();
+    ctx.moveTo(14 * scale, -31 * scale);
+    ctx.lineTo(32 * scale, -31 * scale);
+    ctx.moveTo(17 * scale, -37 * scale);
+    ctx.lineTo(29 * scale, -37 * scale);
+    ctx.stroke();
   }
+  ctx.restore();
 }
 
 function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number) {

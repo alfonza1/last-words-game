@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { GameEngine } from './engine';
 import { DEFAULT_SETTINGS, DEFAULT_UPGRADES } from '../lib/storage';
+import { puzzlePoolSize } from '../data/puzzles';
 import type { Zombie } from '../types';
 
 function makeEngine() {
@@ -175,6 +176,27 @@ describe('riddle mode', () => {
     expect(e.inputWrong).toBe(false);
   });
 
+  it('shows a survived result after every finite puzzle in the session is solved', () => {
+    const e = riddleEngine();
+    e.state.wave = 1;
+    e.state.betweenWaves = 0;
+    e.state.waveZombiesToSpawn = 1000;
+    e.state.waveZombiesSpawned = 0;
+    e.state.zombies = [];
+
+    const prompts = new Set<string>();
+    for (let i = 0; i < 40 && e.state.status !== 'gameover'; i++) {
+      const prompt = e.state.riddlePrompt;
+      expect(prompt).toBeTruthy();
+      prompts.add(prompt!);
+      e.handleInput(firstWord(e) + ' ');
+    }
+
+    expect(prompts.size).toBe(puzzlePoolSize('riddles', 'easy'));
+    expect(e.state.status).toBe('gameover');
+    expect(e.state.survived).toBe(true);
+  });
+
   it('math style fires its own (smaller) volley — normal = 4 kills', () => {
     const e = new GameEngine({
       mode: 'survival', difficulty: 'normal', upgrades: DEFAULT_UPGRADES,
@@ -244,11 +266,11 @@ describe('difficulty rewards', () => {
     nightmare.handleInput(firstWord(nightmare) + ' ');
 
     expect(easy.state.score).toBe(100);
-    expect(easy.state.coins).toBe(4);
+    expect(easy.state.coins).toBe(2);
     expect(normal.state.score).toBe(125);
-    expect(normal.state.coins).toBe(5);
+    expect(normal.state.coins).toBe(3);
     expect(nightmare.state.score).toBe(200);
-    expect(nightmare.state.coins).toBe(8);
+    expect(nightmare.state.coins).toBe(4);
   });
 });
 

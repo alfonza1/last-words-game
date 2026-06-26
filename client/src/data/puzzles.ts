@@ -54,6 +54,11 @@ export function puzzleLabel(style: PuzzleStyle): string {
   return STYLE_LABEL[style];
 }
 
+export function puzzlePoolSize(style: PuzzleStyle, tier: WordTier): number | null {
+  if (style === 'math') return null;
+  return (style === 'trivia' ? TRIVIA[tier] : RIDDLES[tier]).length;
+}
+
 /** Pick/generate one puzzle for the current style, difficulty and wave tier. */
 export function makePuzzle(style: PuzzleStyle, rng: () => number, difficulty: Difficulty, tier: WordTier): Puzzle {
   if (style === 'math') return makeMath(rng, difficulty);
