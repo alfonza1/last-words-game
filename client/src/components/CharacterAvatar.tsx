@@ -214,7 +214,12 @@ function Hair({ style, color }: { style: string; color: string }) {
         <path d="M129 51 Q137 70 136 91 Q136 108 144 121" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round" />
         <path d="M88 47 Q78 66 75 88 Q73 104 66 116 M132 47 Q146 64 150 87 Q153 104 160 116 M94 51 Q88 70 89 91 Q89 108 82 121 M104 49 Q99 69 100 91 Q101 109 94 123 M119 49 Q126 69 126 91 Q126 109 134 123 M129 51 Q137 70 136 91 Q136 108 144 121" fill="none" stroke={shadow} strokeWidth="2" strokeLinecap="round" opacity=".62" />
         <path d="M94 66 Q92 84 91 104 M104 64 Q103 84 102 105 M119 64 Q122 84 124 105 M129 66 Q133 84 136 104" fill="none" stroke={sheen} strokeWidth="1.35" strokeLinecap="round" opacity=".72" />
-        <path d="M86 55 Q98 48 111 48 Q124 48 136 55" fill="none" stroke={shadow} strokeWidth="2.5" strokeLinecap="round" opacity=".5" />
+        <path d="M84 58 Q96 49 111 49 Q126 49 138 58" fill="none" stroke={color} strokeWidth="6" strokeLinecap="round" />
+        <path d="M86 57 Q98 50 111 50 Q124 50 136 57" fill="none" stroke={shadow} strokeWidth="2.5" strokeLinecap="round" opacity=".55" />
+        <circle cx="94" cy="55" r="3.2" fill={color} stroke={shadow} strokeWidth="1" />
+        <circle cx="104" cy="52" r="3" fill={color} stroke={shadow} strokeWidth="1" />
+        <circle cx="119" cy="52" r="3" fill={color} stroke={shadow} strokeWidth="1" />
+        <circle cx="129" cy="55" r="3.2" fill={color} stroke={shadow} strokeWidth="1" />
         <path d="M95 39 Q110 33 126 39" fill="none" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
       </g>
     );

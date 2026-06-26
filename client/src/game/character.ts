@@ -399,6 +399,18 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, s
     ctx.moveTo(14 * scale, -28 * scale);
     ctx.quadraticCurveTo(23 * scale, -22 * scale, 33 * scale, -28 * scale);
     ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1.8, 3.4 * scale);
+    ctx.beginPath();
+    ctx.moveTo(13 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -34 * scale, 34 * scale, -28 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = shadow;
+    ctx.lineWidth = Math.max(1, scale);
+    ctx.beginPath();
+    ctx.moveTo(14 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -32 * scale, 33 * scale, -28 * scale);
+    ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,.18)';
     ctx.lineWidth = Math.max(1, 0.8 * scale);
     ctx.beginPath();
