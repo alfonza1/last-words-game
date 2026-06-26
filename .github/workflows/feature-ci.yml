@@ -1,4 +1,4 @@
-name: Deploy Dev
+name: Feature CI
 
 on:
   push:
@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-dev-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: feature-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -41,7 +41,7 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build production client
+      - name: Build client
         run: npm run build
 
   server:
@@ -84,5 +84,5 @@ jobs:
         with:
           context: ./server
           push: false
-          cache-from: type=gha,scope=dead-keys-server-deploy-dev
-          cache-to: type=gha,mode=max,scope=dead-keys-server-deploy-dev
+          cache-from: type=gha,scope=dead-keys-server-feature-ci
+          cache-to: type=gha,mode=max,scope=dead-keys-server-feature-ci
