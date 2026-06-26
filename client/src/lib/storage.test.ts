@@ -97,6 +97,13 @@ describe('guest profile', () => {
     expect(loadGuest(store).maps).toEqual(['graveyard', 'city']);
   });
 
+  it('persists a selected face expression', () => {
+    const guest = loadGuest(store);
+    saveGuest({ ...guest, character: { ...guest.character, expression: 'blood-rush' } }, store);
+
+    expect(loadGuest(store).character.expression).toBe('blood-rush');
+  });
+
   it('detects and clears transferable progress while preserving settings', () => {
     const empty = loadGuestProgress(store);
     expect(hasGuestProgress(empty)).toBe(false);

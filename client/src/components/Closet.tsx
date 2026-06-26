@@ -15,7 +15,7 @@ interface Props {
   ownedCosmetics: string[];
   signedIn: boolean;
   username: string;
-  onEquip: (character: CharacterLoadout) => void;
+  onEquip: (character: CharacterLoadout) => Promise<void>;
   onOpenStore: () => void;
   onBack: () => void;
 }
@@ -23,7 +23,6 @@ interface Props {
 export function Closet({
   character,
   ownedCosmetics,
-  signedIn,
   username,
   onEquip,
   onOpenStore,
@@ -31,6 +30,7 @@ export function Closet({
 }: Props) {
   const [draft, setDraft] = useState(() => normalizeCharacter(character));
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   useEffect(() => {
     setDraft(normalizeCharacter(character));
@@ -52,14 +52,17 @@ export function Closet({
     updateDraft({ [slot]: key });
   };
 
-  const save = () => {
-    if (!signedIn) {
-      onEquip(draft);
+  const save = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await onEquip(draft);
       setSaved(true);
-      return;
+    } catch {
+      setSaved(false);
+    } finally {
+      setSaving(false);
     }
-    onEquip(draft);
-    setSaved(true);
   };
 
   const requestBack = () => {
@@ -120,14 +123,14 @@ export function Closet({
           </div>
           <button
             onClick={save}
-            disabled={!dirty || saved}
+            disabled={!dirty || saved || saving}
             className={`mt-2 w-full rounded-lg border px-4 py-1.5 text-xs font-black tracking-wider ${
               hasUnsavedChanges
                 ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-neon'
                 : 'border-neon-cyan/25 bg-neon-cyan/5 text-neon-cyan/60'
             }`}
           >
-            EQUIP LOOK
+            {saving ? 'EQUIPPING…' : 'EQUIP LOOK'}
           </button>
         </div>
       </section>
@@ -140,7 +143,9 @@ export function Closet({
                 key={tone.key}
                 onClick={() => updateDraft({ skinTone: tone.key })}
                 className={`rounded-lg border p-1.5 text-[9px] font-bold ${
-                  draft.skinTone === tone.key ? 'border-neon-green text-neon-green' : 'border-white/10 text-white/50'
+                  draft.skinTone === tone.key
+                    ? 'border-neon-cyan bg-neon-cyan/10 text-neon-cyan'
+                    : 'border-white/10 text-white/50'
                 }`}
               >
                 <span className="mx-auto mb-1 block h-5 w-5 rounded-full border border-white/20" style={{ background: tone.color }} />
@@ -199,21 +204,21 @@ export function Closet({
                   title={expression.description}
                   className={`group relative flex min-h-[72px] flex-col items-center rounded-lg border p-1.5 text-center transition ${
                     active
-                      ? 'border-neon-pink bg-neon-pink/10 shadow-[0_0_16px_rgba(255,43,214,0.16)]'
-                      : 'border-white/10 bg-black/25 hover:border-neon-pink/50'
+                      ? 'border-neon-cyan bg-neon-cyan/10 shadow-[0_0_16px_rgba(0,240,255,0.16)]'
+                      : 'border-white/10 bg-black/25 hover:border-neon-cyan/50'
                   }`}
                 >
                   {active && (
-                    <span className="absolute right-1 top-1 text-[8px] font-black text-neon-pink">✓</span>
+                    <span className="absolute right-1 top-1 text-[8px] font-black text-neon-cyan">✓</span>
                   )}
                   <span
                     className={`flex h-7 min-w-10 items-center justify-center rounded-md border bg-black/35 px-2 font-mono text-sm ${
-                      active ? 'border-neon-green/50 text-neon-green' : 'border-white/10 text-white/45'
+                      active ? 'border-neon-cyan/50 text-neon-cyan' : 'border-white/10 text-white/45'
                     }`}
                   >
                     {expression.icon}
                   </span>
-                  <span className={`mt-1 text-[9px] font-black leading-tight ${active ? 'text-neon-pink' : 'text-white/80'}`}>
+                  <span className={`mt-1 text-[9px] font-black leading-tight ${active ? 'text-neon-cyan' : 'text-white/80'}`}>
                     {expression.label}
                   </span>
                   <p className="mt-0.5 h-[1.7rem] overflow-hidden text-[8px] leading-[0.85rem] text-white/40 xl:hidden">
