@@ -368,7 +368,7 @@ export class GameEngine {
         return;
       }
       this.registerMistake();
-      s.input = candidate;
+      s.input = '';
       return;
     }
 

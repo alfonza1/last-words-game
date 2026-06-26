@@ -166,13 +166,20 @@ describe('riddle mode', () => {
     expect(e.state.riddlePrompt).not.toBe(prompt); // next riddle queued
   });
 
-  it('a wrong answer is a mistake and keeps the typed text', () => {
+  it('keeps a wrong solver answer until it is submitted', () => {
+    const e = riddleEngine();
+    e.handleInput('definitelywrong');
+    expect(e.state.input).toBe('definitelywrong');
+    expect(e.state.mistakes).toBe(0);
+  });
+
+  it('a submitted wrong solver answer is a mistake and clears the text', () => {
     const e = riddleEngine();
     e.state.zombies = [zombie({ y: 400 })];
     e.handleInput('definitelywrong ');
     expect(e.state.mistakes).toBe(1);
     expect(e.state.kills).toBe(0);
-    expect(e.state.input).toBe('definitelywrong');
+    expect(e.state.input).toBe('');
     expect(e.inputWrong).toBe(false);
   });
 
