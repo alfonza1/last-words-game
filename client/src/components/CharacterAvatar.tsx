@@ -183,37 +183,43 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
 function Hair({ style, color }: { style: string; color: string }) {
   if (style === 'bald') return null;
   const sheen = 'rgba(255,255,255,0.16)';
+  const shadow = 'rgba(0,0,0,0.28)';
 
   if (style === 'buzz') {
     return (
       <g>
-        <path d="M80 59 Q82 30 110 28 Q138 30 140 59 Q121 48 110 48 Q99 48 80 59Z" fill={color} />
-        <path d="M92 40 Q110 34 128 40" fill="none" stroke={sheen} strokeWidth="3" strokeLinecap="round" />
+        <path d="M80 59 Q83 31 110 28 Q137 31 140 59 Q128 52 118 50 L110 46 L101 50 Q91 52 80 59Z" fill={color} />
+        <path d="M84 60 Q87 49 93 38 M97 51 L99 32 M110 46 L110 29 M122 51 L120 32 M136 60 Q132 48 126 38" stroke={shadow} strokeWidth="2" strokeLinecap="round" opacity=".45" />
+        <path d="M92 41 Q109 34 127 40" fill="none" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
       </g>
     );
   }
   if (style === 'mohawk') {
     return (
       <g>
-        <path d="M100 47 L103 13 Q110 3 117 13 L120 47 Q110 40 100 47Z" fill={color} stroke="#050708" strokeWidth="1.5" />
-        <path d="M110 9 L110 44" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M82 62 Q93 52 110 52 Q127 52 138 62 Q132 47 120 48 Q110 42 100 48 Q88 47 82 62Z" fill={shadow} />
+        <path d="M96 50 L100 35 L105 46 L109 18 L113 45 L119 9 L122 45 L128 30 L130 51 Q113 44 96 50Z" fill={color} stroke="#050708" strokeWidth="1.5" />
+        <path d="M119 13 L117 43 M109 22 L110 43 M101 36 L106 47 M127 32 L123 47" stroke={sheen} strokeWidth="2" strokeLinecap="round" />
       </g>
     );
   }
   if (style === 'ponytail') {
     return (
       <g>
-        <path d="M80 58 Q82 28 110 26 Q138 28 140 58 Q120 46 110 46 Q100 46 80 58Z" fill={color} />
-        <path d="M133 44 Q166 62 151 106 Q158 92 156 76 Q154 56 137 50Z" fill={color} />
-        <path d="M95 40 Q110 34 126 40" fill="none" stroke={sheen} strokeWidth="3" strokeLinecap="round" />
+        <path d="M80 58 Q84 29 111 26 Q137 30 140 58 Q126 49 111 49 Q96 49 80 58Z" fill={color} />
+        <path d="M85 57 C77 72 80 89 72 105 M93 57 C88 74 91 93 83 111 M127 56 C137 73 132 91 141 110 M136 57 C149 70 148 88 156 103" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round" />
+        <path d="M85 57 C77 72 80 89 72 105 M93 57 C88 74 91 93 83 111 M127 56 C137 73 132 91 141 110 M136 57 C149 70 148 88 156 103" fill="none" stroke={shadow} strokeWidth="2" strokeLinecap="round" opacity=".6" />
+        <path d="M95 39 Q110 33 126 39" fill="none" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
       </g>
     );
   }
-  // undercut — volume on top with a side sweep, tight sides
+  // Swept Fringe — longer survivor hair falling forward with shaved-tight sides.
   return (
     <g>
-      <path d="M82 56 Q80 26 112 25 Q142 27 141 56 L131 49 Q128 33 110 33 Q94 34 90 52Z" fill={color} stroke="#050708" strokeWidth="1" />
-      <path d="M101 34 Q119 35 129 49" fill="none" stroke={sheen} strokeWidth="3" strokeLinecap="round" />
+      <path d="M80 60 Q82 32 108 27 Q136 25 144 47 Q130 39 114 43 Q98 47 88 62Z" fill={color} stroke="#050708" strokeWidth="1" />
+      <path d="M86 62 Q98 43 119 37 Q135 34 145 47 Q130 49 112 58 Q99 65 88 72 Q85 68 86 62Z" fill={color} />
+      <path d="M130 47 Q139 52 140 63" fill="none" stroke={shadow} strokeWidth="3" strokeLinecap="round" />
+      <path d="M93 58 Q107 43 130 40 M98 66 Q111 55 128 50" fill="none" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
     </g>
   );
 }
