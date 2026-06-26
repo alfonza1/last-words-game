@@ -50,7 +50,7 @@ export const SKIN_TONES = [
 ] as const;
 
 export const HAIR_STYLES = [
-  { key: 'buzz', label: 'Textured Crop' },
+  { key: 'buzz', label: 'Buzz' },
   { key: 'undercut', label: 'Swept Fringe' },
   { key: 'mohawk', label: 'Mohawk' },
   { key: 'ponytail', label: 'Crow Locs' },
