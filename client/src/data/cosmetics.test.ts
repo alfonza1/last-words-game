@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CHARACTER, EXPRESSIONS, normalizeCharacter } from './cosmetics';
+import { DEFAULT_CHARACTER, EXPRESSIONS, lipColorForSkinTone, normalizeCharacter, skinColor } from './cosmetics';
 
 describe('default character', () => {
   it('selects buzz hair for new survivors', () => {
@@ -12,5 +12,10 @@ describe('default character', () => {
     expect(normalizeCharacter({ hair: 'mohawk' }).expression).toBe('last-light');
     expect(EXPRESSIONS.map((expression) => expression.key)).toContain('not-yet-dead');
     expect(EXPRESSIONS.find((expression) => expression.key === 'not-yet-dead')?.outfitReactive).toBe(true);
+  });
+
+  it('derives lips from the selected skin tone', () => {
+    expect(lipColorForSkinTone('warm')).not.toBe(lipColorForSkinTone('undead'));
+    expect(lipColorForSkinTone('warm')).not.toBe(skinColor('warm'));
   });
 });

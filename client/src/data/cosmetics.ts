@@ -239,10 +239,26 @@ export function skinColor(key: string): string {
   return SKIN_TONES.find((tone) => tone.key === key)?.color ?? SKIN_TONES[1].color;
 }
 
+export function lipColorForSkinTone(key: string): string {
+  return darkenHex(skinColor(key), 0.62);
+}
+
 export function hairColor(key: string): string {
   return HAIR_COLORS.find((color) => color.key === key)?.color ?? HAIR_COLORS[0].color;
 }
 
 export function normalizeCharacter(value?: Partial<CharacterLoadout> | null): CharacterLoadout {
   return { ...DEFAULT_CHARACTER, ...(value ?? {}) };
+}
+
+function darkenHex(hex: string, factor: number): string {
+  const clean = hex.replace('#', '');
+  const value = Number.parseInt(clean.length === 3 ? clean.split('').map((char) => char + char).join('') : clean, 16);
+  if (Number.isNaN(value)) return '#512c28';
+
+  const r = Math.max(0, Math.min(255, Math.round(((value >> 16) & 255) * factor)));
+  const g = Math.max(0, Math.min(255, Math.round(((value >> 8) & 255) * factor)));
+  const b = Math.max(0, Math.min(255, Math.round((value & 255) * factor)));
+
+  return `#${[r, g, b].map((part) => part.toString(16).padStart(2, '0')).join('')}`;
 }

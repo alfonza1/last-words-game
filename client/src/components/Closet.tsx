@@ -31,7 +31,7 @@ export function Closet({
   const [draft, setDraft] = useState(() => normalizeCharacter(character));
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [pendingExit, setPendingExit] = useState<'back' | 'store' | null>(null);
   useEffect(() => {
     setDraft(normalizeCharacter(character));
     setSaved(false);
@@ -67,7 +67,25 @@ export function Closet({
 
   const requestBack = () => {
     if (hasUnsavedChanges) {
-      setConfirmLeave(true);
+      setPendingExit('back');
+      return;
+    }
+    onBack();
+  };
+
+  const requestStore = () => {
+    if (hasUnsavedChanges) {
+      setPendingExit('store');
+      return;
+    }
+    onOpenStore();
+  };
+
+  const discardAndExit = () => {
+    const target = pendingExit;
+    setPendingExit(null);
+    if (target === 'store') {
+      onOpenStore();
       return;
     }
     onBack();
@@ -89,14 +107,11 @@ export function Closet({
           </p>
         </div>
         <button
-          onClick={onOpenStore}
-          className="group ml-auto flex min-h-11 flex-none items-center gap-2 rounded-xl border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-4 py-2 text-left shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)]"
+          onClick={requestStore}
+          className="group ml-auto flex min-h-11 flex-none items-center gap-2 rounded-xl border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-5 py-2.5 text-left shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)]"
         >
           <span className="h-2 w-2 rounded-full bg-neon-pink shadow-[0_0_12px_rgba(255,43,214,0.9)] transition group-hover:bg-neon-cyan group-hover:shadow-[0_0_14px_rgba(0,240,255,0.9)]" />
-          <span className="flex flex-col leading-none">
-            <span className="text-[11px] font-black uppercase tracking-[0.24em] text-neon-pink">Open Shop</span>
-            <span className="mt-1 text-[8px] font-bold uppercase tracking-[0.2em] text-white/35">Gear market</span>
-          </span>
+          <span className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Open Shop</span>
         </button>
       </div>
 
@@ -252,25 +267,25 @@ export function Closet({
         </section>
       </div>
 
-      {confirmLeave && (
+      {pendingExit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
           <div className="w-full max-w-sm rounded-xl border border-neon-amber/50 bg-ink-800 p-5 text-center shadow-[0_0_30px_rgba(255,183,0,0.15)]">
             <h2 className="text-lg font-black tracking-wide text-neon-amber">UNSAVED SURVIVOR LOOK</h2>
             <p className="mt-2 text-sm leading-relaxed text-white/70">
-              Your changes have not been equipped. Leaving now will discard them.
+              Your changes have not been equipped. {pendingExit === 'store' ? 'Opening the shop' : 'Leaving now'} will discard them.
             </p>
             <div className="mt-5 flex gap-2">
               <button
-                onClick={() => setConfirmLeave(false)}
+                onClick={() => setPendingExit(null)}
                 className="flex-1 rounded-lg border border-neon-cyan/50 bg-neon-cyan/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-neon-cyan hover:bg-neon-cyan/20"
               >
                 Keep Editing
               </button>
               <button
-                onClick={onBack}
+                onClick={discardAndExit}
                 className="flex-1 rounded-lg border border-neon-amber/50 bg-neon-amber/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-neon-amber hover:bg-neon-amber/20"
               >
-                Discard Changes
+                {pendingExit === 'store' ? 'Open Shop' : 'Discard Changes'}
               </button>
             </div>
           </div>

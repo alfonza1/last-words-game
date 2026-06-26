@@ -1,5 +1,5 @@
 import type { CharacterLoadout, GameState } from '../types';
-import { OUTFIT_PALETTES, hairColor, skinColor } from '../data/cosmetics';
+import { OUTFIT_PALETTES, hairColor, lipColorForSkinTone, skinColor } from '../data/cosmetics';
 
 /** Draw the equipped survivor prone at the defensive line, aiming into play. */
 export function drawSurvivor(
@@ -22,6 +22,7 @@ export function drawSurvivor(
   const direction = dx >= 0 ? 1 : -1;
   const aimAngle = Math.atan2(target.y - (y - 21 * scale), Math.abs(dx));
   const skin = skinColor(character.skinTone);
+  const lips = lipColorForSkinTone(character.skinTone);
   const hair = hairColor(character.hairColor);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
   const breathing = Math.sin(time * 0.0024) * 0.85 * scale;
@@ -108,7 +109,7 @@ export function drawSurvivor(
   drawHair(ctx, character.hair, hair, scale);
   drawAccessory(ctx, character.accessory, outfit.trim, scale);
   ctx.restore();
-  drawCombatFace(ctx, character.expression, outfit.trim, scale);
+  drawCombatFace(ctx, character.expression, outfit.trim, lips, scale);
 
   // Trigger arm and braced support arm.
   limb(ctx, 0, -12, 24, -19, 8, outfit.primary, scale);
@@ -206,6 +207,7 @@ function drawCombatFace(
   ctx: CanvasRenderingContext2D,
   expression: string,
   glow: string,
+  lips: string,
   scale: number,
 ) {
   const eyeX = 34 * scale;
@@ -220,11 +222,13 @@ function drawCombatFace(
     ctx.moveTo(31 * scale, eyeY);
     ctx.lineTo(37 * scale, eyeY);
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(70,35,30,.75)';
+    ctx.strokeStyle = lips;
+    ctx.globalAlpha = 0.8;
     ctx.beginPath();
     ctx.moveTo(36 * scale, -22 * scale);
     ctx.lineTo(41 * scale, -22 * scale);
     ctx.stroke();
+    ctx.globalAlpha = 1;
     ctx.restore();
     return;
   }
@@ -240,11 +244,13 @@ function drawCombatFace(
     ctx.beginPath();
     ctx.arc(eyeX + scale * 0.6, eyeY, scale, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(70,35,30,.75)';
+    ctx.strokeStyle = lips;
+    ctx.globalAlpha = 0.8;
     ctx.beginPath();
     ctx.moveTo(36 * scale, -21 * scale);
     ctx.quadraticCurveTo(39 * scale, -25 * scale, 42 * scale, -21 * scale);
     ctx.stroke();
+    ctx.globalAlpha = 1;
     ctx.restore();
     return;
   }
@@ -271,7 +277,7 @@ function drawCombatFace(
     ctx.fill();
   }
 
-  ctx.strokeStyle = expression === 'blood-rush' ? '#111719' : 'rgba(70,35,30,.75)';
+  ctx.strokeStyle = expression === 'blood-rush' ? '#111719' : lips;
   ctx.beginPath();
   if (expression === 'grave-grin' || expression === 'not-yet-dead') {
     ctx.moveTo(35 * scale, -23 * scale);
@@ -279,6 +285,9 @@ function drawCombatFace(
   } else if (expression === 'blood-rush') {
     ctx.moveTo(32 * scale, -33 * scale);
     ctx.lineTo(38 * scale, -30 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = lips;
+    ctx.beginPath();
     ctx.moveTo(34 * scale, -21 * scale);
     ctx.quadraticCurveTo(39 * scale, -25 * scale, 44 * scale, -22 * scale);
     ctx.moveTo(35 * scale, -19 * scale);

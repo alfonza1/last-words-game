@@ -1,5 +1,5 @@
 import type { CharacterLoadout } from '../types';
-import { OUTFIT_PALETTES, hairColor, skinColor } from '../data/cosmetics';
+import { OUTFIT_PALETTES, hairColor, lipColorForSkinTone, skinColor } from '../data/cosmetics';
 
 interface Props {
   character: CharacterLoadout;
@@ -10,6 +10,7 @@ interface Props {
 export function CharacterAvatar({ character, className = '', armed = false }: Props) {
   const skin = skinColor(character.skinTone);
   const hair = hairColor(character.hairColor);
+  const lips = lipColorForSkinTone(character.skinTone);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
   const glow = outfit.glow ?? outfit.trim;
 
@@ -84,7 +85,7 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       <rect x="100" y="83" width="20" height="24" rx="8" fill={skin} />
       <ellipse cx="110" cy="66" rx="32" ry="37" fill={skin} />
       <path d="M83 63 Q110 47 137 63 L134 85 Q110 100 86 84Z" fill="rgba(0,0,0,.08)" />
-      <Face expression={character.expression} glow={glow} />
+      <Face expression={character.expression} glow={glow} lips={lips} />
 
       <Hair style={character.hair} color={hair} />
       <Accessory type={character.accessory} glow={glow} />
@@ -106,9 +107,8 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
   );
 }
 
-function Face({ expression, glow }: { expression: string; glow: string }) {
+function Face({ expression, glow, lips }: { expression: string; glow: string; lips: string }) {
   const ink = '#101416';
-  const mouth = '#512c28';
 
   if (expression === 'grave-grin') {
     return (
@@ -116,7 +116,7 @@ function Face({ expression, glow }: { expression: string; glow: string }) {
         <path d="M94 65 Q99 62 104 65 M116 65 Q121 62 126 65" fill="none" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
         <circle cx="99" cy="68" r="2.5" fill={ink} />
         <circle cx="121" cy="68" r="2.5" fill={ink} />
-        <path d="M99 80 Q110 91 123 78 Q116 93 103 89Z" fill="#351819" stroke={mouth} strokeWidth="1.5" />
+        <path d="M99 80 Q110 91 123 78 Q116 93 103 89Z" fill={lips} fillOpacity=".58" stroke={lips} strokeWidth="1.5" />
         <path d="M104 84 Q111 88 118 82" fill="none" stroke="#f3d6c7" strokeWidth="2" strokeLinecap="round" />
       </g>
     );
@@ -126,7 +126,7 @@ function Face({ expression, glow }: { expression: string; glow: string }) {
     return (
       <g>
         <path d="M94 67 H104 M116 67 H126" stroke={ink} strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M101 84 H119" stroke={mouth} strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M101 84 H119" stroke={lips} strokeWidth="2.2" strokeLinecap="round" />
       </g>
     );
   }
@@ -139,7 +139,7 @@ function Face({ expression, glow }: { expression: string; glow: string }) {
         <circle cx="121" cy="68" r="5" fill="#e8ece6" stroke={ink} strokeWidth="1.5" />
         <circle cx="100" cy="69" r="2.2" fill={ink} />
         <circle cx="120" cy="69" r="2.2" fill={ink} />
-        <path d="M102 86 Q110 80 118 86" fill="none" stroke={mouth} strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M102 86 Q110 80 118 86" fill="none" stroke={lips} strokeWidth="2.2" strokeLinecap="round" />
       </g>
     );
   }
@@ -150,10 +150,10 @@ function Face({ expression, glow }: { expression: string; glow: string }) {
         <path d="M92 60 L104 65 M128 60 L116 65" stroke={ink} strokeWidth="3" strokeLinecap="round" />
         <circle cx="99" cy="69" r="3" fill={ink} />
         <circle cx="121" cy="69" r="3" fill={ink} />
-        <path d="M99 84 Q109 78 121 82" fill="none" stroke={mouth} strokeWidth="2.6" strokeLinecap="round" />
-        <path d="M102 84 Q110 81 118 83 L116 87 Q109 88 103 87Z" fill="#f4ded2" stroke="#5d3532" strokeWidth="1" />
-        <path d="M106 83 L106 87 M110 82 L110 88 M114 82 L114 87" stroke="#8a625b" strokeWidth=".9" />
-        <path d="M102 89 Q111 91 120 86" fill="none" stroke="#7d2428" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M99 84 Q109 78 121 82" fill="none" stroke={lips} strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M102 84 Q110 81 118 83 L116 87 Q109 88 103 87Z" fill="#f4ded2" stroke={lips} strokeWidth="1" />
+        <path d="M106 83 L106 87 M110 82 L110 88 M114 82 L114 87" stroke={lips} strokeOpacity=".65" strokeWidth=".9" />
+        <path d="M102 89 Q111 91 120 86" fill="none" stroke={lips} strokeWidth="1.8" strokeLinecap="round" />
       </g>
     );
   }
@@ -164,7 +164,7 @@ function Face({ expression, glow }: { expression: string; glow: string }) {
         <circle cx="99" cy="67" r="3" fill={ink} />
         <circle cx="121" cy="67" r="5.5" fill={glow} opacity=".24" style={{ filter: `drop-shadow(0 0 5px ${glow})` }} />
         <circle cx="121" cy="67" r="2.6" fill={glow} />
-        <path d="M101 83 Q110 89 121 81" fill="none" stroke={mouth} strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M101 83 Q110 89 121 81" fill="none" stroke={lips} strokeWidth="2.2" strokeLinecap="round" />
         <path d="M129 70 L135 73 M128 76 L133 80" stroke={glow} strokeOpacity=".55" strokeWidth="1.5" />
       </g>
     );
@@ -175,7 +175,7 @@ function Face({ expression, glow }: { expression: string; glow: string }) {
       <path d="M94 63 Q99 61 104 63 M116 63 Q121 61 126 63" fill="none" stroke={ink} strokeWidth="2" strokeLinecap="round" />
       <circle cx="99" cy="68" r="3" fill={ink} />
       <circle cx="121" cy="68" r="3" fill={ink} />
-      <path d="M101 83 Q110 86 119 83" fill="none" stroke={mouth} strokeWidth="2" strokeLinecap="round" />
+      <path d="M101 83 Q110 86 119 83" fill="none" stroke={lips} strokeWidth="2" strokeLinecap="round" />
     </g>
   );
 }

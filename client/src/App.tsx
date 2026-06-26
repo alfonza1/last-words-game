@@ -409,7 +409,7 @@ export default function App() {
         const profile = await apiEquipCharacter(look);
         const persisted = normalizeCharacter(profile.character);
         if (persisted.expression !== look.expression) {
-          throw new Error('The selected face expression was not saved. Please try again.');
+          throw new Error('Face expression did not save. The API needs the latest deploy.');
         }
         applyProfile(profile);
         toast.success('Survivor look equipped!');
