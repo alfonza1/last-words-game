@@ -53,7 +53,7 @@ export const HAIR_STYLES = [
   { key: 'buzz', label: 'Textured Crop' },
   { key: 'undercut', label: 'Swept Fringe' },
   { key: 'mohawk', label: 'Mohawk' },
-  { key: 'ponytail', label: 'Crow Locks' },
+  { key: 'ponytail', label: 'Crow Locs' },
   { key: 'bald', label: 'Bald' },
 ] as const;
 
