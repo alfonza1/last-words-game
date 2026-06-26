@@ -1,46 +1,38 @@
 import { useEffect, useState } from 'react';
 
 export const CONNECTION_FACT_DELAY_MS = 3_000;
-const FACT_ROTATION_MS = 5_500;
+const FACT_ROTATION_MS = 6_500;
 
 export const SCARY_FACTS = [
   {
-    label: 'INFECTION FILE',
     title: 'REAL-LIFE MIND CONTROL',
     text: 'Cordyceps fungi can hijack an insect’s behavior before growing from its body to spread spores.',
   },
   {
-    label: 'MORGUE NOTE',
     title: 'THE BODY MAKES WAX',
     text: 'In damp, oxygen-poor conditions, body fat can become adipocere: a soap-like “grave wax” that slows decay.',
   },
   {
-    label: 'AUTOPSY LOG',
     title: 'THE LAST FEAST',
     text: 'After death, bacteria already living inside the body help break it down from within.',
   },
   {
-    label: 'SURVIVOR INTEL',
     title: 'CROWS REMEMBER YOU',
     text: 'Crows can recognize human faces, remember threats for years, and teach other crows who to avoid.',
   },
   {
-    label: 'NIGHT WATCH',
     title: 'KNOCKING IN THE WALLS',
     text: 'Deathwatch beetles tap inside old wood to attract mates—a sound once feared as an omen of death.',
   },
   {
-    label: 'ARCHIVE 1732',
     title: 'VAMPIRE PANIC WAS REAL',
     text: 'European vampire scares led communities to exhume bodies and use stakes, stones, or burning to stop the “undead.”',
   },
   {
-    label: 'WILDLIFE ALERT',
     title: 'PLAYING DEAD WORKS',
     text: 'Some animals use thanatosis—an eerily convincing death pose—to make predators lose interest.',
   },
   {
-    label: 'DEEP TIME',
     title: 'SHARKS PRE-DATE TREES',
     text: 'Shark ancestors were already swimming through ancient seas millions of years before the first trees appeared.',
   },
@@ -103,7 +95,7 @@ export function ConnectingScreen() {
             <div key={fact.title} className="animate-fadeIn px-4 py-3.5">
               <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.24em] text-neon-cyan/80">
                 <span className="h-1.5 w-1.5 rounded-full bg-neon-green shadow-[0_0_10px_rgba(57,255,20,0.75)]" />
-                {fact.label}
+                Fun facts while you wait
               </div>
               <h2 className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-white/85">{fact.title}</h2>
               <p className="mt-2 text-xs leading-relaxed text-white/55">{fact.text}</p>
