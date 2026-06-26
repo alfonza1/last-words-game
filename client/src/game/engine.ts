@@ -222,7 +222,9 @@ export class GameEngine {
   }
 
   private computeFinitePuzzleGoal(): number | null {
-    if (!this.state.riddleMode) return null;
+    if (!this.state.riddleMode || (this.puzzleStyle !== 'riddles' && this.puzzleStyle !== 'trivia')) {
+      return null;
+    }
     return puzzlePoolSize(this.puzzleStyle, this.currentPuzzleTier());
   }
 

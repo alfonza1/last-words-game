@@ -20,7 +20,7 @@ export function GameOver({ result, mode, isHighScore, rewardCoins, onWatchAd, on
   const [adPhase, setAdPhase] = useState<'idle' | 'playing' | 'claimed'>('idle');
   const [earned, setEarned] = useState(0);
   const [adError, setAdError] = useState<string | null>(null);
-  const survived = result.survived;
+  const survived = result.survived && (result.style === 'riddles' || result.style === 'trivia');
 
   const watchAd = async () => {
     setAdError(null);
