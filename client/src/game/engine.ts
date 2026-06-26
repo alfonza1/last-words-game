@@ -82,7 +82,7 @@ const SHOT_DAMAGE = 2; // base damage a completed word deals to the nearest zomb
 const MEDKIT_HEAL = 35; // health restored by a med kit
 // Global match economy tuning. Difficulty and Scavenger multipliers still
 // apply on top, so Normal remains 1.25x and Nightmare remains 2x.
-const MATCH_COIN_PAYOUT_RATE = 0.75;
+const MATCH_COIN_PAYOUT_RATE = 0.421875;
 // Zombies spawn just below the on-screen word panel.
 const SPAWN_FRAC = 0.24;
 // Vertical movement is scaled to the play-field height so a zombie takes the same

@@ -266,11 +266,11 @@ describe('difficulty rewards', () => {
     nightmare.handleInput(firstWord(nightmare) + ' ');
 
     expect(easy.state.score).toBe(100);
-    expect(easy.state.coins).toBe(4);
+    expect(easy.state.coins).toBe(2);
     expect(normal.state.score).toBe(125);
-    expect(normal.state.coins).toBe(5);
+    expect(normal.state.coins).toBe(3);
     expect(nightmare.state.score).toBe(200);
-    expect(nightmare.state.coins).toBe(8);
+    expect(nightmare.state.coins).toBe(4);
   });
 });
 
