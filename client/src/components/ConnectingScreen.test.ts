@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { CONNECTION_FACT_DELAY_MS, nextScaryFactIndex, SCARY_FACTS } from './ConnectingScreen';
 
 describe('cold-start scary facts', () => {
-  it('reveals a fact after three seconds', () => {
-    expect(CONNECTION_FACT_DELAY_MS).toBe(3_000);
+  it('reveals a fact after one second', () => {
+    expect(CONNECTION_FACT_DELAY_MS).toBe(1_000);
   });
 
   it('rotates to a different fact', () => {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export const CONNECTION_FACT_DELAY_MS = 3_000;
+export const CONNECTION_FACT_DELAY_MS = 1_000;
 const FACT_ROTATION_MS = 6_500;
 
 export const SCARY_FACTS = [
