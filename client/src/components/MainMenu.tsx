@@ -28,7 +28,7 @@ const STYLE_META: Record<Style, { label: string; icon: string; active: string; b
     label: 'Typing',
     icon: '⌨',
     active: 'bg-neon-green/15 text-neon-green shadow-neon',
-    blurb: 'Type the words — each completed word fires one shot.',
+    blurb: 'Each completed word fires one shot. High WPM earns extra points and coins.',
     tagWord: 'WORD',
   },
   riddles: {

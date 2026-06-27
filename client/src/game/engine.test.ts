@@ -43,6 +43,12 @@ function firstWord(e: GameEngine): string {
   return e.state.wordQueue[0];
 }
 
+function advanceShotSpacing(e: GameEngine, shots = 1) {
+  for (let shot = 0; shot < shots; shot++) {
+    for (let tick = 0; tick < 5; tick++) e.update(0.05);
+  }
+}
+
 describe('word queue is independent of zombies', () => {
   it('starts with five distinct words', () => {
     const e = makeEngine();
@@ -156,10 +162,15 @@ describe('word queue is independent of zombies', () => {
 
 describe('riddle mode', () => {
   function riddleEngine() {
-    return new GameEngine({
+    const engine = new GameEngine({
       mode: 'survival', difficulty: 'normal', upgrades: DEFAULT_UPGRADES,
       settings: DEFAULT_SETTINGS, width: 960, height: 600, seed: 1, riddleMode: true,
     });
+    engine.state.wave = 1;
+    engine.state.betweenWaves = 0;
+    engine.state.waveZombiesToSpawn = 999;
+    engine.state.waveZombiesSpawned = 999;
+    return engine;
   }
 
   it('exposes a prompt and hides the answer behind it', () => {
@@ -174,10 +185,47 @@ describe('riddle mode', () => {
     const prompt = e.state.riddlePrompt;
     e.state.zombies = Array.from({ length: 12 }, () => zombie({ y: 400 }));
     e.handleInput(firstWord(e) + ' '); // type the answer
-    expect(e.state.kills).toBe(8); // riddleKills for normal
-    expect(e.state.zombies).toHaveLength(4);
+    expect(e.state.kills).toBe(1);
+    expect(e.state.shotsFired).toBe(1);
+    expect(e.state.zombies).toHaveLength(11);
     expect(e.state.input).toBe('');
     expect(e.state.riddlePrompt).not.toBe(prompt); // next riddle queued
+
+    advanceShotSpacing(e);
+    expect(e.state.kills).toBe(2);
+    expect(e.state.shotsFired).toBe(2);
+    expect(e.state.zombies).toHaveLength(10);
+
+    advanceShotSpacing(e, 6);
+    expect(e.state.kills).toBe(8); // riddleKills for normal
+    expect(e.state.shotsFired).toBe(8);
+    expect(e.state.zombies).toHaveLength(4);
+
+    advanceShotSpacing(e);
+    expect(e.state.shotsFired).toBe(8);
+  });
+
+  it('solver volleys reserve unique zombies instead of shooting one zombie repeatedly', () => {
+    const e = riddleEngine();
+    e.state.zombies = [
+      zombie({ type: 'tank', hp: 6, maxHp: 6, y: 500 }),
+      zombie({ y: 420 }),
+      zombie({ y: 340 }),
+    ];
+
+    e.handleInput(firstWord(e) + ' ');
+
+    expect(e.state.kills).toBe(1);
+    expect(e.state.shotsFired).toBe(1);
+    expect(e.state.zombies).toHaveLength(2);
+
+    advanceShotSpacing(e, 2);
+    expect(e.state.kills).toBe(3);
+    expect(e.state.shotsFired).toBe(3);
+    expect(e.state.zombies).toHaveLength(0);
+
+    advanceShotSpacing(e);
+    expect(e.state.shotsFired).toBe(3);
   });
 
   it('keeps a wrong solver answer until it is submitted', () => {
@@ -224,9 +272,17 @@ describe('riddle mode', () => {
       settings: DEFAULT_SETTINGS, width: 960, height: 600, seed: 1,
       riddleMode: true, puzzleStyle: 'math',
     });
+    e.state.wave = 1;
+    e.state.betweenWaves = 0;
+    e.state.waveZombiesToSpawn = 999;
+    e.state.waveZombiesSpawned = 999;
     expect(e.state.riddlePrompt).toBeTruthy(); // an equation
     e.state.zombies = Array.from({ length: 8 }, () => zombie({ y: 400 }));
     e.handleInput(firstWord(e) + ' '); // type the math answer
+    expect(e.state.kills).toBe(1);
+    expect(e.state.zombies).toHaveLength(7);
+
+    advanceShotSpacing(e, 3);
     expect(e.state.kills).toBe(4); // puzzleKills.math.normal
     expect(e.state.zombies).toHaveLength(4);
   });
@@ -346,10 +402,14 @@ describe('powerups (consumables)', () => {
   it('consumes a grenade charge and clears a cluster', () => {
     const e = makeEngine();
     e.state.powerups.consumables.grenade = 1;
-    e.state.zombies = [zombie({ y: 300 }), zombie({ y: 305 }), zombie({ y: 310 })];
+    const anchor = zombie({ y: 500 });
+    const oldRadiusMiss = zombie({ y: 330 });
+    const wideBlastHit = zombie({ y: 250 });
+    const outOfRange = zombie({ y: 220 });
+    e.state.zombies = [anchor, oldRadiusMiss, wideBlastHit, outOfRange];
     e.handleInput('grenade ');
     expect(e.state.powerups.consumables.grenade).toBe(0);
-    expect(e.state.zombies.length).toBeLessThan(3);
+    expect(e.state.zombies).toEqual([outOfRange]);
   });
 
   it('ignores a powerup word when none are owned', () => {

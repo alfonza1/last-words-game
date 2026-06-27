@@ -70,7 +70,7 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
         </button>
       </div>
       <p className="-mt-2 text-center text-[11px] text-white/35">
-        {board === 'typers' ? "Top scores - WPM shows each player's best." : 'Sharpest minds — Riddle, Math & Trivia Defense.'}
+        {board === 'typers' ? "Elite Typists - Top Typing Defense scores." : 'Sharpest minds — Top Riddle, Math & Trivia Defense scores.'}
       </p>
 
       {error && <p className="text-center text-sm text-neon-red">Couldn’t load the leaderboard right now.</p>}
