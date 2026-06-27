@@ -242,18 +242,6 @@ function Hair({ style, color, accent }: { style: string; color: string; accent: 
 }
 
 function Accessory({ type, glow }: { type: string; glow: string }) {
-  if (type === 'accessory-cap') {
-    return (
-      <g>
-        <path d="M91 96 Q110 114 129 96" fill="none" stroke="#101416" strokeWidth="3" strokeLinecap="round" />
-        <path d="M96 98 Q110 109 124 98" fill="none" stroke={glow} strokeWidth="1.35" strokeLinecap="round" opacity=".72" />
-        <path d="M109 108 L120 113 L114 130 L104 121Z" fill="#d9e0dc" stroke="#111719" strokeWidth="1.4" strokeLinejoin="round" />
-        <path d="M110 112 L117 115 M107 119 L114 123" fill="none" stroke={glow} strokeWidth="1.2" strokeLinecap="round" opacity=".8" />
-        <circle cx="110" cy="111" r="1.8" fill="#101416" />
-        <path d="M116 114 L112 128" stroke="#7a8781" strokeWidth=".9" strokeLinecap="round" opacity=".65" />
-      </g>
-    );
-  }
   if (type === 'accessory-headphones') {
     return (
       <>

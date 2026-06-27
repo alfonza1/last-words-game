@@ -21,7 +21,6 @@ public final class CharacterCatalog {
       new Def("outfit-warden", OUTFIT, 3_600),
       new Def("outfit-inferno", OUTFIT, 4_800),
       new Def("accessory-none", ACCESSORY, 0),
-      new Def("accessory-cap", ACCESSORY, 360),
       new Def("accessory-headphones", ACCESSORY, 600),
       new Def("accessory-goggles", ACCESSORY, 840),
       new Def("accessory-mask", ACCESSORY, 1_200),

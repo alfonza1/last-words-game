@@ -564,43 +564,7 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, a
 }
 
 function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number) {
-  if (type === 'accessory-cap') {
-    ctx.strokeStyle = '#101416';
-    ctx.lineWidth = 1.7 * scale;
-    ctx.beginPath();
-    ctx.moveTo(14 * scale, -13 * scale);
-    ctx.quadraticCurveTo(23 * scale, -3 * scale, 33 * scale, -13 * scale);
-    ctx.stroke();
-    ctx.strokeStyle = glow;
-    ctx.globalAlpha = 0.65;
-    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
-    ctx.beginPath();
-    ctx.moveTo(16 * scale, -12 * scale);
-    ctx.quadraticCurveTo(23 * scale, -5 * scale, 31 * scale, -12 * scale);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#d9e0dc';
-    ctx.strokeStyle = '#111719';
-    ctx.lineWidth = Math.max(0.7, 0.85 * scale);
-    ctx.beginPath();
-    ctx.moveTo(21 * scale, -5.5 * scale);
-    ctx.lineTo(28 * scale, -2.6 * scale);
-    ctx.lineTo(24 * scale, 7 * scale);
-    ctx.lineTo(17.8 * scale, 2.2 * scale);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.strokeStyle = glow;
-    ctx.lineWidth = Math.max(0.6, 0.75 * scale);
-    ctx.globalAlpha = 0.82;
-    ctx.beginPath();
-    ctx.moveTo(21.5 * scale, -2.5 * scale);
-    ctx.lineTo(25.5 * scale, -0.8 * scale);
-    ctx.moveTo(20 * scale, 2 * scale);
-    ctx.lineTo(23.8 * scale, 4.6 * scale);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  } else if (type === 'accessory-headphones') {
+  if (type === 'accessory-headphones') {
     ctx.strokeStyle = glow;
     ctx.lineWidth = 3 * scale;
     ctx.beginPath();

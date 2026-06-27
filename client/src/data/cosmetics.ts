@@ -172,15 +172,6 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'standard',
   },
   {
-    key: 'accessory-cap',
-    slot: 'accessory',
-    name: 'Wraith Fang Pendant',
-    description: 'A polished dead-zone fang on an outfit-lit cord.',
-    cost: 360,
-    rarity: 'standard',
-    outfitReactive: true,
-  },
-  {
     key: 'accessory-headphones',
     slot: 'accessory',
     name: 'Signal Breakers',
@@ -251,7 +242,9 @@ export function hairColor(key: string): string {
 export function normalizeCharacter(value?: Partial<CharacterLoadout> | null): CharacterLoadout {
   const merged = { ...DEFAULT_CHARACTER, ...(value ?? {}) };
   const hair = HAIR_STYLES.some((style) => style.key === merged.hair) ? merged.hair : DEFAULT_CHARACTER.hair;
-  return { ...merged, hair };
+  const outfit = cosmeticByKey(merged.outfit)?.slot === 'outfit' ? merged.outfit : DEFAULT_CHARACTER.outfit;
+  const accessory = cosmeticByKey(merged.accessory)?.slot === 'accessory' ? merged.accessory : DEFAULT_CHARACTER.accessory;
+  return { ...merged, hair, outfit, accessory };
 }
 
 function darkenHex(hex: string, factor: number): string {

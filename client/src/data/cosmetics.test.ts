@@ -19,12 +19,15 @@ describe('default character', () => {
     expect(HAIR_STYLES.find((style) => style.key === 'ponytail')?.label).toBe('Dread Locs');
     expect(HAIR_STYLES.map((style) => style.key as string)).not.toContain('signal-braids');
     expect(EXPRESSIONS.find((expression) => expression.key === 'grave-grin')?.label).toBe('Scarred Smirk');
-    expect(cosmeticByKey('accessory-cap')?.name).toBe('Wraith Fang Pendant');
     expect(cosmeticByKey('accessory-mask')?.name).toBe('Crawler Head Charm');
   });
 
   it('falls back from removed hair styles', () => {
     expect(normalizeCharacter({ hair: 'signal-braids' }).hair).toBe('buzz');
+  });
+
+  it('falls back from removed accessories', () => {
+    expect(normalizeCharacter({ accessory: 'removed-accessory' }).accessory).toBe('accessory-none');
   });
 
   it('derives lips from the selected skin tone', () => {
