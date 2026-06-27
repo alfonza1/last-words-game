@@ -22,10 +22,10 @@ describe('easy math puzzles', () => {
 });
 
 describe('puzzle content pools', () => {
-  it('keeps at least 30 riddles and trivia questions in every tier', () => {
+  it('keeps at least 150 riddles and 150 trivia questions in every tier', () => {
     for (const tier of ['easy', 'medium', 'hard'] as const) {
-      expect(RIDDLES[tier].length).toBeGreaterThanOrEqual(30);
-      expect(TRIVIA[tier].length).toBeGreaterThanOrEqual(30);
+      expect(RIDDLES[tier].length).toBeGreaterThanOrEqual(150);
+      expect(TRIVIA[tier].length).toBeGreaterThanOrEqual(150);
     }
   });
 });
