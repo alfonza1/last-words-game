@@ -23,7 +23,6 @@ public final class CharacterCatalog {
       new Def("accessory-none", ACCESSORY, 0),
       new Def("accessory-headphones", ACCESSORY, 600),
       new Def("accessory-goggles", ACCESSORY, 840),
-      new Def("accessory-mask", ACCESSORY, 1_200),
       new Def("accessory-crown", ACCESSORY, 2_000));
 
   public static final List<String> DEFAULT_OWNED =

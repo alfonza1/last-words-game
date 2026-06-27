@@ -579,33 +579,6 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.fillRect(15 * scale, -27 * scale, 7 * scale, 4 * scale);
     ctx.fillRect(25 * scale, -27 * scale, 7 * scale, 4 * scale);
     ctx.globalAlpha = 1;
-  } else if (type === 'accessory-mask') {
-    ctx.strokeStyle = '#18100d';
-    ctx.lineWidth = 1.5 * scale;
-    ctx.beginPath();
-    ctx.moveTo(14 * scale, -13 * scale);
-    ctx.quadraticCurveTo(23 * scale, -4 * scale, 33 * scale, -13 * scale);
-    ctx.stroke();
-    ctx.fillStyle = '#6e8a59';
-    ctx.strokeStyle = '#121a10';
-    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
-    ctx.beginPath();
-    ctx.ellipse(23 * scale, -3 * scale, 4.4 * scale, 5.4 * scale, 0.15, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = glow;
-    ctx.globalAlpha = 0.9;
-    ctx.beginPath();
-    ctx.arc(21.5 * scale, -4 * scale, 0.75 * scale, 0, Math.PI * 2);
-    ctx.arc(24.8 * scale, -4 * scale, 0.75 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = '#24321e';
-    ctx.lineWidth = Math.max(0.7, 0.75 * scale);
-    ctx.beginPath();
-    ctx.moveTo(20.5 * scale, 0);
-    ctx.quadraticCurveTo(23 * scale, 1.4 * scale, 26 * scale, 0);
-    ctx.stroke();
   } else if (type === 'accessory-crown') {
     ctx.strokeStyle = glow;
     ctx.shadowColor = glow;

@@ -19,7 +19,7 @@ describe('default character', () => {
     expect(HAIR_STYLES.find((style) => style.key === 'ponytail')?.label).toBe('Dread Locs');
     expect(HAIR_STYLES.map((style) => style.key as string)).not.toContain('signal-braids');
     expect(EXPRESSIONS.find((expression) => expression.key === 'grave-grin')?.label).toBe('Scarred Smirk');
-    expect(cosmeticByKey('accessory-mask')?.name).toBe('Crawler Head Charm');
+    expect(cosmeticByKey('accessory-crown')?.name).toBe('Static Crown');
   });
 
   it('falls back from removed hair styles', () => {
