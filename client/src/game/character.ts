@@ -288,11 +288,11 @@ function drawCombatFace(
     ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.strokeStyle = lips;
-    ctx.lineWidth = Math.max(0.9, 1.15 * scale);
+    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
     ctx.globalAlpha = 0.9;
     ctx.beginPath();
-    ctx.moveTo(30.5 * scale, -30 * scale);
-    ctx.quadraticCurveTo(34 * scale, -32 * scale, 38 * scale, -30 * scale);
+    ctx.moveTo(31 * scale, -30 * scale);
+    ctx.quadraticCurveTo(34 * scale, -30.8 * scale, 37.5 * scale, -30 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
   } else {
@@ -305,25 +305,8 @@ function drawCombatFace(
   ctx.strokeStyle = expression === 'blood-rush' ? '#111719' : lips;
   ctx.beginPath();
   if (expression === 'grave-grin' || expression === 'not-yet-dead') {
-    if (expression === 'grave-grin') {
-      ctx.lineWidth = Math.max(0.95, 1.1 * scale);
-      ctx.moveTo(34.5 * scale, -22.5 * scale);
-      ctx.bezierCurveTo(37.5 * scale, -21.4 * scale, 40.5 * scale, -21.8 * scale, 43.2 * scale, -24.2 * scale);
-      ctx.stroke();
-      ctx.globalAlpha = 0.45;
-      ctx.lineWidth = Math.max(0.65, 0.75 * scale);
-      ctx.beginPath();
-      ctx.moveTo(36 * scale, -20.8 * scale);
-      ctx.bezierCurveTo(39 * scale, -19.5 * scale, 42 * scale, -21.2 * scale, 43.5 * scale, -23.5 * scale);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-      ctx.beginPath();
-      ctx.moveTo(43.2 * scale, -24.2 * scale);
-      ctx.lineTo(45.4 * scale, -25.4 * scale);
-    } else {
-      ctx.moveTo(35 * scale, -23 * scale);
-      ctx.quadraticCurveTo(39 * scale, -18 * scale, 43 * scale, -22 * scale);
-    }
+    ctx.moveTo(35 * scale, -23 * scale);
+    ctx.quadraticCurveTo(39 * scale, -18 * scale, 43 * scale, -22 * scale);
   } else if (expression === 'blood-rush') {
     ctx.moveTo(32 * scale, -33 * scale);
     ctx.lineTo(38 * scale, -30 * scale);
