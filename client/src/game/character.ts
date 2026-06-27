@@ -25,6 +25,7 @@ export function drawSurvivor(
   const lips = lipColorForSkinTone(character.skinTone);
   const hair = hairColor(character.hairColor);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
+  const glow = outfit.glow ?? outfit.trim;
   const breathing = Math.sin(time * 0.0024) * 0.85 * scale;
   const shotStrength = s.survivorShot ? Math.max(0, s.survivorShot.life / s.survivorShot.ttl) : 0;
   const recoil = shotStrength * 2.8 * scale;
@@ -106,10 +107,10 @@ export function drawSurvivor(
   ctx.fill();
   ctx.save();
   ctx.translate(5 * scale, 0);
-  drawHair(ctx, character.hair, hair, scale);
-  drawAccessory(ctx, character.accessory, outfit.trim, scale);
+  drawHair(ctx, character.hair, hair, glow, scale);
+  drawAccessory(ctx, character.accessory, glow, scale);
   ctx.restore();
-  drawCombatFace(ctx, character.expression, outfit.trim, lips, scale);
+  drawCombatFace(ctx, character.expression, glow, lips, scale);
 
   // Trigger arm and braced support arm.
   limb(ctx, 0, -12, 24, -19, 8, outfit.primary, scale);
@@ -256,18 +257,34 @@ function drawCombatFace(
   }
 
   if (expression === 'not-yet-dead') {
+    ctx.strokeStyle = '#111719';
+    ctx.lineWidth = Math.max(0.9, 1.15 * scale);
+    ctx.beginPath();
+    ctx.moveTo(30 * scale, -33 * scale);
+    ctx.lineTo(37 * scale, -31 * scale);
+    ctx.stroke();
     ctx.fillStyle = glow;
     ctx.shadowColor = glow;
-    ctx.shadowBlur = 6 * scale;
+    ctx.shadowBlur = 8 * scale;
     ctx.beginPath();
-    ctx.arc(eyeX, eyeY, 1.8 * scale, 0, Math.PI * 2);
+    ctx.arc(eyeX, eyeY, 2.25 * scale, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#101416';
+    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, 3.1 * scale, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.strokeStyle = glow;
-    ctx.globalAlpha = 0.55;
+    ctx.globalAlpha = 0.62;
+    ctx.lineWidth = Math.max(0.65, 0.75 * scale);
     ctx.beginPath();
     ctx.moveTo(37 * scale, -27 * scale);
     ctx.lineTo(41 * scale, -25 * scale);
+    ctx.moveTo(36.5 * scale, -31 * scale);
+    ctx.lineTo(41.5 * scale, -34 * scale);
+    ctx.moveTo(36.8 * scale, -24.5 * scale);
+    ctx.lineTo(42.5 * scale, -21.5 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
   } else if (expression === 'grave-grin') {
@@ -312,8 +329,11 @@ function drawCombatFace(
       ctx.moveTo(42.9 * scale, -24 * scale);
       ctx.lineTo(45 * scale, -25.2 * scale);
     } else {
+      ctx.lineWidth = Math.max(0.85, scale);
       ctx.moveTo(35 * scale, -23 * scale);
-      ctx.quadraticCurveTo(39 * scale, -18 * scale, 43 * scale, -22 * scale);
+      ctx.bezierCurveTo(38.5 * scale, -19 * scale, 42.2 * scale, -20 * scale, 45 * scale, -23.5 * scale);
+      ctx.moveTo(44.7 * scale, -23.5 * scale);
+      ctx.lineTo(46.5 * scale, -24.8 * scale);
     }
   } else if (expression === 'blood-rush') {
     ctx.moveTo(32 * scale, -33 * scale);
@@ -393,23 +413,24 @@ function drawOutfitDetails(
   }
 }
 
-function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, scale: number) {
+function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, accent: string, scale: number) {
   if (style === 'bald') return;
   ctx.save();
   const shadow = 'rgba(0,0,0,.38)';
   const dark = 'rgba(0,0,0,.58)';
   const sheen = 'rgba(255,255,255,.2)';
+  const hatColor = accent;
   ctx.fillStyle = color;
 
   if (style === 'buzz') {
     ctx.beginPath();
-    ctx.arc(23 * scale, -28 * scale, 11 * scale, Math.PI, Math.PI * 2);
+    ctx.ellipse(23 * scale, -28 * scale, 12.8 * scale, 11.2 * scale, 0, Math.PI, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = shadow;
     ctx.lineWidth = Math.max(1, scale);
     ctx.beginPath();
-    ctx.moveTo(14 * scale, -31 * scale);
-    ctx.lineTo(32 * scale, -31 * scale);
+    ctx.moveTo(12 * scale, -31 * scale);
+    ctx.lineTo(34 * scale, -31 * scale);
     ctx.moveTo(17 * scale, -37 * scale);
     ctx.lineTo(29 * scale, -37 * scale);
     ctx.stroke();
@@ -450,8 +471,6 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, s
     ctx.quadraticCurveTo(10 * scale, -18 * scale, 9 * scale, -1 * scale);
     ctx.moveTo(19 * scale, -38 * scale);
     ctx.quadraticCurveTo(16 * scale, -18 * scale, 16 * scale, 1 * scale);
-    ctx.moveTo(24 * scale, -39 * scale);
-    ctx.quadraticCurveTo(22 * scale, -19 * scale, 22 * scale, 2 * scale);
     ctx.moveTo(29 * scale, -38 * scale);
     ctx.quadraticCurveTo(31 * scale, -18 * scale, 31 * scale, 1 * scale);
     ctx.moveTo(33 * scale, -37 * scale);
@@ -464,9 +483,9 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, s
     ctx.strokeStyle = dark;
     ctx.lineWidth = Math.max(0.7, 0.85 * scale);
     ctx.stroke();
-    ctx.fillStyle = color;
+    ctx.fillStyle = hatColor;
     ctx.beginPath();
-    ctx.arc(23 * scale, -28 * scale, 11.4 * scale, Math.PI, Math.PI * 2);
+    ctx.ellipse(23 * scale, -28 * scale, 13.1 * scale, 11.7 * scale, 0, Math.PI, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = dark;
     ctx.lineWidth = Math.max(1, 1.15 * scale);
@@ -474,7 +493,7 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, s
     ctx.moveTo(12 * scale, -28 * scale);
     ctx.quadraticCurveTo(23 * scale, -23 * scale, 35 * scale, -28 * scale);
     ctx.stroke();
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = hatColor;
     ctx.lineWidth = Math.max(1.7, 2.6 * scale);
     ctx.beginPath();
     ctx.moveTo(12 * scale, -28 * scale);
@@ -495,8 +514,6 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, s
     ctx.quadraticCurveTo(8 * scale, -12 * scale, 7 * scale, -7 * scale);
     ctx.moveTo(14 * scale, -20 * scale);
     ctx.quadraticCurveTo(12 * scale, -12 * scale, 12 * scale, -4 * scale);
-    ctx.moveTo(19 * scale, -21 * scale);
-    ctx.quadraticCurveTo(18 * scale, -12 * scale, 18 * scale, -3 * scale);
     ctx.moveTo(28 * scale, -21 * scale);
     ctx.quadraticCurveTo(29 * scale, -12 * scale, 29 * scale, -3 * scale);
     ctx.moveTo(34 * scale, -20 * scale);
@@ -548,7 +565,7 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, s
 
 function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number) {
   if (type === 'accessory-cap') {
-    ctx.strokeStyle = '#2a1512';
+    ctx.strokeStyle = '#101416';
     ctx.lineWidth = 1.7 * scale;
     ctx.beginPath();
     ctx.moveTo(14 * scale, -13 * scale);
@@ -562,18 +579,25 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.quadraticCurveTo(23 * scale, -5 * scale, 31 * scale, -12 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.fillStyle = '#7d2423';
-    ctx.strokeStyle = '#210909';
-    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
+    ctx.fillStyle = '#d9e0dc';
+    ctx.strokeStyle = '#111719';
+    ctx.lineWidth = Math.max(0.7, 0.85 * scale);
     ctx.beginPath();
-    ctx.ellipse(23 * scale, -3 * scale, 4.2 * scale, 4.8 * scale, -0.25, 0, Math.PI * 2);
+    ctx.moveTo(21 * scale, -5.5 * scale);
+    ctx.lineTo(28 * scale, -2.6 * scale);
+    ctx.lineTo(24 * scale, 7 * scale);
+    ctx.lineTo(17.8 * scale, 2.2 * scale);
+    ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.strokeStyle = '#ef8c72';
-    ctx.globalAlpha = 0.72;
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = Math.max(0.6, 0.75 * scale);
+    ctx.globalAlpha = 0.82;
     ctx.beginPath();
-    ctx.moveTo(20.5 * scale, -3 * scale);
-    ctx.quadraticCurveTo(23 * scale, -1.5 * scale, 26 * scale, -3.5 * scale);
+    ctx.moveTo(21.5 * scale, -2.5 * scale);
+    ctx.lineTo(25.5 * scale, -0.8 * scale);
+    ctx.moveTo(20 * scale, 2 * scale);
+    ctx.lineTo(23.8 * scale, 4.6 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
   } else if (type === 'accessory-headphones') {

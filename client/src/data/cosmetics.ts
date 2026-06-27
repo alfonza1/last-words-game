@@ -174,8 +174,8 @@ export const COSMETICS: CosmeticDef[] = [
   {
     key: 'accessory-cap',
     slot: 'accessory',
-    name: 'Gut Trophy Necklace',
-    description: 'A knotted cord of cured infected gut with a glowing kill tag.',
+    name: 'Wraith Fang Pendant',
+    description: 'A polished dead-zone fang on an outfit-lit cord.',
     cost: 360,
     rarity: 'standard',
     outfitReactive: true,

@@ -87,7 +87,7 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       <path d="M83 63 Q110 47 137 63 L134 85 Q110 100 86 84Z" fill="rgba(0,0,0,.08)" />
       <Face expression={character.expression} glow={glow} lips={lips} />
 
-      <Hair style={character.hair} color={hair} />
+      <Hair style={character.hair} color={hair} accent={glow} />
       <Accessory type={character.accessory} glow={glow} />
 
       {/* Outfit details */}
@@ -167,11 +167,15 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
   if (expression === 'not-yet-dead') {
     return (
       <g>
-        <circle cx="99" cy="67" r="3" fill={ink} />
-        <circle cx="121" cy="67" r="5.5" fill={glow} opacity=".24" style={{ filter: `drop-shadow(0 0 5px ${glow})` }} />
-        <circle cx="121" cy="67" r="2.6" fill={glow} />
-        <path d="M101 83 Q110 89 121 81" fill="none" stroke={lips} strokeWidth="2.2" strokeLinecap="round" />
-        <path d="M129 70 L135 73 M128 76 L133 80" stroke={glow} strokeOpacity=".55" strokeWidth="1.5" />
+        <path d="M91 61 L105 58 M116 58 L130 61" stroke={ink} strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="99" cy="68" r="3" fill={ink} />
+        <circle cx="121" cy="68" r="7" fill={glow} opacity=".18" style={{ filter: `drop-shadow(0 0 7px ${glow})` }} />
+        <circle cx="121" cy="68" r="4.2" fill="#101416" stroke={glow} strokeWidth="1.8" />
+        <circle cx="121" cy="68" r="1.9" fill={glow} />
+        <path d="M116 66 L126 70 M121 62 L121 74" stroke={glow} strokeWidth=".9" strokeLinecap="round" opacity=".7" />
+        <path d="M101 84 Q111 91 123 80" fill="none" stroke={lips} strokeWidth="2.35" strokeLinecap="round" />
+        <path d="M123 80 Q126 78.5 129 76.5" fill="none" stroke={lips} strokeWidth="1" strokeLinecap="round" opacity=".65" />
+        <path d="M129 68 L136 70 M127 74 L133 80 M126 63 L132 59" stroke={glow} strokeOpacity=".6" strokeWidth="1.45" strokeLinecap="round" />
       </g>
     );
   }
@@ -186,17 +190,18 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
   );
 }
 
-function Hair({ style, color }: { style: string; color: string }) {
+function Hair({ style, color, accent }: { style: string; color: string; accent: string }) {
   if (style === 'bald') return null;
   const sheen = 'rgba(255,255,255,0.18)';
   const shadow = 'rgba(0,0,0,0.32)';
   const dark = 'rgba(0,0,0,0.5)';
+  const hatColor = accent;
 
   if (style === 'buzz') {
     return (
       <g>
-        <path d="M80 59 Q83 31 110 28 Q137 31 140 59 Q128 52 118 50 L110 46 L101 50 Q91 52 80 59Z" fill={color} />
-        <path d="M84 60 Q87 49 93 38 M97 51 L99 32 M110 46 L110 29 M122 51 L120 32 M136 60 Q132 48 126 38" stroke={shadow} strokeWidth="2" strokeLinecap="round" opacity=".45" />
+        <path d="M76 61 Q80 31 110 27 Q140 31 144 61 Q129 53 118 50 L110 46 L101 50 Q91 53 76 61Z" fill={color} />
+        <path d="M81 61 Q85 49 93 38 M97 51 L99 32 M110 46 L110 29 M122 51 L120 32 M139 61 Q135 48 126 38" stroke={shadow} strokeWidth="2" strokeLinecap="round" opacity=".45" />
         <path d="M92 41 Q109 34 127 40" fill="none" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
       </g>
     );
@@ -215,12 +220,12 @@ function Hair({ style, color }: { style: string; color: string }) {
   if (style === 'ponytail') {
     return (
       <g>
-        <path d="M79 61 Q84 31 110 27 Q136 31 141 61 Q126 52 110 52 Q94 52 79 61Z" fill={color} />
-        <path d="M83 57 Q72 76 70 101 Q68 126 58 149 M88 49 Q77 70 76 96 Q75 122 66 146 M94 43 Q86 68 85 97 Q84 124 76 152 M101 38 Q95 64 96 96 Q96 126 88 155 M109 36 Q105 63 106 96 Q107 126 101 156 M118 38 Q124 64 124 96 Q124 126 132 155 M126 43 Q136 68 137 97 Q138 124 146 152 M133 49 Q147 70 150 96 Q153 122 162 146 M138 57 Q153 78 155 103 Q158 128 169 151" fill="none" stroke={color} strokeWidth="4.8" strokeLinecap="round" opacity=".95" />
-        <path d="M83 57 Q72 76 70 101 Q68 126 58 149 M88 49 Q77 70 76 96 Q75 122 66 146 M94 43 Q86 68 85 97 Q84 124 76 152 M101 38 Q95 64 96 96 Q96 126 88 155 M109 36 Q105 63 106 96 Q107 126 101 156 M118 38 Q124 64 124 96 Q124 126 132 155 M126 43 Q136 68 137 97 Q138 124 146 152 M133 49 Q147 70 150 96 Q153 122 162 146 M138 57 Q153 78 155 103 Q158 128 169 151" fill="none" stroke={dark} strokeWidth="1.15" strokeLinecap="round" opacity=".55" />
-        <path d="M87 47 Q97 36 110 34 Q124 36 135 47 M86 58 Q97 51 110 51 Q124 51 136 58" fill="none" stroke={dark} strokeWidth="1.7" strokeLinecap="round" opacity=".55" />
-        <path d="M88 69 Q82 94 78 122 M96 61 Q91 86 91 116 M104 56 Q101 84 102 121 M117 56 Q121 84 121 121 M126 61 Q133 87 134 116 M135 69 Q143 94 147 122 M75 83 Q72 105 67 130 M151 83 Q155 106 160 130" fill="none" stroke={sheen} strokeWidth=".9" strokeLinecap="round" opacity=".62" />
-        <path d="M93 40 Q109 32 127 40" fill="none" stroke={sheen} strokeWidth="2" strokeLinecap="round" opacity=".7" />
+        <path d="M82 57 Q72 77 70 101 Q68 126 58 149 M89 49 Q77 70 76 96 Q75 122 66 146 M95 43 Q86 68 85 97 Q84 124 76 152 M101 39 Q95 65 96 96 Q96 126 88 155 M118 39 Q124 65 124 96 Q124 126 132 155 M125 43 Q136 68 137 97 Q138 124 146 152 M132 49 Q147 70 150 96 Q153 122 162 146 M139 57 Q153 78 155 103 Q158 128 169 151" fill="none" stroke={color} strokeWidth="4.8" strokeLinecap="round" opacity=".95" />
+        <path d="M82 57 Q72 77 70 101 Q68 126 58 149 M89 49 Q77 70 76 96 Q75 122 66 146 M95 43 Q86 68 85 97 Q84 124 76 152 M101 39 Q95 65 96 96 Q96 126 88 155 M118 39 Q124 65 124 96 Q124 126 132 155 M125 43 Q136 68 137 97 Q138 124 146 152 M132 49 Q147 70 150 96 Q153 122 162 146 M139 57 Q153 78 155 103 Q158 128 169 151" fill="none" stroke={dark} strokeWidth="1.15" strokeLinecap="round" opacity=".55" />
+        <path d="M75 63 Q79 30 110 26 Q141 30 145 63 Q128 54 110 54 Q92 54 75 63Z" fill={hatColor} stroke={dark} strokeWidth="1.1" />
+        <path d="M78 64 Q93 54 110 54 Q128 54 142 64" fill="none" stroke={dark} strokeWidth="2" strokeLinecap="round" opacity=".5" />
+        <path d="M87 47 Q97 36 110 34 Q124 36 135 47" fill="none" stroke={sheen} strokeWidth="1.8" strokeLinecap="round" opacity=".56" />
+        <path d="M88 69 Q82 94 78 122 M96 67 Q91 88 91 116 M104 66 Q101 87 102 121 M117 66 Q121 87 121 121 M126 67 Q133 88 134 116 M135 69 Q143 94 147 122 M75 83 Q72 105 67 130 M151 83 Q155 106 160 130" fill="none" stroke={sheen} strokeWidth=".9" strokeLinecap="round" opacity=".62" />
       </g>
     );
   }
@@ -240,12 +245,12 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
   if (type === 'accessory-cap') {
     return (
       <g>
-        <path d="M91 96 Q110 116 129 96" fill="none" stroke="#2a1512" strokeWidth="3" strokeLinecap="round" />
-        <path d="M95 98 Q110 111 125 98" fill="none" stroke={glow} strokeWidth="1.3" strokeLinecap="round" opacity=".65" />
-        <path d="M105 111 Q111 107 116 112 Q121 117 116 122 Q110 127 104 122 Q100 117 105 111Z" fill="#7d2423" stroke="#210909" strokeWidth="1.2" />
-        <path d="M106 116 Q112 119 118 115 M108 121 Q113 118 117 122" fill="none" stroke="#ef8c72" strokeWidth="1.1" strokeLinecap="round" opacity=".72" />
-        <circle cx="101" cy="106" r="2" fill={glow} opacity=".9" />
-        <circle cx="119" cy="106" r="2" fill={glow} opacity=".9" />
+        <path d="M91 96 Q110 114 129 96" fill="none" stroke="#101416" strokeWidth="3" strokeLinecap="round" />
+        <path d="M96 98 Q110 109 124 98" fill="none" stroke={glow} strokeWidth="1.35" strokeLinecap="round" opacity=".72" />
+        <path d="M109 108 L120 113 L114 130 L104 121Z" fill="#d9e0dc" stroke="#111719" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M110 112 L117 115 M107 119 L114 123" fill="none" stroke={glow} strokeWidth="1.2" strokeLinecap="round" opacity=".8" />
+        <circle cx="110" cy="111" r="1.8" fill="#101416" />
+        <path d="M116 114 L112 128" stroke="#7a8781" strokeWidth=".9" strokeLinecap="round" opacity=".65" />
       </g>
     );
   }
