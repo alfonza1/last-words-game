@@ -272,17 +272,19 @@ function drawCombatFace(
     ctx.globalAlpha = 1;
   } else if (expression === 'grave-grin') {
     ctx.strokeStyle = '#6d211c';
-    ctx.lineWidth = Math.max(1.1, 1.35 * scale);
+    ctx.lineWidth = Math.max(0.85, 1.05 * scale);
     ctx.beginPath();
-    ctx.moveTo(32 * scale, -39 * scale);
-    ctx.quadraticCurveTo(36 * scale, -31 * scale, 34 * scale, -22 * scale);
+    ctx.moveTo(33 * scale, -37 * scale);
+    ctx.lineTo(36 * scale, -30 * scale);
+    ctx.lineTo(34.5 * scale, -24 * scale);
     ctx.stroke();
     ctx.strokeStyle = '#d28a78';
-    ctx.lineWidth = Math.max(0.7, 0.75 * scale);
+    ctx.lineWidth = Math.max(0.45, 0.55 * scale);
     ctx.globalAlpha = 0.78;
     ctx.beginPath();
-    ctx.moveTo(32.4 * scale, -38.5 * scale);
-    ctx.quadraticCurveTo(35.4 * scale, -31 * scale, 34.2 * scale, -23 * scale);
+    ctx.moveTo(33.3 * scale, -36.5 * scale);
+    ctx.lineTo(35.5 * scale, -30 * scale);
+    ctx.lineTo(34.2 * scale, -24.5 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.strokeStyle = '#111719';
