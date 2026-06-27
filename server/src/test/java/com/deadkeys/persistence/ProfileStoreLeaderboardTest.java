@@ -1,6 +1,9 @@
 package com.deadkeys.persistence;
 
 import com.deadkeys.model.Dtos.LeaderboardEntry;
+import com.deadkeys.persistence.entity.LeaderboardEntity;
+import com.deadkeys.persistence.repository.LeaderboardRepository;
+import com.deadkeys.persistence.repository.ProfileRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

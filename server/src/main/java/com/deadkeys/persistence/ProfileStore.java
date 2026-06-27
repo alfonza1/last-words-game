@@ -2,6 +2,10 @@ package com.deadkeys.persistence;
 
 import com.deadkeys.model.Dtos.LeaderboardEntry;
 import com.deadkeys.model.Profile;
+import com.deadkeys.persistence.entity.LeaderboardEntity;
+import com.deadkeys.persistence.entity.ProfileEntity;
+import com.deadkeys.persistence.repository.LeaderboardRepository;
+import com.deadkeys.persistence.repository.ProfileRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
