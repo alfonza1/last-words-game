@@ -74,6 +74,59 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
           <circle cx="110" cy="155" r="9" fill="#080101" stroke="#ff3b12" strokeWidth="3" />
         </>
       )}
+      {character.outfit === 'outfit-godmode-revenant' && (
+        <>
+          {/* Subtle preview-only glitch aura */}
+          <g opacity=".55">
+            <rect x="70" y="132" width="16" height="3" fill="#00f0ff" opacity=".4" />
+            <rect x="136" y="150" width="14" height="3" fill="#ff174d" opacity=".4" />
+          </g>
+          {/* High collar flaps framing the neck */}
+          <path d="M92 113 L100 91 L108 104 M128 113 L120 91 L112 104" fill="none" stroke="#f8d66d" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          {/* Asymmetrical shoulder armor — heavy on the left */}
+          <path d="M68 116 L92 103 L98 122 L72 130 Z" fill="#1b2433" stroke="#f8d66d" strokeWidth="2" />
+          <path d="M150 112 L136 106 L132 119 L146 124 Z" fill="#1b2433" stroke="#f8d66d" strokeWidth="1.5" opacity=".85" />
+          {/* Glowing command-core chest emblem */}
+          <g style={{ filter: 'drop-shadow(0 0 6px #00f0ff)' }}>
+            <path d="M110 128 L121 135 L121 148 L110 155 L99 148 L99 135 Z" fill="#04141b" stroke="#00f0ff" strokeWidth="2.5" />
+            <path d="M106 138 L103 138 L103 145 L106 145 M114 138 L117 138 L117 145 L114 145" fill="none" stroke="#00f0ff" strokeWidth="1.6" strokeLinecap="round" />
+            <circle cx="110" cy="141" r="2.2" fill="#00f0ff" />
+          </g>
+          {/* Terminal / debug seam lines */}
+          <path d="M96 159 V191 M124 159 V191" stroke="#00f0ff" strokeWidth="1.2" strokeDasharray="3 4" opacity=".7" />
+          <path d="M100 166 h7 M100 173 h4 M100 180 h8" stroke="#00f0ff" strokeWidth="1" strokeLinecap="round" opacity=".5" />
+          {/* Red corrupted override slashes */}
+          <path d="M84 150 L101 169 M127 142 L143 161 M91 178 L104 192" stroke="#ff174d" strokeWidth="3" strokeLinecap="round" opacity=".9" />
+        </>
+      )}
+      {character.outfit === 'outfit-neon-plague-saint' && (
+        <>
+          {/* Preview-only toxic mist aura */}
+          <g fill="#39ff14">
+            <circle cx="82" cy="150" r="2.2" opacity=".5" />
+            <circle cx="140" cy="140" r="2.4" opacity=".45" />
+            <circle cx="78" cy="172" r="1.6" opacity=".4" />
+          </g>
+          {/* Plague-saint hood / sealed collar */}
+          <path d="M90 112 Q110 95 130 112 L126 122 Q110 107 94 122 Z" fill={outfit.secondary} stroke="#9dff4f" strokeWidth="2" />
+          {/* Glowing toxic robe seams */}
+          <path d="M94 120 L92 192 M126 120 L128 192" stroke="#00ff99" strokeWidth="2" opacity=".8" style={{ filter: 'drop-shadow(0 0 4px #00ff99)' }} />
+          {/* Chest plague-core vial */}
+          <g style={{ filter: 'drop-shadow(0 0 6px #39ff14)' }}>
+            <rect x="102" y="127" width="16" height="24" rx="6" fill="#04140b" stroke="#9dff4f" strokeWidth="2" />
+            <rect x="106" y="136" width="8" height="11" rx="3" fill="#39ff14" opacity=".92" />
+            <path d="M105 132 H115" stroke="#9dff4f" strokeWidth="1.4" strokeLinecap="round" />
+            <circle cx="110" cy="141" r="1.7" fill="#f8ffe8" />
+          </g>
+          {/* Neon holy sigil — cross within a ring */}
+          <g fill="none" stroke="#9dff4f" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 4px #39ff14)' }}>
+            <circle cx="110" cy="172" r="9" />
+            <path d="M110 165 V179 M103 172 H117" strokeLinecap="round" />
+          </g>
+          {/* Sealed robe panels */}
+          <path d="M82 184 H99 M121 184 H138" stroke="#9dff4f" strokeWidth="1.4" strokeDasharray="4 3" opacity=".7" />
+        </>
+      )}
 
       {/* Arms */}
       <path d="M77 116 Q54 136 64 174" fill="none" stroke={outfit.primary} strokeWidth="19" strokeLinecap="round" />
@@ -265,6 +318,42 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
       <g fill="none" stroke={glow} strokeWidth="3" style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
         <path d="M82 37 L89 17 L101 31 L110 10 L120 31 L133 17 L139 39Z" />
         <path d="M87 43 Q110 48 135 43" />
+      </g>
+    );
+  }
+  if (type === 'accessory-blackout-shoulder-drone') {
+    // Hovers near the right shoulder/back, not above the head.
+    return (
+      <g style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
+        {/* Angular black drone shell */}
+        <path d="M150 92 L168 85 L177 96 L170 109 L152 110 Z" fill="#0a0d12" stroke={glow} strokeWidth="2" strokeLinejoin="round" />
+        {/* Glowing scan lens */}
+        <circle cx="164" cy="98" r="4.2" fill="#04141b" stroke={glow} strokeWidth="1.6" />
+        <circle cx="164" cy="98" r="1.8" fill={glow} />
+        {/* Short scan beam sweeping the field */}
+        <path d="M163 102 L149 121 L161 119 Z" fill={glow} opacity=".18" />
+        {/* Signal line */}
+        <path d="M177 95 l7 -3 M177 100 l6 2" stroke={glow} strokeWidth="1.4" strokeLinecap="round" opacity=".8" />
+        {/* Tiny glitch sparks */}
+        <path d="M150 86 l-3 -3 M170 110 l2 4" stroke="#ff174d" strokeWidth="1.4" strokeLinecap="round" opacity=".75" />
+      </g>
+    );
+  }
+  if (type === 'accessory-toxic-angel-halo') {
+    // Cracked, segmented saint-ring above the head — never a clean ring.
+    return (
+      <g style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
+        {/* Cracked segmented halo */}
+        <ellipse cx="110" cy="30" rx="31" ry="9" fill="none" stroke={glow} strokeWidth="3.4" strokeDasharray="13 5 8 6 11 5" opacity=".95" />
+        {/* Inner holy shimmer */}
+        <ellipse cx="110" cy="30" rx="31" ry="9" fill="none" stroke="#f8ffe8" strokeWidth="1" strokeDasharray="9 10" opacity=".5" />
+        {/* Broken saint-ring pieces drifting free */}
+        <path d="M82 28 Q88 22 96 24" fill="none" stroke={glow} strokeWidth="3" strokeLinecap="round" />
+        <path d="M124 36 Q132 38 139 33" fill="none" stroke={glow} strokeWidth="3" strokeLinecap="round" />
+        {/* Radioactive particles / mist */}
+        <circle cx="92" cy="19" r="1.6" fill={glow} />
+        <circle cx="130" cy="21" r="1.3" fill={glow} opacity=".85" />
+        <circle cx="110" cy="15" r="1.4" fill="#39ff14" opacity=".7" />
       </g>
     );
   }

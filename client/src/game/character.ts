@@ -408,6 +408,92 @@ function drawOutfitDetails(
     ctx.lineTo(-32 * scale, 13 * scale);
     ctx.lineTo(16 * scale, 9 * scale);
     ctx.stroke();
+  } else if (outfit === 'outfit-godmode-revenant') {
+    ctx.save();
+    // Bold glowing command core on the chest.
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 8 * scale;
+    ctx.fillStyle = '#04141b';
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 1.8 * scale;
+    ctx.beginPath();
+    ctx.moveTo(2 * scale, -12 * scale);
+    ctx.lineTo(9 * scale, -8 * scale);
+    ctx.lineTo(9 * scale, -1 * scale);
+    ctx.lineTo(2 * scale, 3 * scale);
+    ctx.lineTo(-5 * scale, -1 * scale);
+    ctx.lineTo(-5 * scale, -8 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#00f0ff';
+    ctx.beginPath();
+    ctx.arc(2 * scale, -4 * scale, 1.7 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Two bright debug seam lines.
+    ctx.strokeStyle = '#00f0ff';
+    ctx.globalAlpha = 0.7;
+    ctx.lineWidth = 1.1 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-14 * scale, -14 * scale);
+    ctx.lineTo(-15 * scale, 6 * scale);
+    ctx.moveTo(16 * scale, -12 * scale);
+    ctx.lineTo(16 * scale, 5 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Asymmetric shoulder/collar plate.
+    ctx.fillStyle = trim;
+    ctx.fillRect(-21 * scale, -17 * scale, 10 * scale, 5 * scale);
+    // Red corrupted override slash.
+    ctx.strokeStyle = '#ff174d';
+    ctx.lineWidth = 2.4 * scale;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-9 * scale, 5 * scale);
+    ctx.lineTo(11 * scale, -9 * scale);
+    ctx.stroke();
+    ctx.restore();
+  } else if (outfit === 'outfit-neon-plague-saint') {
+    ctx.save();
+    // Bold toxic chest vial / plague core.
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur = 8 * scale;
+    ctx.fillStyle = '#04140b';
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = 1.8 * scale;
+    roundRect(ctx, -4 * scale, -13 * scale, 12 * scale, 16 * scale, 4 * scale);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#39ff14';
+    roundRect(ctx, -1 * scale, -8 * scale, 6 * scale, 9 * scale, 2 * scale);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Glowing toxic robe seams.
+    ctx.strokeStyle = '#00ff99';
+    ctx.globalAlpha = 0.8;
+    ctx.lineWidth = 1.2 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-15 * scale, -13 * scale);
+    ctx.lineTo(-16 * scale, 6 * scale);
+    ctx.moveTo(17 * scale, -12 * scale);
+    ctx.lineTo(18 * scale, 5 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Holy sigil — cross within a ring.
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = 1.4 * scale;
+    ctx.beginPath();
+    ctx.arc(14 * scale, -3 * scale, 4 * scale, 0, Math.PI * 2);
+    ctx.moveTo(14 * scale, -7 * scale);
+    ctx.lineTo(14 * scale, 1 * scale);
+    ctx.moveTo(10 * scale, -3 * scale);
+    ctx.lineTo(18 * scale, -3 * scale);
+    ctx.stroke();
+    // Sealed collar/hood detail.
+    ctx.fillStyle = trim;
+    ctx.fillRect(-9 * scale, -20 * scale, 17 * scale, 3 * scale);
+    ctx.restore();
   } else {
     ctx.fillRect(-4 * scale, -15 * scale, 3 * scale, 19 * scale);
   }
@@ -592,6 +678,66 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.lineTo(34 * scale, -35 * scale);
     ctx.stroke();
     ctx.shadowBlur = 0;
+  } else if (type === 'accessory-blackout-shoulder-drone') {
+    ctx.save();
+    // Angular black drone shell hovering by the upper back/head.
+    ctx.fillStyle = '#0a0d12';
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 1.4 * scale;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(2 * scale, -40 * scale);
+    ctx.lineTo(13 * scale, -44 * scale);
+    ctx.lineTo(18 * scale, -38 * scale);
+    ctx.lineTo(12 * scale, -31 * scale);
+    ctx.lineTo(2 * scale, -33 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Glowing scan lens.
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 6 * scale;
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(11 * scale, -38 * scale, 2 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Short scan beam sweeping toward the field.
+    ctx.strokeStyle = glow;
+    ctx.globalAlpha = 0.4;
+    ctx.lineWidth = 1.2 * scale;
+    ctx.beginPath();
+    ctx.moveTo(11 * scale, -36 * scale);
+    ctx.lineTo(21 * scale, -25 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  } else if (type === 'accessory-toxic-angel-halo') {
+    ctx.save();
+    // Cracked, segmented halo above the head.
+    ctx.strokeStyle = glow;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    ctx.lineWidth = 2.2 * scale;
+    ctx.setLineDash([5 * scale, 3 * scale]);
+    ctx.beginPath();
+    ctx.ellipse(24 * scale, -42 * scale, 15 * scale, 5 * scale, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Radioactive particles / mist.
+    ctx.shadowBlur = 4 * scale;
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(11 * scale, -47 * scale, 1.4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(37 * scale, -45 * scale, 1.2 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(24 * scale, -50 * scale, 1.3 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 }
 

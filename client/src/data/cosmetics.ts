@@ -8,7 +8,7 @@ export interface CosmeticDef {
   name: string;
   description: string;
   cost: number;
-  rarity: 'standard' | 'rare' | 'epic' | 'legendary';
+  rarity: 'standard' | 'rare' | 'epic' | 'legendary' | 'exclusive-mythic';
   /** Item's color follows the equipped outfit's glow (e.g. crown, glasses). */
   outfitReactive?: boolean;
 }
@@ -164,6 +164,23 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'legendary',
   },
   {
+    key: 'outfit-godmode-revenant',
+    slot: 'outfit',
+    name: 'Godmode Revenant',
+    description:
+      'A forbidden admin-class survivor suit pulsing with debug energy, corrupted command lines, and override-code armor.',
+    cost: 66666,
+    rarity: 'exclusive-mythic',
+  },
+  {
+    key: 'outfit-neon-plague-saint',
+    slot: 'outfit',
+    name: 'Neon Plague Saint',
+    description: 'A sealed cyber-plague robe marked with toxic holy sigils and impossible neon light.',
+    cost: 66666,
+    rarity: 'exclusive-mythic',
+  },
+  {
     key: 'accessory-none',
     slot: 'accessory',
     name: 'No Accessory',
@@ -198,6 +215,24 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'legendary',
     outfitReactive: true,
   },
+  {
+    key: 'accessory-blackout-shoulder-drone',
+    slot: 'accessory',
+    name: 'Blackout Shoulder Drone',
+    description: 'A hovering blackout drone that scans the field with corrupted admin light.',
+    cost: 33333,
+    rarity: 'exclusive-mythic',
+    outfitReactive: true,
+  },
+  {
+    key: 'accessory-toxic-angel-halo',
+    slot: 'accessory',
+    name: 'Toxic Angel Halo',
+    description: 'A cracked toxic halo leaking neon plague light above the survivor.',
+    cost: 33333,
+    rarity: 'exclusive-mythic',
+    outfitReactive: true,
+  },
 ];
 
 export const OUTFIT_PALETTES: Record<string, OutfitPalette> = {
@@ -208,6 +243,8 @@ export const OUTFIT_PALETTES: Record<string, OutfitPalette> = {
   'outfit-neon': { primary: '#13243b', secondary: '#11101f', trim: '#00f0ff', glow: '#ff2bd6' },
   'outfit-warden': { primary: '#272335', secondary: '#0c0b11', trim: '#a78bfa', glow: '#a78bfa' },
   'outfit-inferno': { primary: '#260806', secondary: '#080101', trim: '#ff3b12', glow: '#ff3b12' },
+  'outfit-godmode-revenant': { primary: '#07070d', secondary: '#111827', trim: '#f8d66d', glow: '#00f0ff' },
+  'outfit-neon-plague-saint': { primary: '#07100b', secondary: '#18251b', trim: '#9dff4f', glow: '#39ff14' },
 };
 
 export function cosmeticByKey(key: string): CosmeticDef | undefined {

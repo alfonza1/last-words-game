@@ -49,7 +49,11 @@ export function Upgrades({
   const active = gamesLeft > 0 && anyOwned;
   const owned = new Set(ownedCosmetics);
   // Stable catalog order — bought items don't jump to the front of the list.
-  const gearFor = (slot: CosmeticSlot) => COSMETICS.filter((item) => item.slot === slot && item.cost > 0);
+  // Exclusive Mythic gear is showcased at the top of its section, above Legendary.
+  const gearFor = (slot: CosmeticSlot) =>
+    COSMETICS.filter((item) => item.slot === slot && item.cost > 0).sort(
+      (a, b) => Number(b.rarity === 'exclusive-mythic') - Number(a.rarity === 'exclusive-mythic'),
+    );
 
   // Purchases require an explicit confirm so nobody buys by accident / spam-clicks.
   const [pending, setPending] = useState<Pending | null>(null);
@@ -66,18 +70,25 @@ export function Upgrades({
     const isOwned = owned.has(item.key);
     const affordable = coins >= item.cost;
     const preview: CharacterLoadout = { ...DEFAULT_CHARACTER, [item.slot]: item.key };
-    const rarityColor =
-      item.rarity === 'legendary'
+    const exclusive = item.rarity === 'exclusive-mythic';
+    const rarityColor = exclusive
+      ? 'border-neon-cyan/70 shadow-[0_0_26px_rgba(0,240,255,0.30)] ring-1 ring-neon-pink/40'
+      : item.rarity === 'legendary'
         ? 'border-neon-amber/60'
         : item.rarity === 'epic'
           ? 'border-neon-pink/50'
           : item.rarity === 'rare'
             ? 'border-neon-cyan/45'
             : 'border-white/20';
+    const rarityLabel = exclusive ? 'Exclusive Mythic' : item.rarity;
     return (
       <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-3 ${rarityColor}`}>
-        <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/45">
-          {item.rarity}
+        <div
+          className={`absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest ${
+            exclusive ? 'text-neon-cyan' : 'text-white/45'
+          }`}
+        >
+          {rarityLabel}
         </div>
         <div className="flex items-center gap-3">
           <div className="h-28 w-24 flex-none overflow-hidden rounded-lg border border-white/15 bg-black/35">
@@ -93,6 +104,13 @@ export function Upgrades({
             )}
           </div>
         </div>
+        {exclusive && (
+          <div className="mt-2 rounded-lg border border-neon-pink/40 bg-gradient-to-r from-neon-cyan/10 via-black/30 to-neon-pink/10 px-2 py-1.5 text-[8px] font-bold uppercase tracking-[0.16em]">
+            <div className="text-neon-cyan">★ Exclusive Mythic · Limited-time cosmetic</div>
+            <div className="mt-0.5 text-white/55">Will never return to the shop once gone</div>
+            <div className="text-white/45">Cosmetic only — no gameplay advantage</div>
+          </div>
+        )}
         <button
           disabled={isOwned || !affordable}
           onClick={() => setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })}
