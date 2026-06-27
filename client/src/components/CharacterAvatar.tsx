@@ -215,18 +215,12 @@ function Hair({ style, color }: { style: string; color: string }) {
   if (style === 'ponytail') {
     return (
       <g>
-        <path d="M86 49 Q72 66 70 89 Q68 113 59 135 M134 49 Q150 66 153 91 Q156 116 166 137 M78 58 Q64 80 64 111 Q64 136 54 158 M142 58 Q159 80 160 112 Q161 138 171 158" fill="none" stroke={color} strokeWidth="7.4" strokeLinecap="round" opacity=".9" />
-        <path d="M86 49 Q72 66 70 89 Q68 113 59 135 M134 49 Q150 66 153 91 Q156 116 166 137 M78 58 Q64 80 64 111 Q64 136 54 158 M142 58 Q159 80 160 112 Q161 138 171 158" fill="none" stroke={dark} strokeWidth="1.8" strokeLinecap="round" opacity=".5" />
-        <path d="M79 61 Q84 31 110 27 Q136 31 141 61 Q126 51 110 51 Q94 51 79 61Z" fill={color} />
-        <path d="M89 52 Q80 69 80 92 Q80 112 72 128 M99 50 Q93 70 94 95 Q95 118 86 134 M121 50 Q127 72 126 96 Q126 119 134 134 M132 52 Q143 72 145 95 Q146 116 155 130" fill="none" stroke={color} strokeWidth="7.2" strokeLinecap="round" />
-        <path d="M89 52 Q80 69 80 92 Q80 112 72 128 M99 50 Q93 70 94 95 Q95 118 86 134 M121 50 Q127 72 126 96 Q126 119 134 134 M132 52 Q143 72 145 95 Q146 116 155 130" fill="none" stroke={dark} strokeWidth="1.7" strokeLinecap="round" opacity=".55" />
-        <path d="M88 58 Q98 49 110 49 Q123 49 136 58" fill="none" stroke={dark} strokeWidth="2.2" strokeLinecap="round" opacity=".5" />
-        <path d="M92 66 Q86 86 84 108 M102 64 Q98 86 98 112 M120 64 Q124 86 124 112 M130 66 Q137 86 139 108 M74 78 Q70 100 66 122 M146 78 Q151 101 156 124" fill="none" stroke={sheen} strokeWidth="1.15" strokeLinecap="round" opacity=".62" />
-        <circle cx="94" cy="55" r="3.4" fill={color} stroke={dark} strokeWidth="1" />
-        <circle cx="104" cy="52" r="3.2" fill={color} stroke={dark} strokeWidth="1" />
-        <circle cx="118" cy="52" r="3.2" fill={color} stroke={dark} strokeWidth="1" />
-        <circle cx="127" cy="55" r="3.4" fill={color} stroke={dark} strokeWidth="1" />
-        <path d="M94 39 Q110 32 127 39" fill="none" stroke={sheen} strokeWidth="2.2" strokeLinecap="round" opacity=".72" />
+        <path d="M79 61 Q84 31 110 27 Q136 31 141 61 Q126 52 110 52 Q94 52 79 61Z" fill={color} />
+        <path d="M83 57 Q72 76 70 101 Q68 126 58 149 M88 49 Q77 70 76 96 Q75 122 66 146 M94 43 Q86 68 85 97 Q84 124 76 152 M101 38 Q95 64 96 96 Q96 126 88 155 M109 36 Q105 63 106 96 Q107 126 101 156 M118 38 Q124 64 124 96 Q124 126 132 155 M126 43 Q136 68 137 97 Q138 124 146 152 M133 49 Q147 70 150 96 Q153 122 162 146 M138 57 Q153 78 155 103 Q158 128 169 151" fill="none" stroke={color} strokeWidth="4.8" strokeLinecap="round" opacity=".95" />
+        <path d="M83 57 Q72 76 70 101 Q68 126 58 149 M88 49 Q77 70 76 96 Q75 122 66 146 M94 43 Q86 68 85 97 Q84 124 76 152 M101 38 Q95 64 96 96 Q96 126 88 155 M109 36 Q105 63 106 96 Q107 126 101 156 M118 38 Q124 64 124 96 Q124 126 132 155 M126 43 Q136 68 137 97 Q138 124 146 152 M133 49 Q147 70 150 96 Q153 122 162 146 M138 57 Q153 78 155 103 Q158 128 169 151" fill="none" stroke={dark} strokeWidth="1.15" strokeLinecap="round" opacity=".55" />
+        <path d="M87 47 Q97 36 110 34 Q124 36 135 47 M86 58 Q97 51 110 51 Q124 51 136 58" fill="none" stroke={dark} strokeWidth="1.7" strokeLinecap="round" opacity=".55" />
+        <path d="M88 69 Q82 94 78 122 M96 61 Q91 86 91 116 M104 56 Q101 84 102 121 M117 56 Q121 84 121 121 M126 61 Q133 87 134 116 M135 69 Q143 94 147 122 M75 83 Q72 105 67 130 M151 83 Q155 106 160 130" fill="none" stroke={sheen} strokeWidth=".9" strokeLinecap="round" opacity=".62" />
+        <path d="M93 40 Q109 32 127 40" fill="none" stroke={sheen} strokeWidth="2" strokeLinecap="round" opacity=".7" />
       </g>
     );
   }
