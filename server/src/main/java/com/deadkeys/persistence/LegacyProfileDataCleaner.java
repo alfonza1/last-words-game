@@ -1,5 +1,7 @@
 package com.deadkeys.persistence;
 
+import com.deadkeys.persistence.entity.ProfileEntity;
+import com.deadkeys.persistence.repository.ProfileRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;

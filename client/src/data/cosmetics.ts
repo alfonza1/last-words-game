@@ -172,15 +172,6 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'standard',
   },
   {
-    key: 'accessory-cap',
-    slot: 'accessory',
-    name: 'Last Shift Cap',
-    description: 'Standard issue, long after standards stopped mattering.',
-    cost: 360,
-    rarity: 'standard',
-    outfitReactive: true,
-  },
-  {
     key: 'accessory-headphones',
     slot: 'accessory',
     name: 'Signal Breakers',
@@ -201,10 +192,11 @@ export const COSMETICS: CosmeticDef[] = [
   {
     key: 'accessory-mask',
     slot: 'accessory',
-    name: 'Bone Filter',
-    description: 'A respirator shaped to make the infected hesitate.',
+    name: 'Crawler Head Charm',
+    description: 'A shrunken crawler head wired to the collar as a warning.',
     cost: 1200,
     rarity: 'epic',
+    outfitReactive: true,
   },
   {
     key: 'accessory-crown',
@@ -248,7 +240,11 @@ export function hairColor(key: string): string {
 }
 
 export function normalizeCharacter(value?: Partial<CharacterLoadout> | null): CharacterLoadout {
-  return { ...DEFAULT_CHARACTER, ...(value ?? {}) };
+  const merged = { ...DEFAULT_CHARACTER, ...(value ?? {}) };
+  const hair = HAIR_STYLES.some((style) => style.key === merged.hair) ? merged.hair : DEFAULT_CHARACTER.hair;
+  const outfit = cosmeticByKey(merged.outfit)?.slot === 'outfit' ? merged.outfit : DEFAULT_CHARACTER.outfit;
+  const accessory = cosmeticByKey(merged.accessory)?.slot === 'accessory' ? merged.accessory : DEFAULT_CHARACTER.accessory;
+  return { ...merged, hair, outfit, accessory };
 }
 
 function darkenHex(hex: string, factor: number): string {

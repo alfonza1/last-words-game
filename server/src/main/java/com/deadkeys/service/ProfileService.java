@@ -457,6 +457,9 @@ public class ProfileService {
       profile.cosmetics = new ArrayList<>();
       changed = true;
     }
+    if (profile.cosmetics.removeIf(key -> CharacterCatalog.find(key) == null)) {
+      changed = true;
+    }
     for (String key : CharacterCatalog.DEFAULT_OWNED) {
       if (!profile.cosmetics.contains(key)) {
         profile.cosmetics.add(key);
@@ -483,11 +486,17 @@ public class ProfileService {
       profile.character.expression = "last-light";
       changed = true;
     }
-    if (!profile.cosmetics.contains(profile.character.outfit)) {
+    CharacterCatalog.Def outfit = CharacterCatalog.find(profile.character.outfit);
+    if (outfit == null
+        || !CharacterCatalog.OUTFIT.equals(outfit.slot())
+        || !profile.cosmetics.contains(profile.character.outfit)) {
       profile.character.outfit = "outfit-field";
       changed = true;
     }
-    if (!profile.cosmetics.contains(profile.character.accessory)) {
+    CharacterCatalog.Def accessory = CharacterCatalog.find(profile.character.accessory);
+    if (accessory == null
+        || !CharacterCatalog.ACCESSORY.equals(accessory.slot())
+        || !profile.cosmetics.contains(profile.character.accessory)) {
       profile.character.accessory = "accessory-none";
       changed = true;
     }

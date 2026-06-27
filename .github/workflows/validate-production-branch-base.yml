@@ -1,0 +1,73 @@
+name: Validate Production Branch Base
+
+on:
+  push:
+    branches:
+      - "release/**"
+      - "rollback/**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-production-branch-base:
+    name: validate-production-branch-base
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Fetch base branches
+        run: |
+          git fetch origin develop:refs/remotes/origin/develop
+          git fetch origin main:refs/remotes/origin/main
+
+      - name: Validate release or rollback base
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "Validating production branch base..."
+          echo "Branch: $BRANCH"
+
+          if [[ "$BRANCH" == release/* ]]; then
+            echo "Release branch detected. It must contain latest develop."
+
+            if git merge-base --is-ancestor origin/develop HEAD; then
+              echo "OK: release branch contains latest develop."
+              exit 0
+            else
+              echo "::error::release/* branches must be created from the latest develop branch."
+              echo "::error::Fix:"
+              echo "::error::git checkout develop"
+              echo "::error::git pull origin develop"
+              echo "::error::git checkout -b release/prod-1"
+              exit 1
+            fi
+          fi
+
+          if [[ "$BRANCH" == rollback/* ]]; then
+            echo "Rollback branch detected. It must contain latest main."
+
+            if git merge-base --is-ancestor origin/main HEAD; then
+              echo "OK: rollback branch contains latest main."
+              exit 0
+            else
+              echo "::error::rollback/* branches must be created from the latest main branch."
+              echo "::error::Fix:"
+              echo "::error::git checkout main"
+              echo "::error::git pull origin main"
+              echo "::error::git checkout -b rollback/prod-rollback-1"
+              exit 1
+            fi
+          fi
+
+          echo "::error::Production branches must be release/* or rollback/*."
+          exit 1
