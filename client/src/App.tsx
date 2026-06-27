@@ -62,6 +62,10 @@ const Closet = lazy(() => import('./components/Closet').then((m) => ({ default: 
 
 const REWARD_COINS = 50; // bonus for an optional rewarded ad (server is authoritative)
 
+function difficultyForMode(mode: GameMode, difficulty: Difficulty): Difficulty {
+  return mode === 'bossrush' ? 'normal' : difficulty;
+}
+
 export default function App() {
   const { signedIn, user, loading: authLoading, signOut, updateDisplayName } = useAuth();
   const toast = useToast();
@@ -201,8 +205,9 @@ export default function App() {
     (m: GameMode) => {
       // Drop a mode/difficulty-exclusive map that isn't valid for this mode.
       const sel = getMap(settings.map);
+      const effectiveDifficulty = difficultyForMode(m, settings.difficulty);
       const invalid =
-        (sel.nightmareOnly && settings.difficulty !== 'nightmare') || (sel.bossRushOnly && m !== 'bossrush');
+        (sel.nightmareOnly && effectiveDifficulty !== 'nightmare') || (sel.bossRushOnly && m !== 'bossrush');
       if (invalid) persistSettings({ ...settings, map: 'graveyard' });
       setMode(m);
       setScreen('mapselect');
@@ -221,6 +226,7 @@ export default function App() {
   const saveRun = useCallback(
     (r: RunResult, onResult?: (high: boolean) => void) => {
       const records = r.riddle ? riddleStats : stats;
+      const runDifficulty = difficultyForMode(mode, settings.difficulty);
       const high = r.score > records.bestScore && r.score > 0;
       if (user) {
         const payload: RunPayload = {
@@ -234,7 +240,7 @@ export default function App() {
           streak: r.streak,
           coins: r.coins,
           mode,
-          difficulty: settings.difficulty,
+          difficulty: runDifficulty,
           riddle: r.riddle,
           style: r.style,
         };
@@ -501,7 +507,7 @@ export default function App() {
           <GameScreen
             key={gameKey}
             mode={mode}
-            difficulty={settings.difficulty}
+            difficulty={difficultyForMode(mode, settings.difficulty)}
             upgrades={activeUpgrades}
             powerups={powerups}
             upgradesActive={upgradeGames > 0}
@@ -522,7 +528,7 @@ export default function App() {
         return (
           <MapSelect
             mode={mode}
-            difficulty={settings.difficulty}
+            difficulty={difficultyForMode(mode, settings.difficulty)}
             selectedMapId={settings.map}
             ownedMaps={maps}
             onSelect={setMap}

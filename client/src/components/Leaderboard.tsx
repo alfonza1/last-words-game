@@ -32,7 +32,7 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
   }, []);
 
   const entries = data ? data[board] ?? null : null; // tolerate an older API response
-  const cols = 'grid-cols-[2.75rem_1fr_5rem_3.5rem_4rem]';
+  const cols = 'grid-cols-[2.75rem_1fr_5rem_4rem]';
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-2xl flex-col gap-4 overflow-y-auto p-6">
@@ -70,7 +70,7 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
         </button>
       </div>
       <p className="-mt-2 text-center text-[11px] text-white/35">
-        {board === 'typers' ? 'Fastest fingers — Typing Defense.' : 'Sharpest minds — Riddle, Math & Trivia Defense.'}
+        {board === 'typers' ? "Top scores - WPM shows each player's best." : 'Sharpest minds — Riddle, Math & Trivia Defense.'}
       </p>
 
       {error && <p className="text-center text-sm text-neon-red">Couldn’t load the leaderboard right now.</p>}
@@ -88,9 +88,17 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
           <div className={`grid ${cols} gap-2 bg-ink-700/70 px-4 py-2 text-[10px] uppercase tracking-widest text-white/40`}>
             <span>#</span>
             <span>Player</span>
-            <span className="text-right">Score</span>
-            <span className="text-right">Wave</span>
-            <span className="text-right">{board === 'typers' ? 'WPM' : 'Mode'}</span>
+            {board === 'typers' ? (
+              <>
+                <span className="text-right">Score</span>
+                <span className="text-right">WPM</span>
+              </>
+            ) : (
+              <>
+                <span className="text-right">Score</span>
+                <span className="text-right">Mode</span>
+              </>
+            )}
           </div>
           {entries.map((e, i) => (
             <Row key={e.id} e={e} rank={i} board={board} cols={cols} />
@@ -115,12 +123,16 @@ function Row({ e, rank, board, cols }: { e: LeaderboardEntry; rank: number; boar
         {top ? MEDALS[rank] : rank + 1}
       </span>
       <span className="truncate font-bold text-white/90">{e.name}</span>
-      <span className="text-right font-black text-neon-amber">{e.score.toLocaleString()}</span>
-      <span className="text-right text-white/60">{e.wave}</span>
       {board === 'typers' ? (
-        <span className="text-right text-neon-cyan">{e.wpm}</span>
+        <>
+          <span className="text-right font-black text-neon-amber">{e.score.toLocaleString()}</span>
+          <span className="text-right text-neon-cyan">{e.wpm}</span>
+        </>
       ) : (
-        <span className="text-right text-xs font-bold uppercase tracking-wide text-neon-cyan">{modeLabel(e)}</span>
+        <>
+          <span className="text-right font-black text-neon-amber">{e.score.toLocaleString()}</span>
+          <span className="text-right text-xs font-bold uppercase tracking-wide text-neon-cyan">{modeLabel(e)}</span>
+        </>
       )}
     </div>
   );

@@ -67,7 +67,7 @@ public class ProfileStore {
 
   /**
    * Record a run on the leaderboard, keeping only ONE row per player (their best
-   * score). Prevents the table from filling up with every replay.
+   * score run). WPM is kept as that leaderboard player's highest submitted WPM.
    */
   @Transactional
   public void upsertLeaderboard(String ownerId, LeaderboardEntry run) {
@@ -75,7 +75,14 @@ public class ProfileStore {
     boolean riddle = run.riddle();
     LeaderboardEntity e = leaderboard.findByOwnerIdAndRiddle(ownerId, riddle).orElse(null);
     if (e != null && run.score() <= e.score) {
-      return; // not a new personal best on this board — leave the row untouched
+      int bestWpm = Math.max(e.wpm, run.wpm());
+      if (bestWpm > e.wpm) {
+        e.wpm = bestWpm;
+        e.name = run.name();
+        e.at = System.currentTimeMillis();
+        leaderboard.save(e);
+      }
+      return; // score did not improve; WPM was already refreshed if needed.
     }
     if (e == null) {
       // Brand-new entrant: only store them if they'd crack this board's top N,
@@ -91,7 +98,7 @@ public class ProfileStore {
     e.name = run.name();
     e.score = run.score();
     e.wave = run.wave();
-    e.wpm = run.wpm();
+    e.wpm = Math.max(e.wpm, run.wpm());
     e.accuracy = run.accuracy();
     e.mode = run.mode();
     e.difficulty = run.difficulty();

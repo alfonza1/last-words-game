@@ -108,11 +108,12 @@ export class GameEngine {
   constructor(opts: EngineOptions) {
     this.rng = mulberry32(opts.seed ?? hashSeed(`${Date.now()}-${Math.random()}`));
     this.puzzleStyle = opts.puzzleStyle ?? 'riddles';
-    const cfg = getDifficultyConfig(opts.difficulty);
+    const difficulty = opts.mode === 'bossrush' ? 'normal' : opts.difficulty;
+    const cfg = getDifficultyConfig(difficulty);
     const maxHealth = cfg.startHealth + maxHealthBonus(opts.upgrades);
     this.state = {
       mode: opts.mode,
-      difficulty: opts.difficulty,
+      difficulty,
       status: 'playing',
       width: opts.width,
       height: opts.height,
@@ -368,7 +369,7 @@ export class GameEngine {
         return;
       }
       this.registerMistake();
-      s.input = candidate;
+      s.input = '';
       return;
     }
 

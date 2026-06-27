@@ -15,4 +15,5 @@ public interface LeaderboardRepository extends JpaRepository<LeaderboardEntity, 
 
   /** All rows on one board (for pruning), highest score first. */
   List<LeaderboardEntity> findByRiddleOrderByScoreDesc(boolean riddle);
+
 }

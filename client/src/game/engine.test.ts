@@ -49,6 +49,20 @@ describe('word queue is independent of zombies', () => {
     expect(e.state.wordQueue).toHaveLength(5);
   });
 
+  it('forces boss rush to normal difficulty', () => {
+    const e = new GameEngine({
+      mode: 'bossrush',
+      difficulty: 'nightmare',
+      upgrades: DEFAULT_UPGRADES,
+      settings: { ...DEFAULT_SETTINGS, difficulty: 'nightmare' },
+      width: 960,
+      height: 600,
+      seed: 1,
+    });
+
+    expect(e.state.difficulty).toBe('normal');
+  });
+
   it('does not fire until space is pressed', () => {
     const e = makeEngine();
     e.state.zombies = [zombie()];
@@ -166,13 +180,20 @@ describe('riddle mode', () => {
     expect(e.state.riddlePrompt).not.toBe(prompt); // next riddle queued
   });
 
-  it('a wrong answer is a mistake and keeps the typed text', () => {
+  it('keeps a wrong solver answer until it is submitted', () => {
+    const e = riddleEngine();
+    e.handleInput('definitelywrong');
+    expect(e.state.input).toBe('definitelywrong');
+    expect(e.state.mistakes).toBe(0);
+  });
+
+  it('a submitted wrong solver answer is a mistake and clears the text', () => {
     const e = riddleEngine();
     e.state.zombies = [zombie({ y: 400 })];
     e.handleInput('definitelywrong ');
     expect(e.state.mistakes).toBe(1);
     expect(e.state.kills).toBe(0);
-    expect(e.state.input).toBe('definitelywrong');
+    expect(e.state.input).toBe('');
     expect(e.inputWrong).toBe(false);
   });
 

@@ -113,11 +113,16 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
   if (expression === 'grave-grin') {
     return (
       <g>
-        <path d="M94 65 Q99 62 104 65 M116 65 Q121 62 126 65" fill="none" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="99" cy="68" r="2.5" fill={ink} />
-        <circle cx="121" cy="68" r="2.5" fill={ink} />
-        <path d="M99 80 Q110 91 123 78 Q116 93 103 89Z" fill={lips} fillOpacity=".58" stroke={lips} strokeWidth="1.5" />
-        <path d="M104 84 Q111 88 118 82" fill="none" stroke="#f3d6c7" strokeWidth="2" strokeLinecap="round" />
+        <path d="M91 61 Q99 56 106 61 M116 62 Q122 56 130 58" fill="none" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M95 68 Q100 65.5 105 68" fill="none" stroke={ink} strokeWidth="2.4" strokeLinecap="round" opacity=".65" />
+        <path d="M117 69 Q123 67 128 69" fill="none" stroke={lips} strokeWidth="2.4" strokeLinecap="round" opacity=".78" />
+        <circle cx="101" cy="68" r="2.25" fill={ink} />
+        <path d="M120 57 L123 67 L121 78" fill="none" stroke="#5e1f1a" strokeWidth="2.35" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M120.35 57.5 L122.45 67 L120.85 77.4" fill="none" stroke="#d08a78" strokeWidth=".78" strokeLinecap="round" strokeLinejoin="round" opacity=".78" />
+        <path d="M118.5 62 L121.5 60 M121.5 73 L125 75" fill="none" stroke="#5e1f1a" strokeWidth=".8" strokeLinecap="round" opacity=".42" />
+        <path d="M117 69 Q123 66 129 69" fill="none" stroke={lips} strokeWidth="2.2" strokeLinecap="round" opacity=".9" />
+        <path d="M99 84 Q112 91 124 80" fill="none" stroke={lips} strokeWidth="2.8" strokeLinecap="round" />
+        <path d="M111 87 Q117 87 122 82" fill="none" stroke="#f1d8cb" strokeWidth="1.35" strokeLinecap="round" opacity=".75" />
       </g>
     );
   }
@@ -224,7 +229,7 @@ function Hair({ style, color }: { style: string; color: string }) {
       </g>
     );
   }
-  // Swept Fringe — longer survivor hair falling forward with shaved-tight sides.
+  // Undercut - longer survivor hair falling forward with shaved-tight sides.
   return (
     <g>
       <path d="M80 60 Q82 32 108 27 Q136 25 144 47 Q130 39 114 43 Q98 47 88 62Z" fill={color} stroke="#050708" strokeWidth="1" />
