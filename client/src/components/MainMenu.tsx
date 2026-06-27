@@ -28,7 +28,7 @@ const STYLE_META: Record<Style, { label: string; icon: string; active: string; b
     label: 'Typing',
     icon: '⌨',
     active: 'bg-neon-green/15 text-neon-green shadow-neon',
-    blurb: 'Type the words — each completed word fires one shot.',
+    blurb: 'Each completed word fires one shot. High WPM earns extra points and coins.',
     tagWord: 'WORD',
   },
   riddles: {
@@ -58,23 +58,23 @@ const DIFFS: Difficulty[] = ['easy', 'normal', 'nightmare'];
 const DIFF_BLURB: Record<Style, Record<Difficulty, string>> = {
   typing: {
     easy: 'Short words with a relaxed horde.',
-    normal: 'Words and numbers against the full outbreak. Earn 1.25× coins and points.',
-    nightmare: 'Exact-case words, numbers, and symbols. Earn 2× coins and points.',
+    normal: 'Words and numbers against the full outbreak. Earn 1.25× coins and score.',
+    nightmare: 'Exact-case words, numbers, and symbols. Earn 2× coins and score.',
   },
   riddles: {
     easy: 'Straightforward clues with extra time to solve.',
-    normal: 'Sharper clues and a faster approaching horde. Earn 1.25× coins and points.',
-    nightmare: 'The hardest clues under maximum pressure. Earn 2× coins and points.',
+    normal: 'Sharper clues and a faster approaching horde. Earn 1.25× coins and score.',
+    nightmare: 'The hardest clues under maximum pressure. Earn 2× coins and score.',
   },
   math: {
     easy: 'Quick addition and subtraction, relaxed horde.',
-    normal: 'Multiplication and bigger sums against the outbreak. Earn 1.25× coins and points.',
-    nightmare: 'Multi-step problems and division under max pressure. Earn 2× coins and points.',
+    normal: 'Multiplication and bigger sums against the outbreak. Earn 1.25× coins and score.',
+    nightmare: 'Multi-step problems under max pressure. Earn 2× coins and score.',
   },
   trivia: {
     easy: 'Everyday questions with time to think.',
-    normal: 'Trickier questions and a faster approaching horde. Earn 1.25× coins and points.',
-    nightmare: 'Tough questions under maximum pressure. Earn 2× coins and points.',
+    normal: 'Trickier questions and a faster approaching horde. Earn 1.25× coins and score.',
+    nightmare: 'Tough questions under maximum pressure. Earn 2× coins and score.',
   },
 };
 

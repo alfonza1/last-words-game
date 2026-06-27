@@ -40,6 +40,7 @@ import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from './data/
 import { audio } from './lib/audio';
 import { useAuth } from './lib/auth';
 import { useToast } from './lib/toast';
+import { calculateWpmBonus, type WpmBonus } from './game/wpmBonus';
 import { MainMenu } from './components/MainMenu';
 import { CoinPackModal } from './components/CoinPackModal';
 import { ConnectingScreen } from './components/ConnectingScreen';
@@ -61,6 +62,11 @@ const SettingsPanel = lazy(() => import('./components/SettingsPanel').then((m) =
 const Closet = lazy(() => import('./components/Closet').then((m) => ({ default: m.Closet })));
 
 const REWARD_COINS = 50; // bonus for an optional rewarded ad (server is authoritative)
+const EMPTY_WPM_BONUS: WpmBonus = { tiers: 0, coins: 0, score: 0 };
+
+function difficultyForMode(mode: GameMode, difficulty: Difficulty): Difficulty {
+  return mode === 'bossrush' ? 'normal' : difficulty;
+}
 
 export default function App() {
   const { signedIn, user, loading: authLoading, signOut, updateDisplayName } = useAuth();
@@ -99,6 +105,7 @@ export default function App() {
   const [gameKey, setGameKey] = useState(0);
   const [result, setResult] = useState<RunResult | null>(null);
   const [isHighScore, setIsHighScore] = useState(false);
+  const [wpmBonus, setWpmBonus] = useState<WpmBonus>(EMPTY_WPM_BONUS);
 
   // Upgrades only apply while they have games left (signed-in only).
   const activeUpgrades = upgradeGames > 0 ? upgrades : DEFAULT_UPGRADES;
@@ -201,8 +208,9 @@ export default function App() {
     (m: GameMode) => {
       // Drop a mode/difficulty-exclusive map that isn't valid for this mode.
       const sel = getMap(settings.map);
+      const effectiveDifficulty = difficultyForMode(m, settings.difficulty);
       const invalid =
-        (sel.nightmareOnly && settings.difficulty !== 'nightmare') || (sel.bossRushOnly && m !== 'bossrush');
+        (sel.nightmareOnly && effectiveDifficulty !== 'nightmare') || (sel.bossRushOnly && m !== 'bossrush');
       if (invalid) persistSettings({ ...settings, map: 'graveyard' });
       setMode(m);
       setScreen('mapselect');
@@ -214,6 +222,7 @@ export default function App() {
     setMode(m);
     setGameKey((k) => k + 1);
     setResult(null);
+    setWpmBonus(EMPTY_WPM_BONUS);
     setScreen('game');
   }, []);
 
@@ -221,6 +230,7 @@ export default function App() {
   const saveRun = useCallback(
     (r: RunResult, onResult?: (high: boolean) => void) => {
       const records = r.riddle ? riddleStats : stats;
+      const runDifficulty = difficultyForMode(mode, settings.difficulty);
       const high = r.score > records.bestScore && r.score > 0;
       if (user) {
         const payload: RunPayload = {
@@ -234,7 +244,7 @@ export default function App() {
           streak: r.streak,
           coins: r.coins,
           mode,
-          difficulty: settings.difficulty,
+          difficulty: runDifficulty,
           riddle: r.riddle,
           style: r.style,
         };
@@ -278,12 +288,14 @@ export default function App() {
   const handleGameOver = useCallback(
     (r: RunResult) => {
       const records = r.riddle ? riddleStats : stats;
+      const runDifficulty = difficultyForMode(mode, settings.difficulty);
       setResult(r);
+      setWpmBonus(r.riddle ? EMPTY_WPM_BONUS : calculateWpmBonus(r.wpm, runDifficulty));
       setIsHighScore(r.score > records.bestScore && r.score > 0);
       setScreen('gameover');
       saveRun(r, setIsHighScore);
     },
-    [stats, riddleStats, saveRun],
+    [mode, settings.difficulty, stats, riddleStats, saveRun],
   );
 
   // Quitting/restarting mid-run still saves the stats earned this game and uses
@@ -501,7 +513,7 @@ export default function App() {
           <GameScreen
             key={gameKey}
             mode={mode}
-            difficulty={settings.difficulty}
+            difficulty={difficultyForMode(mode, settings.difficulty)}
             upgrades={activeUpgrades}
             powerups={powerups}
             upgradesActive={upgradeGames > 0}
@@ -522,7 +534,7 @@ export default function App() {
         return (
           <MapSelect
             mode={mode}
-            difficulty={settings.difficulty}
+            difficulty={difficultyForMode(mode, settings.difficulty)}
             selectedMapId={settings.map}
             ownedMaps={maps}
             onSelect={setMap}
@@ -538,6 +550,7 @@ export default function App() {
             mode={mode}
             isHighScore={isHighScore}
             rewardCoins={REWARD_COINS}
+            wpmBonus={wpmBonus}
             onWatchAd={claimReward}
             onRestart={() => startGame(mode)}
             onMenu={() => setScreen('menu')}
@@ -628,6 +641,7 @@ export default function App() {
     character,
     result,
     isHighScore,
+    wpmBonus,
     stats,
     riddleStats,
     signedIn,
