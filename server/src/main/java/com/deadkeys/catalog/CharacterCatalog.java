@@ -33,7 +33,7 @@ public final class CharacterCatalog {
   public static final Set<String> SKIN_TONES =
       Set.of("porcelain", "warm", "tan", "brown", "deep", "undead");
   public static final Set<String> HAIR_STYLES =
-      Set.of("buzz", "undercut", "mohawk", "ponytail", "signal-braids", "bald");
+      Set.of("buzz", "undercut", "mohawk", "ponytail", "bald");
   public static final Set<String> HAIR_COLORS =
       Set.of("charcoal", "brown", "blonde", "red", "cyan", "pink");
   public static final Set<String> EXPRESSIONS =

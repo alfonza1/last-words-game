@@ -106,7 +106,7 @@ export function drawSurvivor(
   ctx.fill();
   ctx.save();
   ctx.translate(5 * scale, 0);
-  drawHair(ctx, character.hair, hair, outfit.glow ?? outfit.trim, scale);
+  drawHair(ctx, character.hair, hair, scale);
   drawAccessory(ctx, character.accessory, outfit.trim, scale);
   ctx.restore();
   drawCombatFace(ctx, character.expression, outfit.trim, lips, scale);
@@ -305,8 +305,16 @@ function drawCombatFace(
   ctx.strokeStyle = expression === 'blood-rush' ? '#111719' : lips;
   ctx.beginPath();
   if (expression === 'grave-grin' || expression === 'not-yet-dead') {
-    ctx.moveTo(35 * scale, -23 * scale);
-    ctx.quadraticCurveTo(39 * scale, -18 * scale, 43 * scale, -22 * scale);
+    if (expression === 'grave-grin') {
+      ctx.lineWidth = Math.max(0.95, 1.05 * scale);
+      ctx.moveTo(34.8 * scale, -22.5 * scale);
+      ctx.bezierCurveTo(38 * scale, -21.2 * scale, 41 * scale, -21.8 * scale, 43.2 * scale, -24 * scale);
+      ctx.moveTo(42.9 * scale, -24 * scale);
+      ctx.lineTo(45 * scale, -25.2 * scale);
+    } else {
+      ctx.moveTo(35 * scale, -23 * scale);
+      ctx.quadraticCurveTo(39 * scale, -18 * scale, 43 * scale, -22 * scale);
+    }
   } else if (expression === 'blood-rush') {
     ctx.moveTo(32 * scale, -33 * scale);
     ctx.lineTo(38 * scale, -30 * scale);
@@ -385,7 +393,7 @@ function drawOutfitDetails(
   }
 }
 
-function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, glow: string, scale: number) {
+function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, scale: number) {
   if (style === 'bald') return;
   ctx.save();
   const shadow = 'rgba(0,0,0,.38)';
@@ -395,24 +403,15 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, g
 
   if (style === 'buzz') {
     ctx.beginPath();
-    ctx.arc(23 * scale, -28 * scale, 11.5 * scale, Math.PI * 1.03, Math.PI * 1.98);
-    ctx.quadraticCurveTo(31 * scale, -31 * scale, 35 * scale, -23 * scale);
-    ctx.quadraticCurveTo(24 * scale, -29 * scale, 12 * scale, -23 * scale);
-    ctx.closePath();
+    ctx.arc(23 * scale, -28 * scale, 11 * scale, Math.PI, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = dark;
-    ctx.lineWidth = Math.max(1, 1.1 * scale);
+    ctx.strokeStyle = shadow;
+    ctx.lineWidth = Math.max(1, scale);
     ctx.beginPath();
-    ctx.moveTo(13 * scale, -25 * scale);
-    ctx.quadraticCurveTo(23 * scale, -31 * scale, 34 * scale, -25 * scale);
-    ctx.moveTo(16 * scale, -31 * scale);
-    ctx.quadraticCurveTo(23 * scale, -37 * scale, 31 * scale, -31 * scale);
-    ctx.stroke();
-    ctx.strokeStyle = sheen;
-    ctx.lineWidth = Math.max(0.8, 0.8 * scale);
-    ctx.beginPath();
-    ctx.moveTo(18 * scale, -35 * scale);
-    ctx.quadraticCurveTo(24 * scale, -38 * scale, 30 * scale, -34 * scale);
+    ctx.moveTo(14 * scale, -31 * scale);
+    ctx.lineTo(32 * scale, -31 * scale);
+    ctx.moveTo(17 * scale, -37 * scale);
+    ctx.lineTo(29 * scale, -37 * scale);
     ctx.stroke();
   } else if (style === 'mohawk') {
     ctx.fillStyle = shadow;
@@ -443,16 +442,18 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, g
     ctx.lineCap = 'round';
     ctx.lineWidth = 4.6 * scale;
     ctx.beginPath();
+    ctx.moveTo(8 * scale, -31 * scale);
+    ctx.quadraticCurveTo(2 * scale, -15 * scale, 1 * scale, 6 * scale);
     ctx.moveTo(12 * scale, -33 * scale);
     ctx.quadraticCurveTo(7 * scale, -19 * scale, 6 * scale, -6 * scale);
     ctx.moveTo(17 * scale, -34 * scale);
     ctx.quadraticCurveTo(14 * scale, -18 * scale, 13 * scale, -1 * scale);
-    ctx.moveTo(23 * scale, -35 * scale);
-    ctx.quadraticCurveTo(21 * scale, -18 * scale, 22 * scale, 1 * scale);
     ctx.moveTo(29 * scale, -34 * scale);
     ctx.quadraticCurveTo(34 * scale, -18 * scale, 34 * scale, -1 * scale);
     ctx.moveTo(34 * scale, -33 * scale);
     ctx.quadraticCurveTo(41 * scale, -19 * scale, 41 * scale, -6 * scale);
+    ctx.moveTo(38 * scale, -31 * scale);
+    ctx.quadraticCurveTo(45 * scale, -15 * scale, 46 * scale, 6 * scale);
     ctx.stroke();
     ctx.strokeStyle = dark;
     ctx.lineWidth = Math.max(0.9, 1.05 * scale);
@@ -482,64 +483,19 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, g
     ctx.strokeStyle = sheen;
     ctx.lineWidth = Math.max(0.8, 0.75 * scale);
     ctx.beginPath();
+    ctx.moveTo(6 * scale, -15 * scale);
+    ctx.quadraticCurveTo(4 * scale, -7 * scale, 3 * scale, 4 * scale);
     ctx.moveTo(10 * scale, -18 * scale);
     ctx.quadraticCurveTo(8 * scale, -12 * scale, 7 * scale, -7 * scale);
     ctx.moveTo(16 * scale, -18 * scale);
     ctx.quadraticCurveTo(15 * scale, -11 * scale, 14 * scale, -5 * scale);
     ctx.moveTo(31 * scale, -18 * scale);
     ctx.quadraticCurveTo(33 * scale, -11 * scale, 33 * scale, -5 * scale);
+    ctx.moveTo(39 * scale, -15 * scale);
+    ctx.quadraticCurveTo(43 * scale, -6 * scale, 44 * scale, 4 * scale);
     ctx.stroke();
-  } else if (style === 'signal-braids') {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(23 * scale, -28 * scale, 11.5 * scale, Math.PI, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = dark;
-    ctx.lineWidth = Math.max(0.9, 0.9 * scale);
-    ctx.beginPath();
-    ctx.moveTo(14 * scale, -26 * scale);
-    ctx.quadraticCurveTo(17 * scale, -37 * scale, 22 * scale, -39 * scale);
-    ctx.moveTo(21 * scale, -26 * scale);
-    ctx.quadraticCurveTo(22 * scale, -38 * scale, 23 * scale, -39 * scale);
-    ctx.moveTo(31 * scale, -26 * scale);
-    ctx.quadraticCurveTo(29 * scale, -37 * scale, 24 * scale, -39 * scale);
-    ctx.stroke();
-    ctx.strokeStyle = color;
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 3.4 * scale;
-    ctx.beginPath();
-    ctx.moveTo(14 * scale, -30 * scale);
-    ctx.quadraticCurveTo(10 * scale, -17 * scale, 9 * scale, -5 * scale);
-    ctx.moveTo(20 * scale, -31 * scale);
-    ctx.quadraticCurveTo(18 * scale, -17 * scale, 18 * scale, -1 * scale);
-    ctx.moveTo(27 * scale, -31 * scale);
-    ctx.quadraticCurveTo(30 * scale, -17 * scale, 30 * scale, -1 * scale);
-    ctx.moveTo(33 * scale, -30 * scale);
-    ctx.quadraticCurveTo(38 * scale, -17 * scale, 38 * scale, -5 * scale);
-    ctx.stroke();
-    ctx.strokeStyle = dark;
-    ctx.lineWidth = Math.max(0.75, 0.8 * scale);
-    ctx.stroke();
-    ctx.strokeStyle = glow;
-    ctx.shadowColor = glow;
-    ctx.shadowBlur = 5 * scale;
-    ctx.lineWidth = Math.max(1.2, 1.4 * scale);
-    ctx.beginPath();
-    ctx.moveTo(12 * scale, -13 * scale);
-    ctx.lineTo(16 * scale, -13 * scale);
-    ctx.moveTo(18 * scale, -11 * scale);
-    ctx.lineTo(22 * scale, -11 * scale);
-    ctx.moveTo(28 * scale, -11 * scale);
-    ctx.lineTo(32 * scale, -11 * scale);
-    ctx.moveTo(36 * scale, -13 * scale);
-    ctx.lineTo(40 * scale, -13 * scale);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(15 * scale, -35 * scale);
-    ctx.quadraticCurveTo(23 * scale, -41 * scale, 31 * scale, -35 * scale);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
   } else if (style === 'undercut') {
+    ctx.translate(-2.5 * scale, 0);
     ctx.beginPath();
     ctx.moveTo(12 * scale, -29 * scale);
     ctx.quadraticCurveTo(19 * scale, -44 * scale, 35 * scale, -39 * scale);
@@ -582,11 +538,34 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, g
 
 function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number) {
   if (type === 'accessory-cap') {
-    ctx.fillStyle = '#1a252b';
+    ctx.strokeStyle = '#2a1512';
+    ctx.lineWidth = 1.7 * scale;
     ctx.beginPath();
-    ctx.arc(23 * scale, -30 * scale, 11 * scale, Math.PI, Math.PI * 2);
+    ctx.moveTo(14 * scale, -13 * scale);
+    ctx.quadraticCurveTo(23 * scale, -3 * scale, 33 * scale, -13 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = glow;
+    ctx.globalAlpha = 0.65;
+    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
+    ctx.beginPath();
+    ctx.moveTo(16 * scale, -12 * scale);
+    ctx.quadraticCurveTo(23 * scale, -5 * scale, 31 * scale, -12 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#7d2423';
+    ctx.strokeStyle = '#210909';
+    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
+    ctx.beginPath();
+    ctx.ellipse(23 * scale, -3 * scale, 4.2 * scale, 4.8 * scale, -0.25, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillRect(23 * scale, -31 * scale, 13 * scale, 3 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = '#ef8c72';
+    ctx.globalAlpha = 0.72;
+    ctx.beginPath();
+    ctx.moveTo(20.5 * scale, -3 * scale);
+    ctx.quadraticCurveTo(23 * scale, -1.5 * scale, 26 * scale, -3.5 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   } else if (type === 'accessory-headphones') {
     ctx.strokeStyle = glow;
     ctx.lineWidth = 3 * scale;
@@ -603,16 +582,31 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.fillRect(25 * scale, -27 * scale, 7 * scale, 4 * scale);
     ctx.globalAlpha = 1;
   } else if (type === 'accessory-mask') {
-    ctx.fillStyle = '#11191d';
-    ctx.strokeStyle = '#dce6df';
-    ctx.lineWidth = 1 * scale;
+    ctx.strokeStyle = '#18100d';
+    ctx.lineWidth = 1.5 * scale;
     ctx.beginPath();
-    ctx.moveTo(14 * scale, -23 * scale);
-    ctx.lineTo(32 * scale, -23 * scale);
-    ctx.lineTo(28 * scale, -14 * scale);
-    ctx.lineTo(18 * scale, -14 * scale);
-    ctx.closePath();
+    ctx.moveTo(14 * scale, -13 * scale);
+    ctx.quadraticCurveTo(23 * scale, -4 * scale, 33 * scale, -13 * scale);
+    ctx.stroke();
+    ctx.fillStyle = '#6e8a59';
+    ctx.strokeStyle = '#121a10';
+    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
+    ctx.beginPath();
+    ctx.ellipse(23 * scale, -3 * scale, 4.4 * scale, 5.4 * scale, 0.15, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = glow;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.arc(21.5 * scale, -4 * scale, 0.75 * scale, 0, Math.PI * 2);
+    ctx.arc(24.8 * scale, -4 * scale, 0.75 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#24321e';
+    ctx.lineWidth = Math.max(0.7, 0.75 * scale);
+    ctx.beginPath();
+    ctx.moveTo(20.5 * scale, 0);
+    ctx.quadraticCurveTo(23 * scale, 1.4 * scale, 26 * scale, 0);
     ctx.stroke();
   } else if (type === 'accessory-crown') {
     ctx.strokeStyle = glow;

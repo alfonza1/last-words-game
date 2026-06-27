@@ -54,7 +54,6 @@ export const HAIR_STYLES = [
   { key: 'undercut', label: 'Undercut' },
   { key: 'mohawk', label: 'Mohawk' },
   { key: 'ponytail', label: 'Dread Locs' },
-  { key: 'signal-braids', label: 'Signal Braids', outfitReactive: true },
   { key: 'bald', label: 'Bald' },
 ] as const;
 
@@ -175,8 +174,8 @@ export const COSMETICS: CosmeticDef[] = [
   {
     key: 'accessory-cap',
     slot: 'accessory',
-    name: 'Last Shift Cap',
-    description: 'Standard issue, long after standards stopped mattering.',
+    name: 'Gut Trophy Necklace',
+    description: 'A knotted cord of cured infected gut with a glowing kill tag.',
     cost: 360,
     rarity: 'standard',
     outfitReactive: true,
@@ -202,10 +201,11 @@ export const COSMETICS: CosmeticDef[] = [
   {
     key: 'accessory-mask',
     slot: 'accessory',
-    name: 'Bone Filter',
-    description: 'A respirator shaped to make the infected hesitate.',
+    name: 'Crawler Head Charm',
+    description: 'A shrunken crawler head wired to the collar as a warning.',
     cost: 1200,
     rarity: 'epic',
+    outfitReactive: true,
   },
   {
     key: 'accessory-crown',
@@ -249,7 +249,9 @@ export function hairColor(key: string): string {
 }
 
 export function normalizeCharacter(value?: Partial<CharacterLoadout> | null): CharacterLoadout {
-  return { ...DEFAULT_CHARACTER, ...(value ?? {}) };
+  const merged = { ...DEFAULT_CHARACTER, ...(value ?? {}) };
+  const hair = HAIR_STYLES.some((style) => style.key === merged.hair) ? merged.hair : DEFAULT_CHARACTER.hair;
+  return { ...merged, hair };
 }
 
 function darkenHex(hex: string, factor: number): string {

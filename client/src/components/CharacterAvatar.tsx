@@ -87,7 +87,7 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       <path d="M83 63 Q110 47 137 63 L134 85 Q110 100 86 84Z" fill="rgba(0,0,0,.08)" />
       <Face expression={character.expression} glow={glow} lips={lips} />
 
-      <Hair style={character.hair} color={hair} glow={glow} />
+      <Hair style={character.hair} color={hair} />
       <Accessory type={character.accessory} glow={glow} />
 
       {/* Outfit details */}
@@ -121,8 +121,9 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
         <path d="M120.35 57.5 L122.45 67 L120.85 77.4" fill="none" stroke="#d08a78" strokeWidth=".78" strokeLinecap="round" strokeLinejoin="round" opacity=".78" />
         <path d="M118.5 62 L121.5 60 M121.5 73 L125 75" fill="none" stroke="#5e1f1a" strokeWidth=".8" strokeLinecap="round" opacity=".42" />
         <path d="M117 69 Q123 67.5 129 69" fill="none" stroke={lips} strokeWidth="1.5" strokeLinecap="round" opacity=".9" />
-        <path d="M99 84 Q112 91 124 80" fill="none" stroke={lips} strokeWidth="2.8" strokeLinecap="round" />
-        <path d="M111 87 Q117 87 122 82" fill="none" stroke="#f1d8cb" strokeWidth="1.35" strokeLinecap="round" opacity=".75" />
+        <path d="M99 84 Q108 86 116 84 Q122 82 125 79" fill="none" stroke={lips} strokeWidth="2.45" strokeLinecap="round" />
+        <path d="M102 86 Q112 88 121 82" fill="none" stroke="#f1d8cb" strokeWidth="1.05" strokeLinecap="round" opacity=".42" />
+        <path d="M124 79 Q127 78 129 76.5" fill="none" stroke={lips} strokeWidth=".95" strokeLinecap="round" opacity=".62" />
       </g>
     );
   }
@@ -185,7 +186,7 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
   );
 }
 
-function Hair({ style, color, glow }: { style: string; color: string; glow: string }) {
+function Hair({ style, color }: { style: string; color: string }) {
   if (style === 'bald') return null;
   const sheen = 'rgba(255,255,255,0.18)';
   const shadow = 'rgba(0,0,0,0.32)';
@@ -194,11 +195,9 @@ function Hair({ style, color, glow }: { style: string; color: string; glow: stri
   if (style === 'buzz') {
     return (
       <g>
-        <path d="M80 61 Q82 36 101 29 Q116 23 133 35 Q140 42 141 60 Q127 53 110 51 Q95 52 80 61Z" fill={color} />
-        <path d="M82 62 Q87 70 94 72 M138 62 Q132 70 125 72" fill="none" stroke={color} strokeWidth="5" strokeLinecap="round" opacity=".85" />
-        <path d="M84 61 Q92 50 105 47 Q121 45 136 57" fill="none" stroke={dark} strokeWidth="2.2" strokeLinecap="round" opacity=".45" />
-        <path d="M88 54 Q96 39 111 35 Q126 37 135 51 M94 63 Q109 58 127 63" fill="none" stroke={shadow} strokeWidth="1.4" strokeLinecap="round" opacity=".58" />
-        <path d="M95 39 Q111 31 128 42" fill="none" stroke={sheen} strokeWidth="2.1" strokeLinecap="round" opacity=".75" />
+        <path d="M80 59 Q83 31 110 28 Q137 31 140 59 Q128 52 118 50 L110 46 L101 50 Q91 52 80 59Z" fill={color} />
+        <path d="M84 60 Q87 49 93 38 M97 51 L99 32 M110 46 L110 29 M122 51 L120 32 M136 60 Q132 48 126 38" stroke={shadow} strokeWidth="2" strokeLinecap="round" opacity=".45" />
+        <path d="M92 41 Q109 34 127 40" fill="none" stroke={sheen} strokeWidth="2.5" strokeLinecap="round" />
       </g>
     );
   }
@@ -216,35 +215,24 @@ function Hair({ style, color, glow }: { style: string; color: string; glow: stri
   if (style === 'ponytail') {
     return (
       <g>
+        <path d="M86 49 Q72 66 70 89 Q68 113 59 135 M134 49 Q150 66 153 91 Q156 116 166 137 M78 58 Q64 80 64 111 Q64 136 54 158 M142 58 Q159 80 160 112 Q161 138 171 158" fill="none" stroke={color} strokeWidth="7.4" strokeLinecap="round" opacity=".9" />
+        <path d="M86 49 Q72 66 70 89 Q68 113 59 135 M134 49 Q150 66 153 91 Q156 116 166 137 M78 58 Q64 80 64 111 Q64 136 54 158 M142 58 Q159 80 160 112 Q161 138 171 158" fill="none" stroke={dark} strokeWidth="1.8" strokeLinecap="round" opacity=".5" />
         <path d="M79 61 Q84 31 110 27 Q136 31 141 61 Q126 51 110 51 Q94 51 79 61Z" fill={color} />
-        <path d="M91 52 Q84 69 84 91 Q84 111 76 126 M101 50 Q96 70 97 94 Q98 116 88 132 M111 50 Q108 72 110 96 Q112 119 105 134 M122 50 Q129 72 128 96 Q128 119 136 132 M132 52 Q143 72 145 94 Q146 112 154 126" fill="none" stroke={color} strokeWidth="7.2" strokeLinecap="round" />
-        <path d="M91 52 Q84 69 84 91 Q84 111 76 126 M101 50 Q96 70 97 94 Q98 116 88 132 M111 50 Q108 72 110 96 Q112 119 105 134 M122 50 Q129 72 128 96 Q128 119 136 132 M132 52 Q143 72 145 94 Q146 112 154 126" fill="none" stroke={dark} strokeWidth="1.7" strokeLinecap="round" opacity=".55" />
+        <path d="M89 52 Q80 69 80 92 Q80 112 72 128 M99 50 Q93 70 94 95 Q95 118 86 134 M121 50 Q127 72 126 96 Q126 119 134 134 M132 52 Q143 72 145 95 Q146 116 155 130" fill="none" stroke={color} strokeWidth="7.2" strokeLinecap="round" />
+        <path d="M89 52 Q80 69 80 92 Q80 112 72 128 M99 50 Q93 70 94 95 Q95 118 86 134 M121 50 Q127 72 126 96 Q126 119 134 134 M132 52 Q143 72 145 95 Q146 116 155 130" fill="none" stroke={dark} strokeWidth="1.7" strokeLinecap="round" opacity=".55" />
         <path d="M88 58 Q98 49 110 49 Q123 49 136 58" fill="none" stroke={dark} strokeWidth="2.2" strokeLinecap="round" opacity=".5" />
-        <path d="M94 66 Q90 85 90 107 M104 64 Q103 86 104 111 M118 64 Q122 86 123 111 M130 66 Q137 86 139 106" fill="none" stroke={sheen} strokeWidth="1.15" strokeLinecap="round" opacity=".62" />
+        <path d="M92 66 Q86 86 84 108 M102 64 Q98 86 98 112 M120 64 Q124 86 124 112 M130 66 Q137 86 139 108 M74 78 Q70 100 66 122 M146 78 Q151 101 156 124" fill="none" stroke={sheen} strokeWidth="1.15" strokeLinecap="round" opacity=".62" />
         <circle cx="94" cy="55" r="3.4" fill={color} stroke={dark} strokeWidth="1" />
         <circle cx="104" cy="52" r="3.2" fill={color} stroke={dark} strokeWidth="1" />
-        <circle cx="116" cy="52" r="3.2" fill={color} stroke={dark} strokeWidth="1" />
+        <circle cx="118" cy="52" r="3.2" fill={color} stroke={dark} strokeWidth="1" />
         <circle cx="127" cy="55" r="3.4" fill={color} stroke={dark} strokeWidth="1" />
         <path d="M94 39 Q110 32 127 39" fill="none" stroke={sheen} strokeWidth="2.2" strokeLinecap="round" opacity=".72" />
       </g>
     );
   }
-  if (style === 'signal-braids') {
-    return (
-      <g>
-        <path d="M80 61 Q84 32 110 27 Q136 32 140 61 Q127 53 110 52 Q94 53 80 61Z" fill={color} />
-        <path d="M91 55 Q91 38 100 31 M102 53 Q104 34 110 29 M118 53 Q116 34 110 29 M129 55 Q128 38 120 31" fill="none" stroke={dark} strokeWidth="1.4" strokeLinecap="round" opacity=".58" />
-        <path d="M94 54 Q91 70 91 86 Q91 103 84 116 M104 52 Q101 69 102 88 Q103 106 96 122 M116 52 Q119 69 118 88 Q117 106 124 122 M126 54 Q130 70 131 86 Q132 103 139 116" fill="none" stroke={color} strokeWidth="5.4" strokeLinecap="round" />
-        <path d="M94 54 Q91 70 91 86 Q91 103 84 116 M104 52 Q101 69 102 88 Q103 106 96 122 M116 52 Q119 69 118 88 Q117 106 124 122 M126 54 Q130 70 131 86 Q132 103 139 116" fill="none" stroke={shadow} strokeWidth="1.2" strokeLinecap="round" opacity=".72" />
-        <path d="M91 77 H96 M101 82 H107 M114 82 H120 M126 77 H132" stroke={glow} strokeWidth="3" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 4px ${glow})` }} />
-        <path d="M96 39 Q110 31 124 39" fill="none" stroke={glow} strokeOpacity=".85" strokeWidth="2.1" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 5px ${glow})` }} />
-        <circle cx="110" cy="36" r="4.2" fill={color} stroke={glow} strokeWidth="1.4" />
-      </g>
-    );
-  }
 
   return (
-    <g>
+    <g transform="translate(-3 0)">
       <path d="M80 62 Q83 34 105 27 Q132 23 144 43 Q133 40 120 43 Q102 47 86 65Z" fill={color} stroke="#050708" strokeWidth="1" />
       <path d="M85 64 Q98 44 119 37 Q136 33 146 45 Q132 52 116 61 Q100 70 87 75 Q84 70 85 64Z" fill={color} />
       <path d="M83 66 Q87 73 96 76 M134 45 Q141 50 141 61" fill="none" stroke={dark} strokeWidth="2.4" strokeLinecap="round" opacity=".55" />
@@ -257,10 +245,14 @@ function Hair({ style, color, glow }: { style: string; color: string; glow: stri
 function Accessory({ type, glow }: { type: string; glow: string }) {
   if (type === 'accessory-cap') {
     return (
-      <>
-        <path d="M80 48 Q110 24 140 49 L135 59 Q108 48 82 59Z" fill="#26333a" stroke={glow} />
-        <path d="M116 50 Q145 49 151 57 Q131 60 116 56Z" fill="#11181c" />
-      </>
+      <g>
+        <path d="M91 96 Q110 116 129 96" fill="none" stroke="#2a1512" strokeWidth="3" strokeLinecap="round" />
+        <path d="M95 98 Q110 111 125 98" fill="none" stroke={glow} strokeWidth="1.3" strokeLinecap="round" opacity=".65" />
+        <path d="M105 111 Q111 107 116 112 Q121 117 116 122 Q110 127 104 122 Q100 117 105 111Z" fill="#7d2423" stroke="#210909" strokeWidth="1.2" />
+        <path d="M106 116 Q112 119 118 115 M108 121 Q113 118 117 122" fill="none" stroke="#ef8c72" strokeWidth="1.1" strokeLinecap="round" opacity=".72" />
+        <circle cx="101" cy="106" r="2" fill={glow} opacity=".9" />
+        <circle cx="119" cy="106" r="2" fill={glow} opacity=".9" />
+      </g>
     );
   }
   if (type === 'accessory-headphones') {
@@ -283,7 +275,15 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
   }
   if (type === 'accessory-mask') {
     return (
-      <path d="M88 72 Q110 62 132 72 L126 92 L110 101 L94 92Z" fill="#10171a" stroke="#d9e2dc" strokeWidth="2" />
+      <g>
+        <path d="M92 97 Q110 113 128 97" fill="none" stroke="#18100d" strokeWidth="3" strokeLinecap="round" />
+        <ellipse cx="110" cy="117" rx="9" ry="11" fill="#6e8a59" stroke="#121a10" strokeWidth="1.5" />
+        <path d="M103 115 Q106 112 109 115 M112 115 Q115 112 118 115" fill="none" stroke="#152014" strokeWidth="1.3" strokeLinecap="round" />
+        <circle cx="106" cy="116" r="1.2" fill={glow} opacity=".9" />
+        <circle cx="115" cy="116" r="1.2" fill={glow} opacity=".9" />
+        <path d="M105 123 Q110 126 116 122" fill="none" stroke="#24321e" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M101 111 L97 107 M119 111 L123 107" stroke="#4d6642" strokeWidth="1.3" strokeLinecap="round" />
+      </g>
     );
   }
   if (type === 'accessory-crown') {
