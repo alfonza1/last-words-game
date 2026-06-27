@@ -146,6 +146,7 @@ export class GameEngine {
       combo: 0,
       zombies: [],
       wordQueue: [],
+      wordsToClearWave: QUEUE_SIZE,
       input: '',
       riddleMode: !!opts.riddleMode,
       puzzleStyle: opts.puzzleStyle ?? 'riddles',
@@ -177,6 +178,7 @@ export class GameEngine {
     // Fill the initial queue (words, or riddle answers in Riddle Mode).
     for (let i = 0; i < QUEUE_SIZE; i++) this.enqueueItem();
     this.syncRiddlePrompt();
+    this.refreshWordsToClearWave();
   }
 
   /** Generate one queue word for the current difficulty + a rising tier by wave. */
@@ -435,6 +437,35 @@ export class GameEngine {
     this.updateSpawning(sdt);
     this.updateZombies(sdt);
     this.recomputeMetrics();
+    this.refreshWordsToClearWave();
+  }
+
+  /**
+   * Typing Defense: count how many queued words are still required to clear the
+   * current wave — the shots left to kill every zombie on the field plus one for
+   * each wave member not yet spawned — capped at the queue size. Recomputed every
+   * frame from live state, so it self-corrects as zombies spawn, die, or split.
+   * Other modes (Puzzle/Riddle) keep the full queue.
+   */
+  private refreshWordsToClearWave() {
+    this.state.wordsToClearWave = this.computeWordsToClearWave();
+  }
+
+  private computeWordsToClearWave(): number {
+    const s = this.state;
+    if (s.riddleMode) return s.wordQueue.length;
+    // Before the first wave or during the inter-wave breather, show the full queue.
+    if (s.wave === 0 || s.betweenWaves > 0) return Math.max(1, s.wordQueue.length);
+
+    const dmg = SHOT_DAMAGE * damageMultiplier(s.powerups);
+    let shots = 0;
+    for (const z of s.zombies) {
+      const perShot = z.isBoss ? dmg + bossDamageBonus(s.upgrades) : dmg;
+      shots += Math.max(1, Math.ceil(z.hp / Math.max(1, perShot)));
+    }
+    // Every wave member still to spawn needs at least one more word.
+    shots += Math.max(0, s.waveZombiesToSpawn - s.waveZombiesSpawned);
+    return Math.min(s.wordQueue.length, Math.max(1, shots));
   }
 
   // --- Spawning & waves ---------------------------------------------------

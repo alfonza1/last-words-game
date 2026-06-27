@@ -366,6 +366,64 @@ describe('upgrades', () => {
   });
 });
 
+describe('typing defense trims the queue to the wave', () => {
+  it('caps at the queue size while many shots remain', () => {
+    const e = makeEngine();
+    e.state.waveZombiesToSpawn = 6;
+    e.state.waveZombiesSpawned = 6; // nothing left to spawn
+    e.state.zombies = Array.from({ length: 6 }, () => zombie({ hp: 2, maxHp: 2 }));
+    e.update(0.016);
+    expect(e.state.wordsToClearWave).toBe(5);
+  });
+
+  it('shrinks to a single word when one shot ends the wave', () => {
+    const e = makeEngine(); // 1 to spawn, 1 already spawned
+    e.state.zombies = [zombie({ hp: 1, maxHp: 1 })];
+    e.update(0.016);
+    expect(e.state.wordsToClearWave).toBe(1);
+  });
+
+  it('counts one word per shot needed for a tough zombie', () => {
+    const e = makeEngine();
+    e.state.zombies = [zombie({ type: 'tank', hp: 6, maxHp: 6 })];
+    e.update(0.016);
+    expect(e.state.wordsToClearWave).toBe(3); // 6 hp / 2 dmg
+  });
+
+  it('counts each unspawned wave member as at least one word', () => {
+    const e = makeEngine();
+    e.state.waveZombiesToSpawn = 4;
+    e.state.waveZombiesSpawned = 1;
+    e.state.spawnCooldown = 5; // keep this tick from spawning the next zombie
+    e.state.zombies = [zombie({ hp: 2, maxHp: 2 })];
+    e.update(0.016);
+    expect(e.state.wordsToClearWave).toBe(4); // 1 on field + 3 still to spawn
+  });
+
+  it('keeps the full queue during the inter-wave breather', () => {
+    const e = makeEngine();
+    e.state.betweenWaves = 2;
+    e.state.zombies = [];
+    e.update(0.016);
+    expect(e.state.wordsToClearWave).toBe(5);
+  });
+
+  it('leaves the puzzle-mode queue untouched', () => {
+    const e = new GameEngine({
+      mode: 'survival', difficulty: 'normal', upgrades: DEFAULT_UPGRADES,
+      settings: DEFAULT_SETTINGS, width: 960, height: 600, seed: 1,
+      riddleMode: true, puzzleStyle: 'math',
+    });
+    e.state.wave = 1;
+    e.state.betweenWaves = 0;
+    e.state.waveZombiesToSpawn = 999;
+    e.state.waveZombiesSpawned = 999;
+    e.state.zombies = [zombie({ hp: 1, maxHp: 1 })];
+    e.update(0.016);
+    expect(e.state.wordsToClearWave).toBe(e.state.wordQueue.length);
+  });
+});
+
 describe('base collision', () => {
   it('damages the base when a normal zombie arrives', () => {
     const e = makeEngine();
