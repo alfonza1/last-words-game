@@ -16,4 +16,9 @@ describe('cold-start scary facts', () => {
     expect(next).toBeGreaterThanOrEqual(0);
     expect(next).toBeLessThan(SCARY_FACTS.length);
   });
+
+  it('has a deep fact pool with unique titles', () => {
+    expect(SCARY_FACTS.length).toBeGreaterThanOrEqual(30);
+    expect(new Set(SCARY_FACTS.map((fact) => fact.title)).size).toBe(SCARY_FACTS.length);
+  });
 });
