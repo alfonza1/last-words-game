@@ -8,9 +8,12 @@ export interface CosmeticDef {
   name: string;
   description: string;
   cost: number;
-  rarity: 'standard' | 'rare' | 'epic' | 'legendary';
+  rarity: 'standard' | 'rare' | 'epic' | 'legendary' | 'mythic-exclusive';
   /** Item's color follows the equipped outfit's glow (e.g. crown, glasses). */
   outfitReactive?: boolean;
+  exclusive?: boolean;
+  limitedTime?: boolean;
+  shopNotice?: string;
 }
 
 export interface OutfitPalette {
@@ -134,10 +137,13 @@ export const COSMETICS: CosmeticDef[] = [
   {
     key: 'outfit-hazmat',
     slot: 'outfit',
-    name: 'Containment Tech',
-    description: 'Area 67 response gear with sealed neon seams.',
-    cost: 2000,
-    rarity: 'rare',
+    name: 'Apex Revenant EX',
+    description: 'Mythic Exclusive zombie-slayer armor with a void reactor, spectral loc glow, animated aura, and custom weapon skin.',
+    cost: 66666,
+    rarity: 'mythic-exclusive',
+    exclusive: true,
+    limitedTime: true,
+    shopNotice: 'Limited-time only. Never returning after it leaves the shop. Cosmetic only - no gameplay advantage.',
   },
   {
     key: 'outfit-neon',
@@ -192,11 +198,14 @@ export const COSMETICS: CosmeticDef[] = [
   {
     key: 'accessory-crown',
     slot: 'accessory',
-    name: 'Static Crown',
-    description: 'A broken broadcast halo for survivors with a reputation.',
-    cost: 2000,
-    rarity: 'legendary',
+    name: 'Rift Halo EX',
+    description: 'Mythic Exclusive orbiting halo shards with a rare nameplate glow and profile-flex badge.',
+    cost: 33333,
+    rarity: 'mythic-exclusive',
     outfitReactive: true,
+    exclusive: true,
+    limitedTime: true,
+    shopNotice: 'Limited-time only. Never returning after it leaves the shop. Cosmetic only - no gameplay advantage.',
   },
 ];
 
@@ -204,7 +213,7 @@ export const OUTFIT_PALETTES: Record<string, OutfitPalette> = {
   'outfit-field': { primary: '#384832', secondary: '#1d2920', trim: '#8fa26f' },
   'outfit-hoodie': { primary: '#151c22', secondary: '#080b0e', trim: '#39ff14', glow: '#39ff14' },
   'outfit-raider': { primary: '#5b2e23', secondary: '#24201d', trim: '#ffb300' },
-  'outfit-hazmat': { primary: '#d3a72f', secondary: '#30372e', trim: '#9dff4f', glow: '#9dff4f' },
+  'outfit-hazmat': { primary: '#090613', secondary: '#111a31', trim: '#f8d66d', glow: '#00f0ff' },
   'outfit-neon': { primary: '#13243b', secondary: '#11101f', trim: '#00f0ff', glow: '#ff2bd6' },
   'outfit-warden': { primary: '#272335', secondary: '#0c0b11', trim: '#a78bfa', glow: '#a78bfa' },
   'outfit-inferno': { primary: '#260806', secondary: '#080101', trim: '#ff3b12', glow: '#ff3b12' },

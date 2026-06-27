@@ -13,6 +13,7 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
   const lips = lipColorForSkinTone(character.skinTone);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
   const glow = outfit.glow ?? outfit.trim;
+  const isMythicOutfit = character.outfit === 'outfit-hazmat';
 
   return (
     <svg
@@ -27,6 +28,17 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
           <stop offset="0" stopColor={glow} stopOpacity=".3" />
           <stop offset="1" stopColor={glow} stopOpacity="0" />
         </radialGradient>
+        <radialGradient id="avatar-mythic-aura" cx="50%" cy="42%">
+          <stop offset="0" stopColor="#f8d66d" stopOpacity=".45" />
+          <stop offset=".45" stopColor="#00f0ff" stopOpacity=".24" />
+          <stop offset="1" stopColor="#ff2bd6" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="avatar-mythic-plate" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="#f8d66d" />
+          <stop offset=".36" stopColor="#00f0ff" />
+          <stop offset=".68" stopColor="#ff2bd6" />
+          <stop offset="1" stopColor="#050708" />
+        </linearGradient>
         <linearGradient id="avatar-coat" x1="0" x2="1">
           <stop offset="0" stopColor={outfit.primary} />
           <stop offset=".55" stopColor={outfit.secondary} />
@@ -36,6 +48,19 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
 
       <ellipse cx="110" cy="260" rx="76" ry="17" fill="url(#avatar-ground)" />
       <ellipse cx="110" cy="255" rx="52" ry="9" fill="rgba(0,0,0,.48)" />
+      {isMythicOutfit && (
+        <g>
+          <ellipse cx="110" cy="132" rx="74" ry="110" fill="url(#avatar-mythic-aura)" opacity=".62">
+            <animate attributeName="opacity" values=".42;.72;.42" dur="2.8s" repeatCount="indefinite" />
+          </ellipse>
+          <path d="M45 205 Q80 137 70 76 M175 205 Q141 137 150 76" fill="none" stroke="#00f0ff" strokeWidth="1.8" strokeLinecap="round" opacity=".5" strokeDasharray="12 10">
+            <animate attributeName="stroke-dashoffset" values="0;-44" dur="3.5s" repeatCount="indefinite" />
+          </path>
+          <path d="M58 225 Q92 162 82 91 M162 225 Q127 162 138 91" fill="none" stroke="#ff2bd6" strokeWidth="1.4" strokeLinecap="round" opacity=".42" strokeDasharray="7 12">
+            <animate attributeName="stroke-dashoffset" values="0;38" dur="4s" repeatCount="indefinite" />
+          </path>
+        </g>
+      )}
 
       {/* Boots + legs */}
       <path d="M82 190 L105 190 L102 245 L74 245 Z" fill="#111719" stroke={outfit.trim} strokeOpacity=".35" />
@@ -60,7 +85,16 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
         </>
       )}
       {character.outfit === 'outfit-hazmat' && (
-        <path d="M81 111 Q110 95 139 111 V184 H81Z" fill="none" stroke="#9dff4f" strokeWidth="3" strokeDasharray="18 5" />
+        <g>
+          <path d="M76 111 Q110 84 144 111 L154 194 Q132 211 110 201 Q88 211 66 194Z" fill="#07030f" opacity=".72" />
+          <path d="M77 121 L96 100 L110 132 L124 100 L143 121" fill="none" stroke="url(#avatar-mythic-plate)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M91 112 L80 151 L91 190 M129 112 L140 151 L129 190" fill="none" stroke="#00f0ff" strokeWidth="3" strokeLinecap="round" opacity=".8" />
+          <path d="M100 136 L88 158 L102 178 M120 136 L132 158 L118 178" fill="none" stroke="#ff2bd6" strokeWidth="2.4" strokeLinecap="round" opacity=".78" />
+          <circle cx="110" cy="151" r="14" fill="#050708" stroke="#f8d66d" strokeWidth="3" />
+          <circle cx="110" cy="151" r="6" fill="#00f0ff" opacity=".9" style={{ filter: 'drop-shadow(0 0 7px #00f0ff)' }} />
+          <path d="M101 151 H119 M110 142 V160" stroke="#f8d66d" strokeWidth="1.4" strokeLinecap="round" opacity=".78" />
+          <path d="M69 115 L91 101 L96 119 L74 132Z M151 115 L129 101 L124 119 L146 132Z" fill="#0a0615" stroke="#f8d66d" strokeWidth="1.6" />
+        </g>
       )}
       {character.outfit === 'outfit-neon' && (
         <>
@@ -88,19 +122,43 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       <Face expression={character.expression} glow={glow} lips={lips} />
 
       <Hair style={character.hair} color={hair} accent={glow} />
+      {isMythicOutfit && (
+        <g fill="none" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 4px #00f0ff)' }}>
+          <path d="M91 49 Q80 76 80 112 M101 43 Q94 74 95 119 M119 43 Q126 74 125 119 M130 49 Q143 78 143 112" stroke="#00f0ff" strokeWidth="1.35" opacity=".78" />
+          <path d="M86 55 Q69 90 62 133 M135 55 Q153 90 160 133" stroke="#f8d66d" strokeWidth="1" opacity=".58" strokeDasharray="5 7">
+            <animate attributeName="stroke-dashoffset" values="0;-24" dur="3s" repeatCount="indefinite" />
+          </path>
+        </g>
+      )}
       <Accessory type={character.accessory} glow={glow} />
 
       {/* Outfit details */}
-      <path d="M110 105 V194" stroke={outfit.trim} strokeOpacity=".75" strokeWidth="3" />
-      <path d="M82 170 H100 V183 H82Z M120 170 H138 V183 H120Z" fill={outfit.secondary} stroke={outfit.trim} strokeOpacity=".45" />
-      <circle cx="110" cy="121" r="4" fill={glow} opacity=".9" />
+      {isMythicOutfit ? (
+        <g>
+          <rect x="67" y="201" width="86" height="18" rx="6" fill="#050708" stroke="#f8d66d" strokeWidth="1.3" />
+          <path d="M76 210 H144" stroke="#00f0ff" strokeWidth="1.2" strokeLinecap="round" opacity=".75" />
+          <text x="110" y="215" textAnchor="middle" fontSize="8" fontWeight="900" fill="#f8d66d" letterSpacing="1.4">MYTHIC EXCLUSIVE</text>
+        </g>
+      ) : (
+        <>
+          <path d="M110 105 V194" stroke={outfit.trim} strokeOpacity=".75" strokeWidth="3" />
+          <path d="M82 170 H100 V183 H82Z M120 170 H138 V183 H120Z" fill={outfit.secondary} stroke={outfit.trim} strokeOpacity=".45" />
+          <circle cx="110" cy="121" r="4" fill={glow} opacity=".9" />
+        </>
+      )}
 
       {armed && (
         <g transform="translate(52 151) rotate(-8)">
-          <rect x="0" y="0" width="94" height="9" rx="3" fill="#151b1e" stroke="#708086" />
-          <rect x="64" y="-3" width="39" height="4" fill="#080b0d" />
+          <rect x="0" y="0" width="94" height="9" rx="3" fill={isMythicOutfit ? '#080311' : '#151b1e'} stroke={isMythicOutfit ? '#f8d66d' : '#708086'} />
+          <rect x="64" y="-3" width="39" height="4" fill={isMythicOutfit ? '#00f0ff' : '#080b0d'} opacity={isMythicOutfit ? '.72' : '1'} />
           <path d="M29 8 L42 8 L37 28 L28 28Z" fill="#0a0d0f" />
           <rect x="13" y="-4" width="24" height="5" rx="2" fill={outfit.trim} opacity=".8" />
+          {isMythicOutfit && (
+            <>
+              <path d="M5 5 H91" stroke="#ff2bd6" strokeWidth="1.2" strokeLinecap="round" opacity=".75" />
+              <circle cx="48" cy="4.5" r="3" fill="#00f0ff" opacity=".75" style={{ filter: 'drop-shadow(0 0 4px #00f0ff)' }} />
+            </>
+          )}
         </g>
       )}
     </svg>
@@ -262,9 +320,17 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
   }
   if (type === 'accessory-crown') {
     return (
-      <g fill="none" stroke={glow} strokeWidth="3" style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
-        <path d="M82 37 L89 17 L101 31 L110 10 L120 31 L133 17 L139 39Z" />
-        <path d="M87 43 Q110 48 135 43" />
+      <g fill="none" style={{ filter: `drop-shadow(0 0 7px ${glow})` }}>
+        <ellipse cx="110" cy="34" rx="34" ry="10" stroke="#f8d66d" strokeWidth="2.2" opacity=".9">
+          <animate attributeName="rx" values="31;36;31" dur="2.7s" repeatCount="indefinite" />
+        </ellipse>
+        <ellipse cx="110" cy="34" rx="25" ry="7" stroke={glow} strokeWidth="1.4" opacity=".72" strokeDasharray="10 6">
+          <animate attributeName="stroke-dashoffset" values="0;-32" dur="2.2s" repeatCount="indefinite" />
+        </ellipse>
+        <path d="M82 33 L91 22 L98 34 M122 34 L129 22 L138 33 M104 29 L110 16 L116 29" stroke="#ff2bd6" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="91" cy="22" r="2.5" fill="#f8d66d" stroke="none" />
+        <circle cx="110" cy="16" r="3" fill={glow} stroke="none" />
+        <circle cx="129" cy="22" r="2.5" fill="#f8d66d" stroke="none" />
       </g>
     );
   }
