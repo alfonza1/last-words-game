@@ -287,12 +287,14 @@ function drawCombatFace(
     ctx.lineTo(34.2 * scale, -24.5 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.strokeStyle = '#111719';
+    ctx.strokeStyle = lips;
     ctx.lineWidth = Math.max(0.9, 1.15 * scale);
+    ctx.globalAlpha = 0.9;
     ctx.beginPath();
     ctx.moveTo(30.5 * scale, -30 * scale);
     ctx.quadraticCurveTo(34 * scale, -32 * scale, 38 * scale, -30 * scale);
     ctx.stroke();
+    ctx.globalAlpha = 1;
   } else {
     ctx.fillStyle = '#111719';
     ctx.beginPath();
