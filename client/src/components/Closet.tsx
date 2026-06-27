@@ -320,34 +320,23 @@ function CosmeticPicker({
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const active = selected === item.key;
-          const isMythic = item.rarity === 'mythic-exclusive';
           return (
             <button
               key={item.key}
               onClick={() => onChoose(item.key)}
               className={`rounded-lg border p-2 text-left transition ${
                 active
-                  ? isMythic
-                    ? 'border-[#f8d66d] bg-[#f8d66d]/10 shadow-[0_0_20px_rgba(248,214,109,0.18)]'
-                    : 'border-neon-cyan bg-neon-cyan/10 shadow-[0_0_16px_rgba(0,240,255,0.14)]'
-                  : isMythic
-                    ? 'border-[#f8d66d]/45 bg-[#06030d]/70 hover:border-[#f8d66d]'
-                    : 'border-white/20 bg-black/35 hover:border-neon-cyan/60'
+                  ? 'border-neon-cyan bg-neon-cyan/10 shadow-[0_0_16px_rgba(0,240,255,0.14)]'
+                  : 'border-white/20 bg-black/35 hover:border-neon-cyan/60'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className={`text-[11px] font-black ${isMythic ? 'text-[#f8d66d]' : active ? 'text-neon-cyan' : 'text-white'}`}>{item.name}</span>
-                <span className={`text-[8px] font-black uppercase tracking-widest ${isMythic ? 'text-[#f8d66d]' : 'text-neon-cyan'}`}>
+                <span className={`text-[11px] font-black ${active ? 'text-neon-cyan' : 'text-white'}`}>{item.name}</span>
+                <span className="text-[8px] font-black uppercase tracking-widest text-neon-cyan">
                   {active ? 'selected' : 'owned'}
                 </span>
               </div>
-              {isMythic && (
-                <span className="mt-1 inline-block rounded border border-[#f8d66d]/55 bg-[#f8d66d]/10 px-1 py-0.5 text-[7px] font-black uppercase tracking-widest text-[#f8d66d]">
-                  MYTHIC EXCLUSIVE
-                </span>
-              )}
               <p className="mt-0.5 text-[9px] leading-snug text-white/60">{item.description}</p>
-              {item.shopNotice && <p className="mt-1 text-[8px] font-bold leading-snug text-white/50">{item.shopNotice}</p>}
               {item.outfitReactive && (
                 <span className="mt-1 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1 py-0.5 text-[7px] font-black uppercase tracking-widest text-neon-cyan">
                   ◈ Outfit-reactive

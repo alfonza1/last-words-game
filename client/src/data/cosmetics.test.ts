@@ -19,20 +19,7 @@ describe('default character', () => {
     expect(HAIR_STYLES.find((style) => style.key === 'ponytail')?.label).toBe('Dread Locs');
     expect(HAIR_STYLES.map((style) => style.key as string)).not.toContain('signal-braids');
     expect(EXPRESSIONS.find((expression) => expression.key === 'grave-grin')?.label).toBe('Scarred Smirk');
-    expect(cosmeticByKey('outfit-hazmat')?.name).toBe('Apex Revenant EX');
-    expect(cosmeticByKey('accessory-crown')?.name).toBe('Rift Halo EX');
-  });
-
-  it('marks the exclusive drop as mythic and cosmetic-only', () => {
-    const outfit = cosmeticByKey('outfit-hazmat');
-    const accessory = cosmeticByKey('accessory-crown');
-
-    expect(outfit?.rarity).toBe('mythic-exclusive');
-    expect(accessory?.rarity).toBe('mythic-exclusive');
-    expect(outfit?.exclusive).toBe(true);
-    expect(accessory?.exclusive).toBe(true);
-    expect(outfit?.limitedTime).toBe(true);
-    expect(accessory?.shopNotice).toContain('Cosmetic only');
+    expect(cosmeticByKey('accessory-crown')?.name).toBe('Static Crown');
   });
 
   it('falls back from removed hair styles', () => {

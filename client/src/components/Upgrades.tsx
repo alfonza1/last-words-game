@@ -65,22 +65,9 @@ export function Upgrades({
   const gearCard = (item: CosmeticDef) => {
     const isOwned = owned.has(item.key);
     const affordable = coins >= item.cost;
-    const isMythic = item.rarity === 'mythic-exclusive';
-    const preview: CharacterLoadout = isMythic
-      ? {
-          ...DEFAULT_CHARACTER,
-          outfit: item.slot === 'outfit' ? item.key : 'outfit-hazmat',
-          accessory: item.slot === 'accessory' ? item.key : 'accessory-crown',
-          hair: 'ponytail',
-          hairColor: 'cyan',
-          expression: 'not-yet-dead',
-        }
-      : { ...DEFAULT_CHARACTER, [item.slot]: item.key };
-    const rarityLabel = isMythic ? 'MYTHIC EXCLUSIVE' : item.rarity;
+    const preview: CharacterLoadout = { ...DEFAULT_CHARACTER, [item.slot]: item.key };
     const rarityColor =
-      isMythic
-        ? 'border-[#f8d66d]/80 bg-[#06030d]/90 shadow-[0_0_32px_rgba(248,214,109,0.22)]'
-        : item.rarity === 'legendary'
+      item.rarity === 'legendary'
         ? 'border-neon-amber/60'
         : item.rarity === 'epic'
           ? 'border-neon-pink/50'
@@ -89,46 +76,16 @@ export function Upgrades({
             : 'border-white/20';
     return (
       <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-3 ${rarityColor}`}>
-        {isMythic && (
-          <>
-            <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full border border-[#f8d66d]/35 shadow-[0_0_30px_rgba(0,240,255,0.22)]" />
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-neon-cyan via-[#f8d66d] to-neon-pink" />
-          </>
-        )}
-        <div
-          className={`absolute right-2 top-2 rounded border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest ${
-            isMythic
-              ? 'border-[#f8d66d]/70 bg-[#f8d66d]/15 text-[#f8d66d]'
-              : 'border-transparent text-white/45'
-          }`}
-        >
-          {rarityLabel}
+        <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/45">
+          {item.rarity}
         </div>
         <div className="flex items-center gap-3">
-          <div
-            className={`h-28 w-24 flex-none overflow-hidden rounded-lg border bg-black/35 ${
-              isMythic ? 'border-[#f8d66d]/45 shadow-[0_0_22px_rgba(0,240,255,0.18)]' : 'border-white/15'
-            }`}
-          >
+          <div className="h-28 w-24 flex-none overflow-hidden rounded-lg border border-white/15 bg-black/35">
             <CharacterAvatar character={preview} armed={false} className="h-32 w-full -translate-y-1" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className={`text-sm font-black ${isMythic ? 'text-[#f8d66d]' : 'text-neon-green'}`}>{item.name}</h3>
+            <h3 className="text-sm font-black text-neon-green">{item.name}</h3>
             <p className="mt-1 text-[11px] leading-snug text-white/65">{item.description}</p>
-            {item.exclusive && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                <span className="rounded border border-[#f8d66d]/50 bg-[#f8d66d]/10 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest text-[#f8d66d]">
-                  Limited-time only
-                </span>
-                <span className="rounded border border-neon-pink/45 bg-neon-pink/10 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest text-neon-pink">
-                  Never returning after it leaves the shop
-                </span>
-                <span className="rounded border border-neon-cyan/45 bg-neon-cyan/10 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-widest text-neon-cyan">
-                  Cosmetic only - no gameplay advantage
-                </span>
-              </div>
-            )}
-            {item.shopNotice && <p className="mt-1.5 text-[9px] font-bold leading-snug text-white/55">{item.shopNotice}</p>}
             {item.outfitReactive && (
               <span className="mt-1.5 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-neon-cyan">
                 ◈ Outfit-reactive
@@ -144,9 +101,7 @@ export function Upgrades({
               ? 'border-neon-green/60 bg-neon-green/10 text-neon-green'
               : !affordable
                 ? 'cursor-not-allowed border-white/15 text-white/45'
-                : isMythic
-                  ? 'border-[#f8d66d]/70 bg-[#f8d66d]/10 text-[#f8d66d] hover:bg-[#f8d66d]/20'
-                  : 'border-neon-green/60 bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
+                : 'border-neon-green/60 bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
           }`}
         >
           {isOwned ? 'OWNED' : `${item.cost.toLocaleString()} 🪙`}

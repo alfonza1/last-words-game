@@ -26,7 +26,6 @@ export function drawSurvivor(
   const hair = hairColor(character.hairColor);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
   const glow = outfit.glow ?? outfit.trim;
-  const isMythicOutfit = character.outfit === 'outfit-hazmat';
   const breathing = Math.sin(time * 0.0024) * 0.85 * scale;
   const shotStrength = s.survivorShot ? Math.max(0, s.survivorShot.life / s.survivorShot.ttl) : 0;
   const recoil = shotStrength * 2.8 * scale;
@@ -39,26 +38,6 @@ export function drawSurvivor(
   ctx.save();
   ctx.translate(x, y + breathing);
   ctx.scale(direction, 1);
-
-  if (isMythicOutfit) {
-    const pulse = 0.45 + Math.sin(time * 0.004) * 0.18;
-    ctx.save();
-    ctx.strokeStyle = `rgba(0,240,255,${pulse})`;
-    ctx.lineWidth = 1.5 * scale;
-    ctx.shadowColor = glow;
-    ctx.shadowBlur = 12 * scale;
-    ctx.beginPath();
-    ctx.ellipse(-3 * scale, -21 * scale, 76 * scale, 29 * scale, -0.12, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.strokeStyle = `rgba(248,214,109,${0.34 + pulse * 0.3})`;
-    ctx.beginPath();
-    ctx.moveTo(-52 * scale, -7 * scale);
-    ctx.quadraticCurveTo(-15 * scale, -42 * scale, 39 * scale, -34 * scale);
-    ctx.moveTo(-42 * scale, 11 * scale);
-    ctx.quadraticCurveTo(-8 * scale, -21 * scale, 45 * scale, -17 * scale);
-    ctx.stroke();
-    ctx.restore();
-  }
 
   // Ground contact and a small scavenged shooting mat.
   ctx.fillStyle = 'rgba(0,0,0,0.48)';
@@ -129,23 +108,6 @@ export function drawSurvivor(
   ctx.save();
   ctx.translate(5 * scale, 0);
   drawHair(ctx, character.hair, hair, glow, scale);
-  if (isMythicOutfit) {
-    ctx.strokeStyle = glow;
-    ctx.shadowColor = glow;
-    ctx.shadowBlur = 6 * scale;
-    ctx.lineWidth = Math.max(0.55, 0.72 * scale);
-    ctx.beginPath();
-    ctx.moveTo(13 * scale, -24 * scale);
-    ctx.quadraticCurveTo(6 * scale, -7 * scale, 5 * scale, 7 * scale);
-    ctx.moveTo(18 * scale, -26 * scale);
-    ctx.quadraticCurveTo(16 * scale, -10 * scale, 15 * scale, 5 * scale);
-    ctx.moveTo(30 * scale, -26 * scale);
-    ctx.quadraticCurveTo(33 * scale, -10 * scale, 34 * scale, 5 * scale);
-    ctx.moveTo(37 * scale, -24 * scale);
-    ctx.quadraticCurveTo(45 * scale, -7 * scale, 46 * scale, 7 * scale);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-  }
   drawAccessory(ctx, character.accessory, glow, scale);
   ctx.restore();
   drawCombatFace(ctx, character.expression, glow, lips, scale);
@@ -168,7 +130,7 @@ export function drawSurvivor(
   ctx.rotate(aimAngle);
 
   // Stock seated into the shoulder.
-  ctx.fillStyle = isMythicOutfit ? '#080311' : '#090d0f';
+  ctx.fillStyle = '#090d0f';
   ctx.beginPath();
   ctx.moveTo(-27 * scale, -3 * scale);
   ctx.lineTo(-4 * scale, -5 * scale);
@@ -178,23 +140,15 @@ export function drawSurvivor(
   ctx.fill();
 
   // Receiver and handguard.
-  ctx.fillStyle = isMythicOutfit ? '#0d0719' : '#151e22';
+  ctx.fillStyle = '#151e22';
   roundRect(ctx, -3 * scale, -5 * scale, 48 * scale, 10 * scale, 2 * scale);
   ctx.fill();
-  ctx.strokeStyle = isMythicOutfit ? '#f8d66d' : '#829198';
+  ctx.strokeStyle = '#829198';
   ctx.lineWidth = 1.1 * scale;
   ctx.stroke();
-  ctx.fillStyle = isMythicOutfit ? glow : outfit.trim;
+  ctx.fillStyle = outfit.trim;
   ctx.globalAlpha = 0.7;
   ctx.fillRect(17 * scale, -4 * scale, 23 * scale, 2 * scale);
-  if (isMythicOutfit) {
-    ctx.fillStyle = '#ff2bd6';
-    ctx.fillRect(19 * scale, 3 * scale, 24 * scale, 1.6 * scale);
-    ctx.fillStyle = '#f8d66d';
-    ctx.beginPath();
-    ctx.arc(27 * scale, 0, 2.4 * scale, 0, Math.PI * 2);
-    ctx.fill();
-  }
   ctx.globalAlpha = 1;
 
   // Magazine, grip, optic, barrel, and muzzle brake.
@@ -438,32 +392,9 @@ function drawOutfitDetails(
     ctx.lineTo(17 * scale, -13 * scale);
     ctx.stroke();
   } else if (outfit === 'outfit-hazmat') {
-    ctx.save();
-    ctx.shadowColor = trim;
-    ctx.shadowBlur = 8 * scale;
-    ctx.beginPath();
-    ctx.moveTo(-20 * scale, -16 * scale);
-    ctx.lineTo(-7 * scale, -20 * scale);
-    ctx.lineTo(2 * scale, -8 * scale);
-    ctx.lineTo(11 * scale, -20 * scale);
-    ctx.lineTo(24 * scale, -16 * scale);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(2 * scale, -6 * scale, 5.8 * scale, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(0,240,255,.72)';
-    ctx.beginPath();
-    ctx.arc(2 * scale, -6 * scale, 2.5 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#ff2bd6';
-    ctx.shadowColor = '#ff2bd6';
-    ctx.beginPath();
-    ctx.moveTo(-13 * scale, -3 * scale);
-    ctx.lineTo(-4 * scale, 6 * scale);
-    ctx.moveTo(17 * scale, -3 * scale);
-    ctx.lineTo(8 * scale, 6 * scale);
-    ctx.stroke();
-    ctx.restore();
+    ctx.setLineDash([8 * scale, 3 * scale]);
+    ctx.strokeRect(-17 * scale, -14 * scale, 35 * scale, 17 * scale);
+    ctx.setLineDash([]);
   } else if (outfit === 'outfit-inferno') {
     ctx.beginPath();
     ctx.arc(2 * scale, -6 * scale, 5 * scale, 0, Math.PI * 2);
@@ -649,33 +580,18 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.fillRect(25 * scale, -27 * scale, 7 * scale, 4 * scale);
     ctx.globalAlpha = 1;
   } else if (type === 'accessory-crown') {
-    ctx.save();
-    ctx.strokeStyle = '#f8d66d';
-    ctx.shadowColor = glow;
-    ctx.shadowBlur = 9 * scale;
-    ctx.lineWidth = Math.max(1, 1.35 * scale);
-    ctx.beginPath();
-    ctx.ellipse(23 * scale, -39 * scale, 16 * scale, 4.5 * scale, 0, 0, Math.PI * 2);
-    ctx.stroke();
     ctx.strokeStyle = glow;
-    ctx.lineWidth = Math.max(0.8, scale);
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7;
+    ctx.lineWidth = 2 * scale;
     ctx.beginPath();
-    ctx.ellipse(23 * scale, -39 * scale, 10.5 * scale, 2.8 * scale, 0, 0, Math.PI * 2);
+    ctx.moveTo(12 * scale, -35 * scale);
+    ctx.lineTo(16 * scale, -45 * scale);
+    ctx.lineTo(22 * scale, -37 * scale);
+    ctx.lineTo(28 * scale, -47 * scale);
+    ctx.lineTo(34 * scale, -35 * scale);
     ctx.stroke();
-    ctx.strokeStyle = '#ff2bd6';
-    ctx.lineWidth = Math.max(0.9, 1.1 * scale);
-    ctx.beginPath();
-    ctx.moveTo(10 * scale, -39 * scale);
-    ctx.lineTo(15 * scale, -45 * scale);
-    ctx.lineTo(19 * scale, -39 * scale);
-    ctx.moveTo(27 * scale, -39 * scale);
-    ctx.lineTo(31 * scale, -45 * scale);
-    ctx.lineTo(36 * scale, -39 * scale);
-    ctx.moveTo(21 * scale, -42 * scale);
-    ctx.lineTo(23 * scale, -49 * scale);
-    ctx.lineTo(25 * scale, -42 * scale);
-    ctx.stroke();
-    ctx.restore();
+    ctx.shadowBlur = 0;
   }
 }
 
