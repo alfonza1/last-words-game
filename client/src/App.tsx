@@ -290,7 +290,7 @@ export default function App() {
       const records = r.riddle ? riddleStats : stats;
       const runDifficulty = difficultyForMode(mode, settings.difficulty);
       setResult(r);
-      setWpmBonus(calculateWpmBonus(r.wpm, runDifficulty));
+      setWpmBonus(r.riddle ? EMPTY_WPM_BONUS : calculateWpmBonus(r.wpm, runDifficulty));
       setIsHighScore(r.score > records.bestScore && r.score > 0);
       setScreen('gameover');
       saveRun(r, setIsHighScore);

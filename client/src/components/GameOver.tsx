@@ -62,13 +62,15 @@ export function GameOver({ result, mode, isHighScore, rewardCoins, wpmBonus, onW
         <Big label="Coins" value={result.coins} accent="#ffd166" />
       </div>
 
-      <div className="rounded-lg border border-white/10 bg-ink-800/70 px-4 py-2">
-        <div className="text-[10px] uppercase tracking-widest text-white/40">WPM Bonus</div>
-        <div className="mt-1 flex items-center justify-center gap-4 text-sm font-black">
-          <span className="text-neon-amber">+{wpmBonus.coins.toLocaleString()} Coins</span>
-          <span className="text-neon-cyan">+{wpmBonus.score.toLocaleString()} Score</span>
+      {result.style === 'typing' && (
+        <div className="rounded-lg border border-white/10 bg-ink-800/70 px-4 py-2">
+          <div className="text-[10px] uppercase tracking-widest text-white/40">WPM Bonus</div>
+          <div className="mt-1 flex items-center justify-center gap-4 text-sm font-black">
+            <span className="text-neon-amber">+{wpmBonus.coins.toLocaleString()} Coins</span>
+            <span className="text-neon-cyan">+{wpmBonus.score.toLocaleString()} Score</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Optional rewarded ad for bonus coins */}
       {adPhase === 'claimed' ? (

@@ -94,6 +94,13 @@ const SPAWN_FRAC = 0.24;
 // sooner. The difficulty speeds (px/sec) are tuned against this reference height.
 const REFERENCE_HEIGHT = 600;
 
+interface SolverShot {
+  zombieId: string;
+  damage: number;
+  combo: number;
+  forceKill: boolean;
+}
+
 export class GameEngine {
   state: GameState;
   private rng: () => number;
@@ -107,7 +114,8 @@ export class GameEngine {
   private puzzleStyle: PuzzleStyle = 'riddles';
   private solvedPuzzlePrompts = new Set<string>();
   private finitePuzzleGoal: number | null = null;
-  private queuedSolverShots: Array<{ x: number; y: number }> = [];
+  private queuedSolverShots: SolverShot[] = [];
+  private queuedSolverTargetCounts = new Map<string, number>();
   private solverShotCooldown = 0;
 
   constructor(opts: EngineOptions) {
@@ -505,6 +513,11 @@ export class GameEngine {
     for (const z of s.zombies) {
       z.hitFlash = Math.max(0, z.hitFlash - dt * 4);
 
+      if (this.queuedSolverTargetCounts.has(z.id)) {
+        survivors.push(z);
+        continue;
+      }
+
       // Screamers periodically spawn adds.
       if (z.type === 'screamer' && (z.spawnsLeft ?? 0) > 0) {
         z.spawnTimer = (z.spawnTimer ?? 0) - dt;
@@ -564,13 +577,17 @@ export class GameEngine {
   private fireShots(count: number) {
     const damage = SHOT_DAMAGE * damageMultiplier(this.state.powerups);
     const combo = this.state.combo;
-    const targets: Array<{ x: number; y: number }> = [];
+    if (this.state.riddleMode) {
+      this.scheduleSolverVolley(count, damage, combo);
+      this.prepareTargetForNextSubmission();
+      return;
+    }
+
     for (let i = 0; i < count; i++) {
       const target = this.fireAtNearest(damage, combo);
       if (!target) break;
-      targets.push(target);
+      this.emitShot(target);
     }
-    this.scheduleShots(targets);
     this.prepareTargetForNextSubmission();
   }
 
@@ -591,23 +608,57 @@ export class GameEngine {
     return shotTarget;
   }
 
-  private scheduleShots(targets: Array<{ x: number; y: number }>) {
-    if (targets.length === 0) return;
-
-    if (!this.state.riddleMode) {
-      for (const target of targets) this.emitShot(target);
-      return;
-    }
-
+  private scheduleSolverVolley(count: number, damage: number, combo: number) {
+    const shots = this.collectSolverShots(count, damage, combo);
+    if (shots.length === 0) return;
+    for (const shot of shots) this.reserveSolverTarget(shot.zombieId);
     if (this.queuedSolverShots.length > 0 || this.solverShotCooldown > 0) {
-      this.queuedSolverShots.push(...targets);
+      this.queuedSolverShots.push(...shots);
       return;
     }
 
-    const [first, ...rest] = targets;
-    this.emitShot(first);
+    const [first, ...rest] = shots;
+    this.emitSolverShot(first);
     this.queuedSolverShots.push(...rest);
     if (rest.length > 0) this.solverShotCooldown = SOLVER_SHOT_SPACING;
+  }
+
+  private collectSolverShots(count: number, damage: number, combo: number): SolverShot[] {
+    const s = this.state;
+    const shots: SolverShot[] = [];
+    const reserved = new Set(this.queuedSolverTargetCounts.keys());
+    const predictedHp = new Map<string, number>();
+
+    for (let i = 0; i < count; i++) {
+      const target = [...s.zombies]
+        .filter((z) => !reserved.has(z.id))
+        .sort((a, b) => b.y - a.y)[0];
+      if (!target) break;
+
+      if (target.isBoss) {
+        const hp = predictedHp.get(target.id) ?? target.hp;
+        const shotDamage = damage + bossDamageBonus(s.upgrades);
+        shots.push({
+          zombieId: target.id,
+          damage: shotDamage,
+          combo,
+          forceKill: false,
+        });
+        const nextHp = hp - shotDamage;
+        predictedHp.set(target.id, nextHp);
+        if (nextHp <= 0) reserved.add(target.id);
+      } else {
+        shots.push({
+          zombieId: target.id,
+          damage: target.hp,
+          combo,
+          forceKill: true,
+        });
+        reserved.add(target.id);
+      }
+    }
+
+    return shots;
   }
 
   private updateQueuedSolverShots(dt: number) {
@@ -621,8 +672,37 @@ export class GameEngine {
 
     const target = this.queuedSolverShots.shift();
     if (!target) return;
-    this.emitShot(target);
+    this.emitSolverShot(target);
     this.solverShotCooldown = this.queuedSolverShots.length > 0 ? SOLVER_SHOT_SPACING : 0;
+  }
+
+  private emitSolverShot(shot: SolverShot) {
+    const s = this.state;
+    const target = s.zombies.find((z) => z.id === shot.zombieId);
+    if (!target) {
+      this.releaseSolverTarget(shot.zombieId);
+      return;
+    }
+
+    this.emitShot({ x: target.x, y: target.y });
+    target.hitFlash = 1;
+    target.hp -= shot.forceKill ? Math.max(target.hp, shot.damage) : shot.damage;
+    if (target.isBoss && target.hp > 0) {
+      this.addFloating(target.x, target.y - target.size, `${Math.max(0, target.hp)}`, '#ff8fe6', 16);
+    }
+    if (target.hp <= 0) this.killZombie(target, false, shot.combo);
+    this.releaseSolverTarget(shot.zombieId);
+    this.prepareTargetForNextSubmission();
+  }
+
+  private reserveSolverTarget(zombieId: string) {
+    this.queuedSolverTargetCounts.set(zombieId, (this.queuedSolverTargetCounts.get(zombieId) ?? 0) + 1);
+  }
+
+  private releaseSolverTarget(zombieId: string) {
+    const count = this.queuedSolverTargetCounts.get(zombieId) ?? 0;
+    if (count <= 1) this.queuedSolverTargetCounts.delete(zombieId);
+    else this.queuedSolverTargetCounts.set(zombieId, count - 1);
   }
 
   private emitShot(target: { x: number; y: number }) {
@@ -701,7 +781,9 @@ export class GameEngine {
     if (s.powerups.shotgunArmed && !silent) {
       s.powerups.shotgunArmed = false;
       const radius = shotgunRadius(s.upgrades);
-      const nearby = s.zombies.filter((o) => !o.isBoss && distance(o.x, o.y, z.x, z.y) <= radius);
+      const nearby = s.zombies.filter(
+        (o) => !o.isBoss && !this.queuedSolverTargetCounts.has(o.id) && distance(o.x, o.y, z.x, z.y) <= radius,
+      );
       for (const o of nearby) this.killZombie(o, true, rewardCombo);
       if (nearby.length > 0) {
         this.addFloating(z.x, z.y, `SHOTGUN x${nearby.length}`, '#ff2bd6', 22);
@@ -800,9 +882,13 @@ export class GameEngine {
 
   private clearNearestCluster(radius: number, label: string) {
     const s = this.state;
-    const anchor = [...s.zombies].filter((z) => !z.isBoss).sort((a, b) => b.y - a.y)[0];
+    const anchor = [...s.zombies]
+      .filter((z) => !z.isBoss && !this.queuedSolverTargetCounts.has(z.id))
+      .sort((a, b) => b.y - a.y)[0];
     if (!anchor) return;
-    const hit = s.zombies.filter((z) => !z.isBoss && distance(z.x, z.y, anchor.x, anchor.y) <= radius);
+    const hit = s.zombies.filter(
+      (z) => !z.isBoss && !this.queuedSolverTargetCounts.has(z.id) && distance(z.x, z.y, anchor.x, anchor.y) <= radius,
+    );
     for (const z of hit) this.killZombie(z, true);
     s.shake = Math.max(s.shake, 16);
     this.addFloating(anchor.x, anchor.y, `${label} x${hit.length}`, '#ff2bd6', 22);
