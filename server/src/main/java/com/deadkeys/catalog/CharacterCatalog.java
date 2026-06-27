@@ -20,10 +20,16 @@ public final class CharacterCatalog {
       new Def("outfit-neon", OUTFIT, 2_600),
       new Def("outfit-warden", OUTFIT, 3_600),
       new Def("outfit-inferno", OUTFIT, 4_800),
+      // Exclusive Mythic — limited-time, cosmetic only (no gameplay effect).
+      new Def("outfit-godmode-revenant", OUTFIT, 66_666),
+      new Def("outfit-neon-plague-saint", OUTFIT, 66_666),
       new Def("accessory-none", ACCESSORY, 0),
       new Def("accessory-headphones", ACCESSORY, 600),
       new Def("accessory-goggles", ACCESSORY, 840),
-      new Def("accessory-crown", ACCESSORY, 2_000));
+      new Def("accessory-crown", ACCESSORY, 2_000),
+      // Exclusive Mythic — limited-time, cosmetic only (no gameplay effect).
+      new Def("accessory-blackout-shoulder-drone", ACCESSORY, 33_333),
+      new Def("accessory-toxic-angel-halo", ACCESSORY, 33_333));
 
   public static final List<String> DEFAULT_OWNED =
       List.of("outfit-field", "accessory-none");
