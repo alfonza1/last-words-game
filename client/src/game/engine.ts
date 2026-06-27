@@ -79,6 +79,8 @@ const FREEZE_MS = 3000;
 const INTER_WAVE_BREATHER = 2.4;
 const QUEUE_SIZE = 5; // words shown / typeable at once
 const SHOT_DAMAGE = 2; // base damage a completed word deals to the nearest zombie
+const SHOT_VISUAL_TTL = 0.18;
+const SOLVER_SHOT_SPACING = 0.25;
 const MEDKIT_HEAL = 35; // health restored by a med kit
 // Global match economy tuning. Difficulty and Scavenger multipliers still
 // apply on top, so Normal remains 1.25x and Nightmare remains 2x.
@@ -104,6 +106,8 @@ export class GameEngine {
   private puzzleStyle: PuzzleStyle = 'riddles';
   private solvedPuzzlePrompts = new Set<string>();
   private finitePuzzleGoal: number | null = null;
+  private queuedSolverShots: Array<{ x: number; y: number }> = [];
+  private solverShotCooldown = 0;
 
   constructor(opts: EngineOptions) {
     this.rng = mulberry32(opts.seed ?? hashSeed(`${Date.now()}-${Math.random()}`));
@@ -414,6 +418,7 @@ export class GameEngine {
       s.survivorShot.life -= dt;
       if (s.survivorShot.life <= 0) s.survivorShot = null;
     }
+    this.updateQueuedSolverShots(dt);
 
     this.updateFloating(dt);
     this.updateEvents(dt);
@@ -558,19 +563,22 @@ export class GameEngine {
   private fireShots(count: number) {
     const damage = SHOT_DAMAGE * damageMultiplier(this.state.powerups);
     const combo = this.state.combo;
+    const targets: Array<{ x: number; y: number }> = [];
     for (let i = 0; i < count; i++) {
-      if (!this.fireAtNearest(damage, combo)) break;
+      const target = this.fireAtNearest(damage, combo);
+      if (!target) break;
+      targets.push(target);
     }
+    this.scheduleShots(targets);
     this.prepareTargetForNextSubmission();
   }
 
-  /** Fire at the nearest zombie. Returns false if the field is empty. */
-  private fireAtNearest(damage: number, combo: number): boolean {
+  /** Fire at the nearest zombie. Returns the target point if the field is not empty. */
+  private fireAtNearest(damage: number, combo: number): { x: number; y: number } | null {
     const s = this.state;
     const target = [...s.zombies].sort((a, b) => b.y - a.y)[0];
-    if (!target) return false;
-    s.survivorShot = { x: target.x, y: target.y, life: 0.18, ttl: 0.18 };
-    s.shotsFired += 1;
+    if (!target) return null;
+    const shotTarget = { x: target.x, y: target.y };
     let dmg = damage;
     if (target.isBoss) dmg += bossDamageBonus(s.upgrades);
     target.hp -= dmg;
@@ -579,7 +587,47 @@ export class GameEngine {
       this.addFloating(target.x, target.y - target.size, `${Math.max(0, target.hp)}`, '#ff8fe6', 16);
     }
     if (target.hp <= 0) this.killZombie(target, false, combo);
-    return true;
+    return shotTarget;
+  }
+
+  private scheduleShots(targets: Array<{ x: number; y: number }>) {
+    if (targets.length === 0) return;
+
+    if (!this.state.riddleMode) {
+      for (const target of targets) this.emitShot(target);
+      return;
+    }
+
+    if (this.queuedSolverShots.length > 0 || this.solverShotCooldown > 0) {
+      this.queuedSolverShots.push(...targets);
+      return;
+    }
+
+    const [first, ...rest] = targets;
+    this.emitShot(first);
+    this.queuedSolverShots.push(...rest);
+    if (rest.length > 0) this.solverShotCooldown = SOLVER_SHOT_SPACING;
+  }
+
+  private updateQueuedSolverShots(dt: number) {
+    if (this.queuedSolverShots.length === 0) {
+      this.solverShotCooldown = 0;
+      return;
+    }
+
+    this.solverShotCooldown -= dt;
+    if (this.solverShotCooldown > 0.0001) return;
+
+    const target = this.queuedSolverShots.shift();
+    if (!target) return;
+    this.emitShot(target);
+    this.solverShotCooldown = this.queuedSolverShots.length > 0 ? SOLVER_SHOT_SPACING : 0;
+  }
+
+  private emitShot(target: { x: number; y: number }) {
+    const s = this.state;
+    s.survivorShot = { ...target, life: SHOT_VISUAL_TTL, ttl: SHOT_VISUAL_TTL };
+    s.shotsFired += 1;
   }
 
   /**

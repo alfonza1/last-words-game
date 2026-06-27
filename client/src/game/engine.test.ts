@@ -43,6 +43,12 @@ function firstWord(e: GameEngine): string {
   return e.state.wordQueue[0];
 }
 
+function advanceShotSpacing(e: GameEngine, shots = 1) {
+  for (let shot = 0; shot < shots; shot++) {
+    for (let tick = 0; tick < 5; tick++) e.update(0.05);
+  }
+}
+
 describe('word queue is independent of zombies', () => {
   it('starts with five distinct words', () => {
     const e = makeEngine();
@@ -175,9 +181,19 @@ describe('riddle mode', () => {
     e.state.zombies = Array.from({ length: 12 }, () => zombie({ y: 400 }));
     e.handleInput(firstWord(e) + ' '); // type the answer
     expect(e.state.kills).toBe(8); // riddleKills for normal
+    expect(e.state.shotsFired).toBe(1);
     expect(e.state.zombies).toHaveLength(4);
     expect(e.state.input).toBe('');
     expect(e.state.riddlePrompt).not.toBe(prompt); // next riddle queued
+
+    advanceShotSpacing(e);
+    expect(e.state.shotsFired).toBe(2);
+
+    advanceShotSpacing(e, 6);
+    expect(e.state.shotsFired).toBe(8);
+
+    advanceShotSpacing(e);
+    expect(e.state.shotsFired).toBe(8);
   });
 
   it('keeps a wrong solver answer until it is submitted', () => {
