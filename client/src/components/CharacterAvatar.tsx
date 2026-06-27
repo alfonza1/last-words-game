@@ -114,12 +114,12 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
     return (
       <g>
         <path d="M91 61 Q99 56 106 61 M116 62 Q122 56 130 58" fill="none" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
-        <path d="M95 68 Q100 66 105 68 M117 69 Q123 67 128 69" fill="none" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M95 68 Q100 66 105 68 M117 69 Q123 67 128 69" fill="none" stroke={ink} strokeWidth="2.4" strokeLinecap="round" opacity=".65" />
         <circle cx="101" cy="68" r="1.7" fill={ink} />
-        <circle cx="123" cy="69" r="1.7" fill={ink} />
-        <path d="M106 52 L113 44 L111 55 L118 50" fill="none" stroke="#6d211c" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M106.5 52 L113 44.5 L111.5 54.5 L117.5 50" fill="none" stroke="#d28a78" strokeWidth="1.05" strokeLinecap="round" strokeLinejoin="round" opacity=".78" />
-        <path d="M109 48 L106 46 M114 52 L119 55" fill="none" stroke="#6d211c" strokeWidth="1.15" strokeLinecap="round" opacity=".5" />
+        <path d="M118 53 C124 61 124 73 121 82" fill="none" stroke="#5e1f1a" strokeWidth="3.2" strokeLinecap="round" />
+        <path d="M118.5 53.5 C123.5 61.5 123.5 72.5 121.5 81.5" fill="none" stroke="#d08a78" strokeWidth="1.1" strokeLinecap="round" opacity=".76" />
+        <path d="M116 61 L121 58 M122 72 L128 75" fill="none" stroke="#5e1f1a" strokeWidth="1.15" strokeLinecap="round" opacity=".48" />
+        <path d="M117 69 Q123 66 129 69" fill="none" stroke={ink} strokeWidth="2.2" strokeLinecap="round" />
         <path d="M99 84 Q112 91 124 80" fill="none" stroke={lips} strokeWidth="2.8" strokeLinecap="round" />
         <path d="M111 87 Q117 87 122 82" fill="none" stroke="#f1d8cb" strokeWidth="1.35" strokeLinecap="round" opacity=".75" />
       </g>
