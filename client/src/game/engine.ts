@@ -81,6 +81,7 @@ const QUEUE_SIZE = 5; // words shown / typeable at once
 const SHOT_DAMAGE = 2; // base damage a completed word deals to the nearest zombie
 const SHOT_VISUAL_TTL = 0.18;
 const SOLVER_SHOT_SPACING = 0.25;
+const GRENADE_RADIUS = 260;
 const MEDKIT_HEAL = 35; // health restored by a med kit
 // Global match economy tuning. Difficulty and Scavenger multipliers still
 // apply on top, so Normal remains 1.25x and Nightmare remains 2x.
@@ -783,7 +784,7 @@ export class GameEngine {
     const s = this.state;
     if (cmd === 'grenade' && s.powerups.consumables.grenade > 0) {
       s.powerups.consumables.grenade -= 1;
-      this.clearNearestCluster(150, 'GRENADE');
+      this.clearNearestCluster(GRENADE_RADIUS, 'GRENADE');
     } else if (cmd === 'freeze' && s.powerups.consumables.freeze > 0) {
       s.powerups.consumables.freeze -= 1;
       s.powerups.freezeMs = FREEZE_MS;

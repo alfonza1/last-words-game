@@ -362,10 +362,14 @@ describe('powerups (consumables)', () => {
   it('consumes a grenade charge and clears a cluster', () => {
     const e = makeEngine();
     e.state.powerups.consumables.grenade = 1;
-    e.state.zombies = [zombie({ y: 300 }), zombie({ y: 305 }), zombie({ y: 310 })];
+    const anchor = zombie({ y: 500 });
+    const oldRadiusMiss = zombie({ y: 330 });
+    const wideBlastHit = zombie({ y: 250 });
+    const outOfRange = zombie({ y: 220 });
+    e.state.zombies = [anchor, oldRadiusMiss, wideBlastHit, outOfRange];
     e.handleInput('grenade ');
     expect(e.state.powerups.consumables.grenade).toBe(0);
-    expect(e.state.zombies.length).toBeLessThan(3);
+    expect(e.state.zombies).toEqual([outOfRange]);
   });
 
   it('ignores a powerup word when none are owned', () => {
