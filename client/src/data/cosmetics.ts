@@ -190,15 +190,6 @@ export const COSMETICS: CosmeticDef[] = [
     outfitReactive: true,
   },
   {
-    key: 'accessory-mask',
-    slot: 'accessory',
-    name: 'Crawler Head Charm',
-    description: 'A shrunken crawler head wired to the collar as a warning.',
-    cost: 1200,
-    rarity: 'epic',
-    outfitReactive: true,
-  },
-  {
     key: 'accessory-crown',
     slot: 'accessory',
     name: 'Static Crown',

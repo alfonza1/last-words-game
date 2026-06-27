@@ -260,19 +260,6 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
       </>
     );
   }
-  if (type === 'accessory-mask') {
-    return (
-      <g>
-        <path d="M92 97 Q110 113 128 97" fill="none" stroke="#18100d" strokeWidth="3" strokeLinecap="round" />
-        <ellipse cx="110" cy="117" rx="9" ry="11" fill="#6e8a59" stroke="#121a10" strokeWidth="1.5" />
-        <path d="M103 115 Q106 112 109 115 M112 115 Q115 112 118 115" fill="none" stroke="#152014" strokeWidth="1.3" strokeLinecap="round" />
-        <circle cx="106" cy="116" r="1.2" fill={glow} opacity=".9" />
-        <circle cx="115" cy="116" r="1.2" fill={glow} opacity=".9" />
-        <path d="M105 123 Q110 126 116 122" fill="none" stroke="#24321e" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M101 111 L97 107 M119 111 L123 107" stroke="#4d6642" strokeWidth="1.3" strokeLinecap="round" />
-      </g>
-    );
-  }
   if (type === 'accessory-crown') {
     return (
       <g fill="none" stroke={glow} strokeWidth="3" style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
