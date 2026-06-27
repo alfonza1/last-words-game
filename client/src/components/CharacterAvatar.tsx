@@ -121,8 +121,10 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
         <path d="M120.35 57.5 L122.45 67 L120.85 77.4" fill="none" stroke="#d08a78" strokeWidth=".78" strokeLinecap="round" strokeLinejoin="round" opacity=".78" />
         <path d="M118.5 62 L121.5 60 M121.5 73 L125 75" fill="none" stroke="#5e1f1a" strokeWidth=".8" strokeLinecap="round" opacity=".42" />
         <path d="M117 69 Q123 66 129 69" fill="none" stroke={lips} strokeWidth="2.2" strokeLinecap="round" opacity=".9" />
-        <path d="M99 84 Q112 91 124 80" fill="none" stroke={lips} strokeWidth="2.8" strokeLinecap="round" />
-        <path d="M111 87 Q117 87 122 82" fill="none" stroke="#f1d8cb" strokeWidth="1.35" strokeLinecap="round" opacity=".75" />
+        <path d="M98 83 Q106 85 115 84 Q121 83 125 79" fill="none" stroke={lips} strokeWidth="2.45" strokeLinecap="round" />
+        <path d="M101 82 Q109 80.5 117 81.5 Q122 81.8 125 79" fill="none" stroke={lips} strokeWidth="1.15" strokeLinecap="round" opacity=".42" />
+        <path d="M104 86 Q112 88.5 121 83.5" fill="none" stroke="#f1d8cb" strokeWidth="1.1" strokeLinecap="round" opacity=".45" />
+        <path d="M124 79 Q127 78.5 129 76.5 M126 82 Q128 82 129.5 83" fill="none" stroke={lips} strokeWidth=".95" strokeLinecap="round" opacity=".55" />
       </g>
     );
   }
