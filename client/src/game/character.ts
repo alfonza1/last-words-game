@@ -108,7 +108,7 @@ export function drawSurvivor(
   ctx.save();
   ctx.translate(5 * scale, 0);
   drawHair(ctx, character.hair, hair, glow, scale);
-  drawAccessory(ctx, character.accessory, glow, scale);
+  drawAccessory(ctx, character.accessory, glow, scale, time);
   ctx.restore();
   drawCombatFace(ctx, character.expression, glow, lips, scale);
 
@@ -391,10 +391,6 @@ function drawOutfitDetails(
     ctx.lineTo(2 * scale, 3 * scale);
     ctx.lineTo(17 * scale, -13 * scale);
     ctx.stroke();
-  } else if (outfit === 'outfit-hazmat') {
-    ctx.setLineDash([8 * scale, 3 * scale]);
-    ctx.strokeRect(-17 * scale, -14 * scale, 35 * scale, 17 * scale);
-    ctx.setLineDash([]);
   } else if (outfit === 'outfit-inferno') {
     ctx.beginPath();
     ctx.arc(2 * scale, -6 * scale, 5 * scale, 0, Math.PI * 2);
@@ -649,7 +645,7 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, a
   ctx.restore();
 }
 
-function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number) {
+function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number, time: number) {
   if (type === 'accessory-headphones') {
     ctx.strokeStyle = glow;
     ctx.lineWidth = 3 * scale;
@@ -680,6 +676,8 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.shadowBlur = 0;
   } else if (type === 'accessory-blackout-shoulder-drone') {
     ctx.save();
+    // Drifts in a small orbit around the survivor.
+    ctx.translate(Math.cos(time * 0.0028) * 3 * scale, Math.sin(time * 0.0028) * 2.2 * scale - scale);
     // Angular black drone shell hovering by the upper back/head.
     ctx.fillStyle = '#0a0d12';
     ctx.strokeStyle = glow;
@@ -714,16 +712,19 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.restore();
   } else if (type === 'accessory-toxic-angel-halo') {
     ctx.save();
-    // Cracked, segmented halo above the head.
+    // Gentle bounce; segmented dashes travel for a spinning look.
+    ctx.translate(0, Math.sin(time * 0.004) * 1.6 * scale);
     ctx.strokeStyle = glow;
     ctx.shadowColor = glow;
     ctx.shadowBlur = 7 * scale;
     ctx.lineWidth = 2.2 * scale;
     ctx.setLineDash([5 * scale, 3 * scale]);
+    ctx.lineDashOffset = (time * 0.03) % 64;
     ctx.beginPath();
     ctx.ellipse(24 * scale, -42 * scale, 15 * scale, 5 * scale, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
+    ctx.lineDashOffset = 0;
     // Radioactive particles / mist.
     ctx.shadowBlur = 4 * scale;
     ctx.fillStyle = glow;

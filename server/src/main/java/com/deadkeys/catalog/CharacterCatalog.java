@@ -16,7 +16,6 @@ public final class CharacterCatalog {
       new Def("outfit-field", OUTFIT, 0),
       new Def("outfit-hoodie", OUTFIT, 800),
       new Def("outfit-raider", OUTFIT, 1_500),
-      new Def("outfit-hazmat", OUTFIT, 2_000),
       new Def("outfit-neon", OUTFIT, 2_600),
       new Def("outfit-warden", OUTFIT, 3_600),
       new Def("outfit-inferno", OUTFIT, 4_800),

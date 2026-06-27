@@ -71,8 +71,9 @@ export function Upgrades({
     const affordable = coins >= item.cost;
     const preview: CharacterLoadout = { ...DEFAULT_CHARACTER, [item.slot]: item.key };
     const exclusive = item.rarity === 'exclusive-mythic';
+    // Exclusive Mythic gets a purple haze; other rarities keep their accent border.
     const rarityColor = exclusive
-      ? 'border-neon-cyan/70 shadow-[0_0_26px_rgba(0,240,255,0.30)] ring-1 ring-neon-pink/40'
+      ? 'border-[#a855f7]/70 shadow-[0_0_26px_rgba(168,85,247,0.45)] ring-1 ring-[#a855f7]/40'
       : item.rarity === 'legendary'
         ? 'border-neon-amber/60'
         : item.rarity === 'epic'
@@ -80,16 +81,13 @@ export function Upgrades({
           : item.rarity === 'rare'
             ? 'border-neon-cyan/45'
             : 'border-white/20';
-    const rarityLabel = exclusive ? 'Exclusive Mythic' : item.rarity;
     return (
       <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-3 ${rarityColor}`}>
-        <div
-          className={`absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest ${
-            exclusive ? 'text-neon-cyan' : 'text-white/45'
-          }`}
-        >
-          {rarityLabel}
-        </div>
+        {!exclusive && (
+          <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/45">
+            {item.rarity}
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <div className="h-28 w-24 flex-none overflow-hidden rounded-lg border border-white/15 bg-black/35">
             <CharacterAvatar character={preview} armed={false} className="h-32 w-full -translate-y-1" />
@@ -105,10 +103,8 @@ export function Upgrades({
           </div>
         </div>
         {exclusive && (
-          <div className="mt-2 rounded-lg border border-neon-pink/40 bg-gradient-to-r from-neon-cyan/10 via-black/30 to-neon-pink/10 px-2 py-1.5 text-[8px] font-bold uppercase tracking-[0.16em]">
-            <div className="text-neon-cyan">★ Exclusive Mythic · Limited-time cosmetic</div>
-            <div className="mt-0.5 text-white/55">Will never return to the shop once gone</div>
-            <div className="text-white/45">Cosmetic only — no gameplay advantage</div>
+          <div className="mt-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#c084fc]">
+            ★ Exclusive Mythic · <span className="text-white/55">Limited-time cosmetic</span>
           </div>
         )}
         <button
@@ -183,8 +179,8 @@ export function Upgrades({
         ))}
       </div>
 
-      <h2 className="mt-1 text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
-      <p className="-mt-2 text-xs text-white/55">Clothes give no advantage — cosmetic only.</p>
+      <p className="mt-1 text-xs text-white/55">Cosmetics give no competitive advantage.</p>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
 
       <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Outfits</h3>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('outfit').map(gearCard)}</div>

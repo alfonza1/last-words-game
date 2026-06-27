@@ -329,7 +329,7 @@ function CosmeticPicker({
                 active
                   ? 'border-neon-cyan bg-neon-cyan/10 shadow-[0_0_16px_rgba(0,240,255,0.14)]'
                   : exclusive
-                    ? 'border-neon-pink/45 bg-gradient-to-br from-neon-cyan/10 to-neon-pink/10 hover:border-neon-pink'
+                    ? 'border-[#a855f7]/50 bg-[#a855f7]/10 shadow-[0_0_16px_rgba(168,85,247,0.28)] hover:border-[#c084fc]'
                     : 'border-white/20 bg-black/35 hover:border-neon-cyan/60'
               }`}
             >
@@ -341,8 +341,8 @@ function CosmeticPicker({
               </div>
               <p className="mt-0.5 text-[9px] leading-snug text-white/60">{item.description}</p>
               {exclusive && (
-                <span className="mr-1 mt-1 inline-block rounded border border-neon-pink/50 bg-neon-pink/10 px-1 py-0.5 text-[7px] font-black uppercase tracking-widest text-neon-pink">
-                  ★ Exclusive Mythic
+                <span className="mr-1 mt-1 inline-block rounded border border-[#a855f7]/60 bg-[#a855f7]/10 px-1 py-0.5 text-[7px] font-black uppercase tracking-widest text-[#c084fc]">
+                  ★ Exclusive Mythic · Limited-time
                 </span>
               )}
               {item.outfitReactive && (

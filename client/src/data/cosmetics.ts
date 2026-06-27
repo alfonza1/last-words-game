@@ -132,14 +132,6 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'rare',
   },
   {
-    key: 'outfit-hazmat',
-    slot: 'outfit',
-    name: 'Containment Tech',
-    description: 'Area 67 response gear with sealed neon seams.',
-    cost: 2000,
-    rarity: 'rare',
-  },
-  {
     key: 'outfit-neon',
     slot: 'outfit',
     name: 'Dead City Runner',
@@ -239,7 +231,6 @@ export const OUTFIT_PALETTES: Record<string, OutfitPalette> = {
   'outfit-field': { primary: '#384832', secondary: '#1d2920', trim: '#8fa26f' },
   'outfit-hoodie': { primary: '#151c22', secondary: '#080b0e', trim: '#39ff14', glow: '#39ff14' },
   'outfit-raider': { primary: '#5b2e23', secondary: '#24201d', trim: '#ffb300' },
-  'outfit-hazmat': { primary: '#d3a72f', secondary: '#30372e', trim: '#9dff4f', glow: '#9dff4f' },
   'outfit-neon': { primary: '#13243b', secondary: '#11101f', trim: '#00f0ff', glow: '#ff2bd6' },
   'outfit-warden': { primary: '#272335', secondary: '#0c0b11', trim: '#a78bfa', glow: '#a78bfa' },
   'outfit-inferno': { primary: '#260806', secondary: '#080101', trim: '#ff3b12', glow: '#ff3b12' },

@@ -59,9 +59,6 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
           <path d="M150 119 L129 101 L120 129 L142 138Z" fill="#504d48" stroke="#ffb300" />
         </>
       )}
-      {character.outfit === 'outfit-hazmat' && (
-        <path d="M81 111 Q110 95 139 111 V184 H81Z" fill="none" stroke="#9dff4f" strokeWidth="3" strokeDasharray="18 5" />
-      )}
       {character.outfit === 'outfit-neon' && (
         <>
           <path d="M82 111 L99 144 L91 190" fill="none" stroke="#00f0ff" strokeWidth="3" />
@@ -76,6 +73,12 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       )}
       {character.outfit === 'outfit-godmode-revenant' && (
         <>
+          {/* Split-tail admin longcoat — distinct silhouette below the hem */}
+          <path d="M92 188 L78 244 L104 224 L110 200 Z" fill="#07070d" stroke="#f8d66d" strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M128 188 L142 244 L116 224 L110 200 Z" fill="#0b0c16" stroke="#f8d66d" strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M104 224 L110 206 L116 224" fill="none" stroke="#00f0ff" strokeWidth="1.4" opacity=".7" />
+          {/* Cyan-lit armored boots */}
+          <path d="M70 247 H102 M120 247 H150" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" opacity=".6" />
           {/* Subtle preview-only glitch aura */}
           <g opacity=".55">
             <rect x="70" y="132" width="16" height="3" fill="#00f0ff" opacity=".4" />
@@ -101,16 +104,21 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       )}
       {character.outfit === 'outfit-neon-plague-saint' && (
         <>
+          {/* Flared sealed plague robe — covers the legs for a robed silhouette */}
+          <path d="M86 150 L60 250 L160 250 L134 150 Q110 164 86 150 Z" fill="url(#avatar-coat)" stroke="#9dff4f" strokeWidth="2" />
+          <path d="M110 158 V248" stroke="#9dff4f" strokeOpacity=".45" strokeWidth="1.4" />
+          {/* Pointed plague-saint hood framing the head */}
+          <path d="M80 66 Q75 30 110 24 Q145 30 140 66 L131 58 Q110 42 89 58 Z" fill={outfit.secondary} stroke="#9dff4f" strokeWidth="2" />
+          {/* Glowing toxic seams running down the robe */}
+          <path d="M96 120 Q92 185 82 244 M124 120 Q128 185 138 244" fill="none" stroke="#00ff99" strokeWidth="2" opacity=".8" style={{ filter: 'drop-shadow(0 0 4px #00ff99)' }} />
           {/* Preview-only toxic mist aura */}
           <g fill="#39ff14">
-            <circle cx="82" cy="150" r="2.2" opacity=".5" />
-            <circle cx="140" cy="140" r="2.4" opacity=".45" />
-            <circle cx="78" cy="172" r="1.6" opacity=".4" />
+            <circle cx="74" cy="150" r="2.2" opacity=".5" />
+            <circle cx="146" cy="140" r="2.4" opacity=".45" />
+            <circle cx="70" cy="186" r="1.6" opacity=".4" />
           </g>
-          {/* Plague-saint hood / sealed collar */}
+          {/* Sealed saint collar */}
           <path d="M90 112 Q110 95 130 112 L126 122 Q110 107 94 122 Z" fill={outfit.secondary} stroke="#9dff4f" strokeWidth="2" />
-          {/* Glowing toxic robe seams */}
-          <path d="M94 120 L92 192 M126 120 L128 192" stroke="#00ff99" strokeWidth="2" opacity=".8" style={{ filter: 'drop-shadow(0 0 4px #00ff99)' }} />
           {/* Chest plague-core vial */}
           <g style={{ filter: 'drop-shadow(0 0 6px #39ff14)' }}>
             <rect x="102" y="127" width="16" height="24" rx="6" fill="#04140b" stroke="#9dff4f" strokeWidth="2" />
@@ -118,13 +126,13 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
             <path d="M105 132 H115" stroke="#9dff4f" strokeWidth="1.4" strokeLinecap="round" />
             <circle cx="110" cy="141" r="1.7" fill="#f8ffe8" />
           </g>
-          {/* Neon holy sigil — cross within a ring */}
+          {/* Neon holy sigil — cross within a ring, on the robe */}
           <g fill="none" stroke="#9dff4f" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 4px #39ff14)' }}>
-            <circle cx="110" cy="172" r="9" />
-            <path d="M110 165 V179 M103 172 H117" strokeLinecap="round" />
+            <circle cx="110" cy="180" r="9" />
+            <path d="M110 173 V187 M103 180 H117" strokeLinecap="round" />
           </g>
           {/* Sealed robe panels */}
-          <path d="M82 184 H99 M121 184 H138" stroke="#9dff4f" strokeWidth="1.4" strokeDasharray="4 3" opacity=".7" />
+          <path d="M84 206 H100 M120 206 H136" stroke="#9dff4f" strokeWidth="1.4" strokeDasharray="4 3" opacity=".7" />
         </>
       )}
 
@@ -133,6 +141,24 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       <path d="M143 116 Q165 136 154 174" fill="none" stroke={outfit.primary} strokeWidth="19" strokeLinecap="round" />
       <circle cx="64" cy="176" r="8" fill={skin} />
       <circle cx="154" cy="176" r="8" fill={skin} />
+
+      {/* Outfit-specific hands drawn over the bare skin */}
+      {character.outfit === 'outfit-godmode-revenant' && (
+        <g stroke="#f8d66d" strokeWidth="1.3">
+          <path d="M56 167 L73 167 L70 185 L59 185 Z" fill="#111827" />
+          <path d="M147 167 L164 167 L161 185 L150 185 Z" fill="#111827" />
+          <circle cx="64" cy="176" r="2.6" fill="#00f0ff" stroke="none" style={{ filter: 'drop-shadow(0 0 4px #00f0ff)' }} />
+          <circle cx="154" cy="176" r="2.6" fill="#00f0ff" stroke="none" style={{ filter: 'drop-shadow(0 0 4px #00f0ff)' }} />
+        </g>
+      )}
+      {character.outfit === 'outfit-neon-plague-saint' && (
+        <g stroke="#9dff4f" strokeWidth="1.3">
+          <path d="M56 168 Q64 164 72 168 L70 185 L58 185 Z" fill="#0d1a10" />
+          <path d="M148 168 Q156 164 164 168 L162 185 L150 185 Z" fill="#0d1a10" />
+          <circle cx="64" cy="177" r="2.4" fill="#39ff14" stroke="none" style={{ filter: 'drop-shadow(0 0 4px #39ff14)' }} />
+          <circle cx="154" cy="177" r="2.4" fill="#39ff14" stroke="none" style={{ filter: 'drop-shadow(0 0 4px #39ff14)' }} />
+        </g>
+      )}
 
       {/* Neck + head */}
       <rect x="100" y="83" width="20" height="24" rx="8" fill={skin} />
@@ -325,6 +351,8 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
     // Hovers near the right shoulder/back, not above the head.
     return (
       <g style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
+        {/* Drifts in a small orbit around the survivor */}
+        <animateTransform attributeName="transform" type="translate" values="0 0; 3 -2; 1 -4; -3 -2; 0 0" dur="3.2s" repeatCount="indefinite" />
         {/* Angular black drone shell */}
         <path d="M150 92 L168 85 L177 96 L170 109 L152 110 Z" fill="#0a0d12" stroke={glow} strokeWidth="2" strokeLinejoin="round" />
         {/* Glowing scan lens */}
@@ -343,8 +371,12 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
     // Cracked, segmented saint-ring above the head — never a clean ring.
     return (
       <g style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
-        {/* Cracked segmented halo */}
-        <ellipse cx="110" cy="30" rx="31" ry="9" fill="none" stroke={glow} strokeWidth="3.4" strokeDasharray="13 5 8 6 11 5" opacity=".95" />
+        {/* Gentle vertical bounce */}
+        <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2.6; 0 0" dur="1.9s" repeatCount="indefinite" />
+        {/* Cracked segmented halo — dashes travel for a spinning look */}
+        <ellipse cx="110" cy="30" rx="31" ry="9" fill="none" stroke={glow} strokeWidth="3.4" strokeDasharray="13 5 8 6 11 5" opacity=".95">
+          <animate attributeName="stroke-dashoffset" from="0" to="48" dur="2.6s" repeatCount="indefinite" />
+        </ellipse>
         {/* Inner holy shimmer */}
         <ellipse cx="110" cy="30" rx="31" ry="9" fill="none" stroke="#f8ffe8" strokeWidth="1" strokeDasharray="9 10" opacity=".5" />
         {/* Broken saint-ring pieces drifting free */}
