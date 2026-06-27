@@ -54,6 +54,7 @@ export const HAIR_STYLES = [
   { key: 'undercut', label: 'Undercut' },
   { key: 'mohawk', label: 'Mohawk' },
   { key: 'ponytail', label: 'Dread Locs' },
+  { key: 'signal-braids', label: 'Signal Braids', outfitReactive: true },
   { key: 'bald', label: 'Bald' },
 ] as const;
 

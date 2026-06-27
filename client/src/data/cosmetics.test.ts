@@ -17,6 +17,7 @@ describe('default character', () => {
   it('uses the updated survivor cosmetic names', () => {
     expect(HAIR_STYLES.find((style) => style.key === 'undercut')?.label).toBe('Undercut');
     expect(HAIR_STYLES.find((style) => style.key === 'ponytail')?.label).toBe('Dread Locs');
+    expect(HAIR_STYLES.find((style) => style.key === 'signal-braids')?.outfitReactive).toBe(true);
     expect(EXPRESSIONS.find((expression) => expression.key === 'grave-grin')?.label).toBe('Scarred Smirk');
   });
 
