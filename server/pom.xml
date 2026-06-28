@@ -104,7 +104,7 @@
             <extensions>true</extensions>
             <configuration>
               <org>dead-keys</org>
-              <project>java-spring-boot</project>
+              <project>dead-keys-api</project>
               <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
               <!-- The Sentry SDK is declared explicitly above; don't let the
                    plugin auto-add (and potentially version-bump) it. -->
