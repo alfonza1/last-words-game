@@ -105,6 +105,10 @@ jobs:
           service: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
           region: ${{ vars.GCP_REGION }}
           image: ${{ env.IMAGE }}
+          # NOTE: the --update-secrets entry below is a Secret Manager *reference*
+          # (secret name : version), NOT the database password. Cloud Run resolves
+          # the real value from Secret Manager at deploy time; the password is never
+          # stored in this repo.
           flags: >-
             --allow-unauthenticated
             --cpu=1
