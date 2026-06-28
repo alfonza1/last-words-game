@@ -409,11 +409,15 @@ public class ProfileService {
     store.save(profile);
   }
 
-  /** Apply the one-time owner coin grant if this account matches the configured name. */
+  /**
+   * Apply the one-time owner coin grant. Matches the configured name, or grants
+   * to every account once when DEADKEYS_GRANT_USER is "*" (handy for local/dev
+   * testing where you don't want to match an exact username).
+   */
   public void maybeGrant(Profile profile) {
     if (profile.granted) return;
     if (grantUser == null || grantUser.isBlank()) return;
-    if (!grantUser.equalsIgnoreCase(profile.name)) return;
+    if (!"*".equals(grantUser) && !grantUser.equalsIgnoreCase(profile.name)) return;
     profile.stats.totalCoins += grantCoins;
     profile.granted = true;
   }
