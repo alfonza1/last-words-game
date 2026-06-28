@@ -100,13 +100,13 @@ export function Upgrades({
                 ◈ Outfit-reactive
               </span>
             )}
+            {exclusive && (
+              <div className="mt-1.5 text-center text-[9px] font-black uppercase tracking-[0.18em] text-[#c084fc]">
+                Exclusive Mythic ·
+              </div>
+            )}
           </div>
         </div>
-        {exclusive && (
-          <div className="mt-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#c084fc]">
-            ★ Exclusive Mythic · <span className="text-white/55">Limited-time cosmetic</span>
-          </div>
-        )}
         <button
           disabled={isOwned || !affordable}
           onClick={() => setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })}
