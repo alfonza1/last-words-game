@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import type { CharacterLoadout, Difficulty, GameMode, GameState, PuzzleStyle, Settings, Upgrades } from '../types';
 import { GameEngine } from '../game/engine';
 import { drawGame } from '../game/render';
@@ -6,6 +6,7 @@ import { getMap } from '../data/maps';
 import { POWERUP_DEFS } from '../data/powerups';
 import { audio } from '../lib/audio';
 import { useGameLoop } from '../hooks/useGameLoop';
+import { useSpeechAnswer, type SpeechAnswerState } from '../mobile/speech';
 import { HUD } from './HUD';
 import { TypeBar } from './TypeBar';
 
@@ -43,6 +44,8 @@ interface Props {
   onMusicToggle: (on: boolean) => void;
   onMusicVolume: (v: number) => void;
   onSfxVolume: (v: number) => void;
+  mobileSpeechExperience?: boolean;
+  seed?: number;
 }
 
 export function GameScreen({
@@ -62,6 +65,8 @@ export function GameScreen({
   onMusicToggle,
   onMusicVolume,
   onSfxVolume,
+  mobileSpeechExperience = false,
+  seed,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -90,6 +95,7 @@ export function GameScreen({
       puzzleStyle,
       width: 960,
       height: 600,
+      seed,
     });
     prevConsumablesRef.current = { ...engineRef.current.state.powerups.consumables };
   }
@@ -126,8 +132,8 @@ export function GameScreen({
   }, [engine]);
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (!mobileSpeechExperience) inputRef.current?.focus();
+  }, [mobileSpeechExperience]);
 
   // Typing Defense gets a safe pause. Puzzle modes only open the menu; their
   // horde keeps advancing so the player cannot pause indefinitely to solve.
@@ -150,7 +156,7 @@ export function GameScreen({
       engine.resume();
       audio.resume();
     }
-    inputRef.current?.focus();
+    if (!mobileSpeechExperience) inputRef.current?.focus();
   };
 
   useEffect(() => {
@@ -250,10 +256,28 @@ export function GameScreen({
   const wrong = engine.inputWrong;
   const waveBreak = s.wave > 0 && s.betweenWaves > 0;
   const acceptingInput = s.status === 'playing' && !waveBreak;
+  const mobileSpeechSolver = mobileSpeechExperience && s.riddleMode;
+
+  const submitSpeechAnswer = useCallback(
+    (answer: string): boolean => {
+      if (!acceptingInput || paused || !engine.state.riddleMode) return false;
+      const correctBefore = engine.state.correctWords;
+      const mistakesBefore = engine.state.mistakes;
+      engine.handleInput(`${answer} `);
+      setTick((t) => t + 1);
+      return engine.state.correctWords > correctBefore && engine.state.mistakes === mistakesBefore;
+    },
+    [acceptingInput, engine, paused],
+  );
+
+  const speech = useSpeechAnswer({
+    enabled: mobileSpeechSolver && acceptingInput && !paused,
+    onTranscript: submitSpeechAnswer,
+  });
 
   useEffect(() => {
-    if (acceptingInput && !paused) inputRef.current?.focus();
-  }, [acceptingInput, paused]);
+    if (acceptingInput && !paused && !mobileSpeechSolver) inputRef.current?.focus();
+  }, [acceptingInput, paused, mobileSpeechSolver]);
 
   return (
     <div className="crt relative h-full w-full overflow-hidden">
@@ -266,7 +290,11 @@ export function GameScreen({
       {/* Words to type — pinned at the TOP; zombies spawn below this panel.
           Status events (WAVE CLEARED, etc.) sit UNDER the box so it never hides them. */}
       {acceptingInput && (
-        <div className="pointer-events-none absolute inset-x-0 top-14 z-30 flex flex-col items-center gap-2 px-4">
+        <div
+          className={`pointer-events-none absolute inset-x-0 z-30 flex flex-col items-center gap-2 px-4 ${
+            mobileSpeechSolver ? 'top-[calc(env(safe-area-inset-top)+3.5rem)]' : 'top-14'
+          }`}
+        >
           <div className="rounded-2xl border border-white/10 bg-black/55 px-5 py-2.5 backdrop-blur-sm">
             {s.riddleMode ? (
               <RiddlePrompt prompt={s.riddlePrompt} wrong={wrong} />
@@ -282,9 +310,31 @@ export function GameScreen({
 
       {/* Input + powerups, at the bottom. */}
       {acceptingInput && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 p-4">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <PowerupBar consumables={s.powerups.consumables} />
-          <div
+          {mobileSpeechSolver ? (
+            <SpeechAnswerPanel
+              state={speech.state}
+              transcript={speech.transcript}
+              supported={speech.supported}
+              disabled={!acceptingInput || paused}
+              onListen={speech.startListening}
+              inputRef={inputRef}
+              input={s.input}
+              onInput={(value) => {
+                if (!acceptingInput || paused) return;
+                engine.handleInput(value);
+                setTick((t) => t + 1);
+              }}
+              onSubmit={() => {
+                if (!acceptingInput || paused) return;
+                engine.handleInput(`${engine.state.input} `);
+                setTick((t) => t + 1);
+              }}
+            />
+          ) : (
+            <>
+              <div
             className={`pointer-events-auto flex w-full max-w-xl items-center gap-2 rounded-lg border bg-black/70 px-3 py-2 transition-colors ${
               wrong ? 'border-neon-red shadow-[0_0_12px_rgba(255,56,96,0.6)]' : 'border-neon-green/40 shadow-neon'
             }`}
@@ -323,6 +373,8 @@ export function GameScreen({
             <span>{riddleMode ? 'SPACE / ENTER = submit answer (volley fire)' : 'SPACE = fire (kills nearest)'}</span>
             <span>Esc / ⏸ = pause</span>
           </div>
+            </>
+          )}
         </div>
       )}
 
@@ -427,7 +479,105 @@ function WaveBreakOverlay({ wave, seconds }: { wave: number; seconds: number }) 
   );
 }
 
-/** Puzzle prompt panel — shows the prompt (not the answer). */
+function SpeechAnswerPanel({
+  state,
+  transcript,
+  supported,
+  disabled,
+  onListen,
+  inputRef,
+  input,
+  onInput,
+  onSubmit,
+}: {
+  state: SpeechAnswerState;
+  transcript: string;
+  supported: boolean;
+  disabled: boolean;
+  onListen: () => Promise<void>;
+  inputRef: RefObject<HTMLInputElement>;
+  input: string;
+  onInput: (value: string) => void;
+  onSubmit: () => void;
+}) {
+  const fallback = state === 'unsupported' || state === 'permission-denied';
+  const active = state === 'listening' || state === 'processing';
+  const label =
+    state === 'listening'
+      ? 'LISTEN'
+      : state === 'processing'
+        ? 'CHECK'
+        : state === 'matched'
+          ? 'HIT'
+          : state === 'no-match'
+            ? 'MISS'
+            : fallback
+              ? 'TYPE'
+              : 'MIC';
+  const line =
+    state === 'listening'
+      ? transcript || 'Say the answer'
+      : state === 'matched'
+        ? 'Answer locked'
+        : state === 'no-match'
+          ? transcript || 'Try again'
+          : fallback
+            ? 'Speech unavailable'
+            : transcript || 'Tap mic to answer';
+
+  return (
+    <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-neon-cyan/35 bg-black/75 p-3 shadow-[0_0_22px_rgba(0,240,255,0.2)] backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => void onListen()}
+          disabled={disabled || !supported || active}
+          aria-label="Answer by voice"
+          className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full border text-xs font-black tracking-widest transition ${
+            state === 'matched'
+              ? 'border-neon-green bg-neon-green/15 text-neon-green shadow-neon'
+              : state === 'no-match' || state === 'permission-denied' || state === 'unsupported'
+                ? 'border-neon-red bg-neon-red/10 text-neon-red'
+                : active
+                  ? 'border-neon-amber bg-neon-amber/15 text-neon-amber'
+                  : 'border-neon-cyan bg-neon-cyan/10 text-neon-cyan hover:bg-neon-cyan/20'
+          } disabled:opacity-60`}
+        >
+          {label}
+        </button>
+        <div className="min-w-0 flex-1 text-left">
+          <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/35">Voice Answer</div>
+          <div className="mt-1 truncate text-sm font-bold text-white/85">{line}</div>
+        </div>
+      </div>
+
+      {fallback && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-white/10 bg-ink-800/80 px-3 py-2">
+          <span className="text-neon-green">&gt;</span>
+          <input
+            ref={inputRef}
+            value={input}
+            disabled={disabled}
+            onChange={(e) => onInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                onSubmit();
+              }
+            }}
+            spellCheck={false}
+            autoComplete="off"
+            autoCapitalize="off"
+            placeholder="type answer"
+            className="w-full bg-transparent text-base text-neon-green outline-none placeholder:text-neon-green/30"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Puzzle prompt panel - shows the prompt, not the answer. */
 function RiddlePrompt({ prompt, wrong }: { prompt: string | null; wrong: boolean }) {
   return (
     <div className="flex w-full max-w-2xl flex-col items-center gap-1 text-center">
@@ -464,7 +614,7 @@ function EventTicker({ events }: { events: GameState['events'] }) {
 /** Bottom strip showing owned consumable powerups + the word to type. */
 function PowerupBar({ consumables }: { consumables: { grenade: number; freeze: number; medkit: number } }) {
   return (
-    <div className="flex items-center gap-2 text-xs">
+    <div className="flex max-w-full flex-wrap items-center justify-center gap-2 text-xs">
       <span className="uppercase tracking-widest text-white/35">Powerups</span>
       {POWERUP_DEFS.map((def) => {
         const count = (consumables as unknown as Record<string, number>)[def.key] ?? 0;
@@ -483,7 +633,7 @@ function PowerupBar({ consumables }: { consumables: { grenade: number; freeze: n
           </span>
         );
       })}
-      <span className="text-white/30">— buy more in the Store</span>
+      <span className="hidden text-white/30 sm:inline">— buy more in the Store</span>
     </div>
   );
 }

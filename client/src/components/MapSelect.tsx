@@ -39,10 +39,10 @@ export function MapSelect({
   const maps = normal.length ? [normal[0], ...exclusive, ...normal.slice(1)] : exclusive;
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-5xl flex-col gap-5 overflow-y-auto p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-5xl flex-col gap-5 overflow-y-auto px-4 pb-28 pt-16 sm:p-6">
       <button
         onClick={onBack}
-        className="absolute left-4 top-4 z-10 rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
+        className="absolute left-4 top-4 z-10 min-h-10 rounded-md border border-white/15 bg-black/60 px-3 py-2 text-sm font-bold text-white/70 backdrop-blur-sm hover:border-neon-green hover:text-neon-green"
       >
         ← Back
       </button>
@@ -66,7 +66,7 @@ export function MapSelect({
             >
               {/* Theme preview swatch */}
               <div
-                className="h-20 w-full flex-none"
+                className="h-24 w-full flex-none sm:h-20"
                 style={{ background: `linear-gradient(160deg, ${p.skyTop}, ${p.skyHorizon} 55%, ${p.ground2})` }}
               >
                 <div className="flex h-full items-end justify-between p-2">
@@ -86,18 +86,18 @@ export function MapSelect({
               </div>
 
               <div className="flex flex-1 flex-col p-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white/90">{m.name}</h3>
-                  {selected && <span className="text-xs font-bold text-neon-green">✓ selected</span>}
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-base font-bold leading-snug text-white/90 sm:text-sm">{m.name}</h3>
+                  {selected && <span className="shrink-0 text-xs font-bold text-neon-green">✓ selected</span>}
                 </div>
                 {/* Fixed height so 1- and 2-line descriptions keep buttons aligned. */}
-                <p className="mt-0.5 min-h-[2.5rem] text-[11px] leading-snug text-white/45">{m.description}</p>
+                <p className="mt-1 min-h-[2.75rem] text-xs leading-snug text-white/50 sm:text-[11px]">{m.description}</p>
 
                 {owned ? (
                   <button
                     onClick={() => onSelect(m.id)}
                     disabled={selected}
-                    className={`mt-auto w-full rounded-md border px-3 py-1.5 text-xs font-bold ${
+                    className={`mt-auto min-h-11 w-full rounded-md border px-3 py-2 text-sm font-bold sm:min-h-0 sm:py-1.5 sm:text-xs ${
                       selected
                         ? 'border-neon-green/50 text-neon-green'
                         : 'border-white/15 text-white/70 hover:border-neon-green hover:text-neon-green'
@@ -108,7 +108,7 @@ export function MapSelect({
                 ) : (
                   <button
                     onClick={() => setPendingMap(m)}
-                    className="mt-auto w-full rounded-md border border-neon-amber/60 px-3 py-1.5 text-xs font-bold text-neon-amber hover:bg-neon-amber/10"
+                    className="mt-auto min-h-11 w-full rounded-md border border-neon-amber/60 px-3 py-2 text-sm font-bold text-neon-amber hover:bg-neon-amber/10 sm:min-h-0 sm:py-1.5 sm:text-xs"
                   >
                     {m.cost.toLocaleString()} 🪙
                   </button>
@@ -119,7 +119,7 @@ export function MapSelect({
         })}
       </div>
 
-      <div className="flex justify-center">
+      <div className="sticky bottom-0 z-20 -mx-4 mt-auto flex justify-center bg-gradient-to-t from-ink-900 via-ink-900/95 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5 sm:static sm:mx-0 sm:bg-transparent sm:p-0">
         <button className="menu-btn max-w-xs flex-1 text-center shadow-neon" onClick={onDeploy}>
           ▶ Deploy
         </button>
@@ -136,7 +136,7 @@ export function MapSelect({
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => setPendingMap(null)}
-                className="flex-1 rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/70 hover:border-white/40"
+                className="min-h-11 flex-1 rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/70 hover:border-white/40"
               >
                 Cancel
               </button>
@@ -145,7 +145,7 @@ export function MapSelect({
                   onBuyMap(pendingMap.id);
                   setPendingMap(null);
                 }}
-                className="flex-1 rounded-lg border border-neon-green bg-neon-green/10 px-4 py-2 text-sm font-bold text-neon-green hover:bg-neon-green/20"
+                className="min-h-11 flex-1 rounded-lg border border-neon-green bg-neon-green/10 px-4 py-2 text-sm font-bold text-neon-green hover:bg-neon-green/20"
               >
                 Confirm
               </button>
