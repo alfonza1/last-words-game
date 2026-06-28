@@ -93,7 +93,7 @@ export function Upgrades({
             {item.rarity}
           </div>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <div className="h-28 w-24 flex-none overflow-hidden rounded-lg border border-white/15 bg-black/35">
             <CharacterAvatar character={preview} armed={false} className="h-32 w-full -translate-y-1" />
           </div>
