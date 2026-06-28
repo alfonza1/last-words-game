@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -12,6 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.LongSupplier;
 
 /**
  * Cheap in-memory, per-IP rate limit — a first line of defence against scripted
@@ -24,12 +26,31 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RateLimitFilter extends OncePerRequestFilter {
   private static final long WINDOW_MS = 10_000; // 10s window
   private static final int MAX_PER_WINDOW = 80; // ~8 req/s sustained per IP
+  // Evict buckets idle longer than this (well above WINDOW_MS) so the map can't
+  // grow unbounded; an evicted idle IP just gets a fresh bucket on its next hit.
+  private static final long IDLE_EXPIRY_MS = 60_000;
+  // Hard ceiling on tracked IPs so a flood can't exhaust the 512 MiB instance —
+  // a sweep is forced once this is exceeded.
+  private static final int MAX_BUCKETS = 50_000;
 
   private final ObjectMapper mapper;
+  private final LongSupplier clock;
   private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+  private volatile long lastSweep;
 
+  // @Autowired marks THIS as the constructor Spring injects — required because a
+  // second (test) constructor exists; without it Spring can't choose and the bean
+  // fails to instantiate, taking down the whole web context.
+  @Autowired
   public RateLimitFilter(ObjectMapper mapper) {
+    this(mapper, System::currentTimeMillis);
+  }
+
+  // Package-private constructor so tests can drive time deterministically.
+  RateLimitFilter(ObjectMapper mapper, LongSupplier clock) {
     this.mapper = mapper;
+    this.clock = clock;
+    this.lastSweep = clock.getAsLong();
   }
 
   private static final class Bucket {
@@ -55,9 +76,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
     chain.doFilter(req, res);
   }
 
-  private boolean allow(String ip) {
-    long now = System.currentTimeMillis();
-    Bucket b = buckets.computeIfAbsent(ip, k -> new Bucket());
+  boolean allow(String ip) {
+    long now = clock.getAsLong();
+    maybeSweep(now);
+    // New buckets start their window now, so they're never seen as idle-since-epoch.
+    Bucket b = buckets.computeIfAbsent(ip, k -> {
+      Bucket nb = new Bucket();
+      nb.windowStart = now;
+      return nb;
+    });
     synchronized (b) {
       if (now - b.windowStart > WINDOW_MS) {
         b.windowStart = now;
@@ -66,6 +93,26 @@ public class RateLimitFilter extends OncePerRequestFilter {
       b.count++;
       return b.count <= MAX_PER_WINDOW;
     }
+  }
+
+  /**
+   * Drop buckets idle past {@link #IDLE_EXPIRY_MS}. Runs at most once per window,
+   * or immediately when the map exceeds {@link #MAX_BUCKETS}. Cheap and bounded.
+   */
+  private void maybeSweep(long now) {
+    if (now - lastSweep < WINDOW_MS && buckets.size() < MAX_BUCKETS) return;
+    lastSweep = now;
+    buckets.entrySet().removeIf(e -> {
+      Bucket b = e.getValue();
+      synchronized (b) {
+        return now - b.windowStart > IDLE_EXPIRY_MS;
+      }
+    });
+  }
+
+  /** Number of IPs currently tracked — exposed for tests/observability. */
+  int bucketCount() {
+    return buckets.size();
   }
 
   private static String clientIp(HttpServletRequest req) {

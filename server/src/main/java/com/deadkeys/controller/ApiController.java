@@ -45,9 +45,22 @@ public class ApiController {
     this.profileService = profileService;
   }
 
+  /**
+   * Shallow liveness — process status only, no database. Cheap for frequent
+   * uptime checks and deploy smoke tests so they don't wake Neon every time.
+   */
   @GetMapping({"/health", "/api/health"})
   public Object health() {
-    return json("status", "ok", "version", "1.0.0",
+    return json("status", "ok", "version", "1.0.0");
+  }
+
+  /**
+   * Readiness — intentionally touches the database to verify connectivity.
+   * Call this only when a DB check is specifically required, not on a loop.
+   */
+  @GetMapping({"/ready", "/api/ready"})
+  public Object ready() {
+    return json("status", "ready", "version", "1.0.0",
         "profiles", store.countProfiles(), "leaderboard", store.countLeaderboard());
   }
 
