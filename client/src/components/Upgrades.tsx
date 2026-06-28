@@ -107,7 +107,7 @@ export function Upgrades({
             )}
             {exclusive && (
               <div className="mt-1.5 text-center text-[9px] font-black uppercase tracking-[0.18em] text-[#c084fc]">
-                Exclusive Mythic ·
+                · Exclusive Mythic ·
               </div>
             )}
           </div>
