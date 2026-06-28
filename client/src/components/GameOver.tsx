@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { GameMode } from '../types';
+import type { DailyOutbreak } from '../data/dailyOutbreak';
 import type { RunResult } from './GameScreen';
 import type { WpmBonus } from '../game/wpmBonus';
 import { formatTime } from '../lib/utils';
@@ -12,13 +13,26 @@ interface Props {
   isHighScore: boolean;
   rewardCoins: number;
   wpmBonus: WpmBonus;
+  dailyChallenge?: DailyOutbreak;
+  dailyBest?: number;
   /** Watch the rewarded ad → grant coins. Returns coins granted (throws on error). */
   onWatchAd: () => Promise<number>;
   onRestart: () => void;
   onMenu: () => void;
 }
 
-export function GameOver({ result, mode, isHighScore, rewardCoins, wpmBonus, onWatchAd, onRestart, onMenu }: Props) {
+export function GameOver({
+  result,
+  mode,
+  isHighScore,
+  rewardCoins,
+  wpmBonus,
+  dailyChallenge,
+  dailyBest = 0,
+  onWatchAd,
+  onRestart,
+  onMenu,
+}: Props) {
   const [adPhase, setAdPhase] = useState<'idle' | 'playing' | 'claimed'>('idle');
   const [earned, setEarned] = useState(0);
   const [adError, setAdError] = useState<string | null>(null);
@@ -68,6 +82,15 @@ export function GameOver({ result, mode, isHighScore, rewardCoins, wpmBonus, onW
           <div className="mt-1 flex items-center justify-center gap-4 text-sm font-black">
             <span className="text-neon-amber">+{wpmBonus.coins.toLocaleString()} Coins</span>
             <span className="text-neon-cyan">+{wpmBonus.score.toLocaleString()} Score</span>
+          </div>
+        </div>
+      )}
+
+      {dailyChallenge && (
+        <div className="rounded-lg border border-neon-amber/35 bg-neon-amber/10 px-4 py-2">
+          <div className="text-[10px] uppercase tracking-widest text-neon-amber">Daily Outbreak</div>
+          <div className="mt-1 text-sm font-black text-white/85">
+            {dailyChallenge.title} - Best {dailyBest.toLocaleString()}
           </div>
         </div>
       )}

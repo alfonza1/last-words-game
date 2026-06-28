@@ -1,6 +1,7 @@
 import type { CharacterLoadout, Difficulty, GameMode, GameStats, PuzzleStyle } from '../types';
 import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
+import type { DailyOutbreak } from '../data/dailyOutbreak';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -17,6 +18,10 @@ interface Props {
   onDifficulty: (d: Difficulty) => void;
   onRiddleMode: (v: boolean) => void;
   onPuzzleStyle: (s: PuzzleStyle) => void;
+  mobileSpeechExperience?: boolean;
+  dailyChallenge: DailyOutbreak;
+  dailyBest: number;
+  onDailyStart: () => void;
 }
 
 /** A play style for the menu: plain typing, or one of the puzzle styles. */
@@ -91,11 +96,16 @@ export function MainMenu({
   onDifficulty,
   onRiddleMode,
   onPuzzleStyle,
+  mobileSpeechExperience = false,
+  dailyChallenge,
+  dailyBest,
+  onDailyStart,
 }: Props) {
-  const activeStyle: Style = riddleMode ? puzzleStyle : 'typing';
+  const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
+  const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-6 overflow-y-auto px-6 pb-10 pt-16 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-5 overflow-y-auto px-4 pb-10 pt-16 sm:px-6 lg:justify-center lg:p-6">
       <div className="text-center">
         <h1 className="text-5xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
@@ -130,12 +140,12 @@ export function MainMenu({
           {/* Play style: type words, or solve a puzzle for a volley */}
           <div>
             <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Play style</div>
-            <div className="grid grid-cols-2 gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1">
-              {STYLE_ORDER.map((s) => (
+            <div className="grid grid-cols-1 gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1 sm:grid-cols-2">
+              {styles.map((s) => (
                 <button
                   key={s}
                   onClick={() => selectStyle(s)}
-                  className={`rounded-md px-3 py-2 text-sm font-bold transition-all ${
+                  className={`min-h-11 rounded-md px-3 py-2 text-sm font-bold transition-all ${
                     activeStyle === s ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
@@ -145,6 +155,8 @@ export function MainMenu({
             </div>
             <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">{STYLE_META[activeStyle].blurb}</p>
           </div>
+
+          <DailyOutbreakCard challenge={dailyChallenge} best={dailyBest} onStart={onDailyStart} />
 
           {/* Modes + nav */}
           <div className="space-y-3">
@@ -232,6 +244,44 @@ function Records({
         <Row k="Longest Streak" v={selected.longestStreak} />
         <Row k="Coins Earned" v={(selected.coinsEarned ?? 0).toLocaleString()} />
       </dl>
+    </div>
+  );
+}
+
+function DailyOutbreakCard({
+  challenge,
+  best,
+  onStart,
+}: {
+  challenge: DailyOutbreak;
+  best: number;
+  onStart: () => void;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-neon-amber/35 bg-gradient-to-br from-neon-amber/10 via-ink-800/80 to-neon-pink/10 p-3 shadow-[0_0_22px_rgba(255,179,0,0.12)]">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-neon-amber">Daily Outbreak</div>
+          <h3 className="mt-1 truncate text-sm font-black text-white/90">{challenge.title}</h3>
+        </div>
+        <div className="shrink-0 rounded border border-white/10 bg-black/35 px-2 py-1 text-[10px] font-bold text-white/45">
+          {challenge.id.slice(5)}
+        </div>
+      </div>
+      <p className="mt-2 min-h-[2rem] text-xs leading-snug text-white/55">{challenge.briefing}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wider">
+        <span className="rounded border border-neon-cyan/30 bg-black/25 px-2 py-1 text-neon-cyan">{challenge.styleLabel}</span>
+        <span className="rounded border border-neon-green/30 bg-black/25 px-2 py-1 text-neon-green">
+          {DIFFICULTY_CONFIGS[challenge.difficulty].label}
+        </span>
+        <span className="rounded border border-neon-pink/30 bg-black/25 px-2 py-1 text-neon-pink">
+          {challenge.mode === 'bossrush' ? 'Boss' : 'Survival'}
+        </span>
+        <span className="ml-auto text-white/40">Best {best.toLocaleString()}</span>
+      </div>
+      <button className="mt-3 w-full rounded-lg border border-neon-amber/70 bg-neon-amber/10 px-4 py-2 text-sm font-black text-neon-amber transition hover:bg-neon-amber/20" onClick={onStart}>
+        Deploy Daily
+      </button>
     </div>
   );
 }
