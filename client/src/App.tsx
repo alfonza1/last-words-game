@@ -564,6 +564,7 @@ export default function App() {
             gamesLeft={upgradeGames}
             powerups={powerups}
             ownedCosmetics={cosmetics}
+            character={character}
             signedIn={signedIn}
             onBuy={buyUpgrade}
             onBuyPowerup={buyPowerup}

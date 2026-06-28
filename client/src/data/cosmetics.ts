@@ -8,7 +8,7 @@ export interface CosmeticDef {
   name: string;
   description: string;
   cost: number;
-  rarity: 'standard' | 'rare' | 'epic' | 'legendary';
+  rarity: 'standard' | 'rare' | 'epic' | 'legendary' | 'exclusive-mythic';
   /** Item's color follows the equipped outfit's glow (e.g. crown, glasses). */
   outfitReactive?: boolean;
 }
@@ -132,14 +132,6 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'rare',
   },
   {
-    key: 'outfit-hazmat',
-    slot: 'outfit',
-    name: 'Containment Tech',
-    description: 'Area 67 response gear with sealed neon seams.',
-    cost: 2000,
-    rarity: 'rare',
-  },
-  {
     key: 'outfit-neon',
     slot: 'outfit',
     name: 'Dead City Runner',
@@ -162,6 +154,22 @@ export const COSMETICS: CosmeticDef[] = [
     description: 'Black ritual plate carrying a living ember seam.',
     cost: 4800,
     rarity: 'legendary',
+  },
+  {
+    key: 'outfit-godmode-revenant',
+    slot: 'outfit',
+    name: 'Bonelord Revenant',
+    description: 'Skeletal admin-lich of gold-bound bone. Limited-time — will never return.',
+    cost: 66666,
+    rarity: 'exclusive-mythic',
+  },
+  {
+    key: 'outfit-neon-plague-saint',
+    slot: 'outfit',
+    name: 'Hollow Plague Doctor',
+    description: 'Beaked plague doctor in a toxic shroud. Limited-time — will never return.',
+    cost: 66666,
+    rarity: 'exclusive-mythic',
   },
   {
     key: 'accessory-none',
@@ -198,16 +206,35 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'legendary',
     outfitReactive: true,
   },
+  {
+    key: 'accessory-blackout-shoulder-drone',
+    slot: 'accessory',
+    name: 'Blackout Shoulder Drone',
+    description: 'Orbiting blackout scan-drone. Limited-time — will never return.',
+    cost: 33333,
+    rarity: 'exclusive-mythic',
+    outfitReactive: true,
+  },
+  {
+    key: 'accessory-toxic-angel-halo',
+    slot: 'accessory',
+    name: 'Toxic Angel Halo',
+    description: 'Cracked halo of spinning plague light. Limited-time — will never return.',
+    cost: 33333,
+    rarity: 'exclusive-mythic',
+    outfitReactive: true,
+  },
 ];
 
 export const OUTFIT_PALETTES: Record<string, OutfitPalette> = {
   'outfit-field': { primary: '#384832', secondary: '#1d2920', trim: '#8fa26f' },
   'outfit-hoodie': { primary: '#151c22', secondary: '#080b0e', trim: '#39ff14', glow: '#39ff14' },
   'outfit-raider': { primary: '#5b2e23', secondary: '#24201d', trim: '#ffb300' },
-  'outfit-hazmat': { primary: '#d3a72f', secondary: '#30372e', trim: '#9dff4f', glow: '#9dff4f' },
   'outfit-neon': { primary: '#13243b', secondary: '#11101f', trim: '#00f0ff', glow: '#ff2bd6' },
   'outfit-warden': { primary: '#272335', secondary: '#0c0b11', trim: '#a78bfa', glow: '#a78bfa' },
   'outfit-inferno': { primary: '#260806', secondary: '#080101', trim: '#ff3b12', glow: '#ff3b12' },
+  'outfit-godmode-revenant': { primary: '#07070d', secondary: '#111827', trim: '#f8d66d', glow: '#00f0ff' },
+  'outfit-neon-plague-saint': { primary: '#07100b', secondary: '#18251b', trim: '#9dff4f', glow: '#39ff14' },
 };
 
 export function cosmeticByKey(key: string): CosmeticDef | undefined {

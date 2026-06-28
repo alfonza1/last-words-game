@@ -26,6 +26,15 @@ export function drawSurvivor(
   const hair = hairColor(character.hairColor);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
   const glow = outfit.glow ?? outfit.trim;
+  // Exclusive Mythics replace the survivor entirely (skull / plague-doctor mask).
+  const fullCharacter =
+    character.outfit === 'outfit-godmode-revenant' || character.outfit === 'outfit-neon-plague-saint';
+  // Mythics have bone / gloved hands rather than bare skin on the rifle.
+  const handColor = fullCharacter
+    ? character.outfit === 'outfit-godmode-revenant'
+      ? '#e8e6da'
+      : '#1b2a1f'
+    : skin;
   const breathing = Math.sin(time * 0.0024) * 0.85 * scale;
   const shotStrength = s.survivorShot ? Math.max(0, s.survivorShot.life / s.survivorShot.ttl) : 0;
   const recoil = shotStrength * 2.8 * scale;
@@ -96,27 +105,30 @@ export function drawSurvivor(
   drawOutfitDetails(ctx, character.outfit, outfit.trim, scale);
   ctx.restore();
 
-  // Head tucked low behind the optic.
+  // Head tucked low behind the optic. Mythics swap in a skull / beaked mask.
   ctx.fillStyle = `${outfit.secondary}dd`;
   ctx.beginPath();
   ctx.arc(17 * scale, -20 * scale, 13 * scale, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = skin;
-  ctx.beginPath();
-  ctx.arc(28 * scale, -27 * scale, 12 * scale, 0, Math.PI * 2);
-  ctx.fill();
+  if (!fullCharacter) {
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    ctx.arc(28 * scale, -27 * scale, 12 * scale, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.save();
   ctx.translate(5 * scale, 0);
-  drawHair(ctx, character.hair, hair, glow, scale);
-  drawAccessory(ctx, character.accessory, glow, scale);
+  if (!fullCharacter) drawHair(ctx, character.hair, hair, glow, scale);
+  drawAccessory(ctx, character.accessory, glow, scale, time);
   ctx.restore();
-  drawCombatFace(ctx, character.expression, glow, lips, scale);
+  if (fullCharacter) drawMythicHead(ctx, character.outfit, glow, scale);
+  else drawCombatFace(ctx, character.expression, glow, lips, scale);
 
   // Trigger arm and braced support arm.
   limb(ctx, 0, -12, 24, -19, 8, outfit.primary, scale);
-  limb(ctx, 22, -19, 35, -19, 5.5, skin, scale);
+  limb(ctx, 22, -19, 35, -19, 5.5, handColor, scale);
   limb(ctx, -1, -4, 24, 2, 8, outfit.primary, scale);
-  limb(ctx, 24, 2, 45, -12, 5.5, skin, scale);
+  limb(ctx, 24, 2, 45, -12, 5.5, handColor, scale);
   ctx.fillStyle = outfit.trim;
   ctx.globalAlpha = 0.35;
   ctx.beginPath();
@@ -391,10 +403,6 @@ function drawOutfitDetails(
     ctx.lineTo(2 * scale, 3 * scale);
     ctx.lineTo(17 * scale, -13 * scale);
     ctx.stroke();
-  } else if (outfit === 'outfit-hazmat') {
-    ctx.setLineDash([8 * scale, 3 * scale]);
-    ctx.strokeRect(-17 * scale, -14 * scale, 35 * scale, 17 * scale);
-    ctx.setLineDash([]);
   } else if (outfit === 'outfit-inferno') {
     ctx.beginPath();
     ctx.arc(2 * scale, -6 * scale, 5 * scale, 0, Math.PI * 2);
@@ -408,6 +416,89 @@ function drawOutfitDetails(
     ctx.lineTo(-32 * scale, 13 * scale);
     ctx.lineTo(16 * scale, 9 * scale);
     ctx.stroke();
+  } else if (outfit === 'outfit-godmode-revenant') {
+    ctx.save();
+    // Gold-trimmed lich breastplate.
+    ctx.fillStyle = '#10131c';
+    ctx.strokeStyle = '#f8d66d';
+    ctx.lineWidth = 1.6 * scale;
+    roundRect(ctx, -11 * scale, -16 * scale, 24 * scale, 28 * scale, 4 * scale);
+    ctx.fill();
+    ctx.stroke();
+    // Engraved chevron.
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = scale;
+    ctx.beginPath();
+    ctx.moveTo(-6 * scale, 4 * scale);
+    ctx.lineTo(2 * scale, 8 * scale);
+    ctx.lineTo(10 * scale, 4 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Pauldron cap.
+    ctx.fillStyle = '#f8d66d';
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(-22 * scale, -17 * scale, 10 * scale, 4 * scale);
+    ctx.globalAlpha = 1;
+    // Glowing core gem.
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 8 * scale;
+    ctx.fillStyle = '#04141b';
+    ctx.beginPath();
+    ctx.moveTo(2 * scale, -10 * scale);
+    ctx.lineTo(8 * scale, -4 * scale);
+    ctx.lineTo(2 * scale, 2 * scale);
+    ctx.lineTo(-4 * scale, -4 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#f8d66d';
+    ctx.lineWidth = 1.4 * scale;
+    ctx.stroke();
+    ctx.fillStyle = '#00f0ff';
+    ctx.beginPath();
+    ctx.arc(2 * scale, -4 * scale, 1.6 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  } else if (outfit === 'outfit-neon-plague-saint') {
+    ctx.save();
+    // Coat lapels.
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = 1.4 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-7 * scale, -16 * scale);
+    ctx.lineTo(2 * scale, -2 * scale);
+    ctx.lineTo(11 * scale, -16 * scale);
+    ctx.stroke();
+    // Button row.
+    ctx.fillStyle = '#9dff4f';
+    for (const by of [-4, 1, 6]) {
+      ctx.beginPath();
+      ctx.arc(2 * scale, by * scale, 1.1 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Belt.
+    ctx.strokeStyle = '#9dff4f';
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = 2.4 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-12 * scale, 9 * scale);
+    ctx.lineTo(14 * scale, 9 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Side plague vial (glowing).
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur = 7 * scale;
+    ctx.fillStyle = '#04140b';
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = 1.4 * scale;
+    roundRect(ctx, 13 * scale, -10 * scale, 6 * scale, 11 * scale, 2 * scale);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#39ff14';
+    roundRect(ctx, 14.5 * scale, -6 * scale, 3 * scale, 5 * scale, 1 * scale);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   } else {
     ctx.fillRect(-4 * scale, -15 * scale, 3 * scale, 19 * scale);
   }
@@ -563,7 +654,7 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, a
   ctx.restore();
 }
 
-function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number) {
+function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number, time: number) {
   if (type === 'accessory-headphones') {
     ctx.strokeStyle = glow;
     ctx.lineWidth = 3 * scale;
@@ -592,7 +683,193 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.lineTo(34 * scale, -35 * scale);
     ctx.stroke();
     ctx.shadowBlur = 0;
+  } else if (type === 'accessory-blackout-shoulder-drone') {
+    ctx.save();
+    // Smoothly orbits around the survivor's head/shoulder on a wide ellipse.
+    const a = time * 0.0021;
+    ctx.translate(20 * scale + Math.cos(a) * 13 * scale, -38 * scale + Math.sin(a) * 7 * scale);
+    ctx.lineJoin = 'round';
+    // Faint thruster glow trailing the hull.
+    ctx.fillStyle = glow;
+    ctx.globalAlpha = 0.18;
+    ctx.beginPath();
+    ctx.ellipse(-9 * scale, 0, 4 * scale, 2 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // Sleek angular hull.
+    ctx.fillStyle = '#0a0d12';
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 1.3 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-7 * scale, 0);
+    ctx.lineTo(-2 * scale, -4 * scale);
+    ctx.lineTo(7 * scale, -3 * scale);
+    ctx.lineTo(9 * scale, 0);
+    ctx.lineTo(7 * scale, 3 * scale);
+    ctx.lineTo(-2 * scale, 4 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Swept wing fins.
+    ctx.beginPath();
+    ctx.moveTo(-2 * scale, -4 * scale);
+    ctx.lineTo(-6 * scale, -8 * scale);
+    ctx.lineTo(1 * scale, -4.5 * scale);
+    ctx.moveTo(-2 * scale, 4 * scale);
+    ctx.lineTo(-6 * scale, 8 * scale);
+    ctx.lineTo(1 * scale, 4.5 * scale);
+    ctx.stroke();
+    // Pulsing scan eye.
+    const pulse = 1.5 + Math.sin(time * 0.006) * 0.6;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 9 * scale;
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(3 * scale, 0, pulse * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Sweeping scan beam toward the field.
+    ctx.strokeStyle = glow;
+    ctx.globalAlpha = 0.32;
+    ctx.lineWidth = 1.4 * scale;
+    ctx.beginPath();
+    ctx.moveTo(5 * scale, 1 * scale);
+    ctx.lineTo(16 * scale, 10 * scale + Math.sin(time * 0.004) * 3 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  } else if (type === 'accessory-toxic-angel-halo') {
+    ctx.save();
+    // Spins in place — segmented dashes travel around the ring.
+    ctx.strokeStyle = glow;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    ctx.lineWidth = 2.2 * scale;
+    ctx.setLineDash([5 * scale, 3 * scale]);
+    ctx.lineDashOffset = (time * 0.03) % 64;
+    ctx.beginPath();
+    ctx.ellipse(24 * scale, -42 * scale, 15 * scale, 5 * scale, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineDashOffset = 0;
+    // Radioactive particles / mist.
+    ctx.shadowBlur = 4 * scale;
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(11 * scale, -47 * scale, 1.4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(37 * scale, -45 * scale, 1.2 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(24 * scale, -50 * scale, 1.3 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   }
+}
+
+/** Mythic head replacement for the prone survivor: a skull or a beaked plague mask. */
+function drawMythicHead(ctx: CanvasRenderingContext2D, outfit: string, glow: string, scale: number) {
+  ctx.save();
+  ctx.lineJoin = 'round';
+  if (outfit === 'outfit-godmode-revenant') {
+    // Skull cranium + jaw.
+    ctx.fillStyle = '#e8e6da';
+    ctx.strokeStyle = '#b9b6a6';
+    ctx.lineWidth = scale;
+    ctx.beginPath();
+    ctx.arc(28 * scale, -28 * scale, 12 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    roundRect(ctx, 23 * scale, -20 * scale, 12 * scale, 7 * scale, 2 * scale);
+    ctx.fill();
+    ctx.stroke();
+    // Burning eye sockets.
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    ctx.fillStyle = '#06080d';
+    ctx.beginPath();
+    ctx.arc(25 * scale, -30 * scale, 3.4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(34 * scale, -29 * scale, 3.4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(25 * scale, -30 * scale, 1.5 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(34 * scale, -29 * scale, 1.5 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Nasal cavity.
+    ctx.fillStyle = '#06080d';
+    ctx.beginPath();
+    ctx.moveTo(31 * scale, -26 * scale);
+    ctx.lineTo(29 * scale, -21 * scale);
+    ctx.lineTo(33 * scale, -21 * scale);
+    ctx.closePath();
+    ctx.fill();
+    // Teeth.
+    ctx.strokeStyle = '#b9b6a6';
+    ctx.lineWidth = 0.8 * scale;
+    ctx.beginPath();
+    ctx.moveTo(26 * scale, -19 * scale);
+    ctx.lineTo(26 * scale, -14 * scale);
+    ctx.moveTo(30 * scale, -19 * scale);
+    ctx.lineTo(30 * scale, -13 * scale);
+    ctx.moveTo(34 * scale, -19 * scale);
+    ctx.lineTo(34 * scale, -14 * scale);
+    ctx.stroke();
+  } else {
+    // Plague-doctor mask face.
+    ctx.fillStyle = '#14120d';
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = scale;
+    ctx.beginPath();
+    ctx.arc(28 * scale, -28 * scale, 12 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Downward beak toward the field.
+    ctx.fillStyle = '#1c1a12';
+    ctx.beginPath();
+    ctx.moveTo(33 * scale, -31 * scale);
+    ctx.lineTo(43 * scale, -22 * scale);
+    ctx.lineTo(33 * scale, -19 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Glowing goggle lenses.
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    for (const lx of [25, 34]) {
+      ctx.fillStyle = '#04140b';
+      ctx.strokeStyle = '#9dff4f';
+      ctx.lineWidth = 0.9 * scale;
+      ctx.beginPath();
+      ctx.arc(lx * scale, -30 * scale, 3.6 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(lx * scale, -30 * scale, 1.5 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    // Wide-brim hat.
+    ctx.fillStyle = '#0d140f';
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = scale;
+    ctx.beginPath();
+    ctx.ellipse(28 * scale, -38 * scale, 15 * scale, 4 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    roundRect(ctx, 21 * scale, -49 * scale, 14 * scale, 12 * scale, 3 * scale);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function limb(

@@ -35,3 +35,56 @@ describe('default character', () => {
     expect(lipColorForSkinTone('warm')).not.toBe(skinColor('warm'));
   });
 });
+
+describe('exclusive mythic cosmetics', () => {
+  it('adds the Bonelord Revenant + Blackout Shoulder Drone set', () => {
+    const outfit = cosmeticByKey('outfit-godmode-revenant');
+    expect(outfit?.name).toBe('Bonelord Revenant');
+    expect(outfit?.slot).toBe('outfit');
+    expect(outfit?.rarity).toBe('exclusive-mythic');
+    expect(outfit?.cost).toBe(66666);
+
+    const drone = cosmeticByKey('accessory-blackout-shoulder-drone');
+    expect(drone?.name).toBe('Blackout Shoulder Drone');
+    expect(drone?.slot).toBe('accessory');
+    expect(drone?.rarity).toBe('exclusive-mythic');
+    expect(drone?.cost).toBe(33333);
+    expect(drone?.outfitReactive).toBe(true);
+  });
+
+  it('adds the Hollow Plague Doctor + Toxic Angel Halo set', () => {
+    const outfit = cosmeticByKey('outfit-neon-plague-saint');
+    expect(outfit?.name).toBe('Hollow Plague Doctor');
+    expect(outfit?.slot).toBe('outfit');
+    expect(outfit?.rarity).toBe('exclusive-mythic');
+    expect(outfit?.cost).toBe(66666);
+
+    const halo = cosmeticByKey('accessory-toxic-angel-halo');
+    expect(halo?.name).toBe('Toxic Angel Halo');
+    expect(halo?.slot).toBe('accessory');
+    expect(halo?.rarity).toBe('exclusive-mythic');
+    expect(halo?.cost).toBe(33333);
+    expect(halo?.outfitReactive).toBe(true);
+  });
+
+  it('prices both mythic outfits at 66666 and both mythic accessories at 33333', () => {
+    expect(cosmeticByKey('outfit-godmode-revenant')?.cost).toBe(66666);
+    expect(cosmeticByKey('outfit-neon-plague-saint')?.cost).toBe(66666);
+    expect(cosmeticByKey('accessory-blackout-shoulder-drone')?.cost).toBe(33333);
+    expect(cosmeticByKey('accessory-toxic-angel-halo')?.cost).toBe(33333);
+  });
+
+  it('tags all four items as exclusive-mythic with outfit-reactive accessories', () => {
+    const keys = [
+      'outfit-godmode-revenant',
+      'outfit-neon-plague-saint',
+      'accessory-blackout-shoulder-drone',
+      'accessory-toxic-angel-halo',
+    ];
+    for (const key of keys) {
+      expect(cosmeticByKey(key)?.rarity).toBe('exclusive-mythic');
+    }
+    expect(cosmeticByKey('accessory-blackout-shoulder-drone')?.outfitReactive).toBe(true);
+    expect(cosmeticByKey('accessory-toxic-angel-halo')?.outfitReactive).toBe(true);
+  });
+});

@@ -20,6 +20,11 @@ export function TypeBar({ s, opts, input }: { s: GameState; opts: MatchOptions; 
   const queue = s.wordQueue;
   const typed = input.trim();
 
+  // Typing Defense only shows the words still needed to clear the wave, so the
+  // last word of a wave stands alone instead of trailing words you won't type.
+  const visibleCount = Math.max(1, Math.min(queue.length, s.wordsToClearWave));
+  const visibleQueue = queue.slice(0, visibleCount);
+
   // The active word is always the first in the queue.
   const active = queue[0] ?? '';
   const onTrack = active.length > 0 && typed.length > 0 && isPrefix(input, active, opts);
@@ -46,7 +51,7 @@ export function TypeBar({ s, opts, input }: { s: GameState; opts: MatchOptions; 
 
       {/* The ordered queue — only the first is active; the rest are upcoming. */}
       <div className="flex flex-wrap items-center justify-center gap-2">
-        {queue.map((word, i) => {
+        {visibleQueue.map((word, i) => {
           const isFirst = i === 0;
           const matched = isFirst ? activeMatched : 0;
           const firstWrong = isFirst && wrong;
