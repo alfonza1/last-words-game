@@ -166,7 +166,7 @@ export const COSMETICS: CosmeticDef[] = [
   {
     key: 'outfit-neon-plague-saint',
     slot: 'outfit',
-    name: 'Hollow Plague Doctor',
+    name: 'Plague Doctor',
     description: 'Beaked plague doctor in a toxic shroud. Limited-time — will never return.',
     cost: 66666,
     rarity: 'exclusive-mythic',

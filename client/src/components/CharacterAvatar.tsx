@@ -425,7 +425,7 @@ function SkullHead({ glow }: { glow: string }) {
   );
 }
 
-/** Hollow Plague Doctor — a beaked mask + wide-brim hat replacing the head. */
+/** Plague Doctor — a beaked mask + wide-brim hat replacing the head. */
 function PlagueMask({ glow }: { glow: string }) {
   return (
     <g>
