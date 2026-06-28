@@ -158,17 +158,17 @@ export const COSMETICS: CosmeticDef[] = [
   {
     key: 'outfit-godmode-revenant',
     slot: 'outfit',
-    name: 'Godmode Revenant',
+    name: 'Bonelord Revenant',
     description:
-      'A forbidden admin-class survivor suit pulsing with debug energy, corrupted command lines, and override-code armor.',
+      'Not a survivor at all — a skeletal admin-lich risen in gold-bound bone, its hollow sockets burning with corrupted command-light.',
     cost: 66666,
     rarity: 'exclusive-mythic',
   },
   {
     key: 'outfit-neon-plague-saint',
     slot: 'outfit',
-    name: 'Neon Plague Saint',
-    description: 'A sealed cyber-plague robe marked with toxic holy sigils and impossible neon light.',
+    name: 'Hollow Plague Doctor',
+    description: 'A plague-cursed doctor sealed inside a beaked toxic mask and a tattered bio-hazard shroud leaking neon green.',
     cost: 66666,
     rarity: 'exclusive-mythic',
   },

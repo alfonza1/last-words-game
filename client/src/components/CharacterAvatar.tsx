@@ -13,6 +13,10 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
   const lips = lipColorForSkinTone(character.skinTone);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
   const glow = outfit.glow ?? outfit.trim;
+  // Exclusive Mythics aren't clothes — they replace the survivor's head/face/hands
+  // with a whole new being (a skeletal lich, a beaked plague doctor).
+  const fullCharacter =
+    character.outfit === 'outfit-godmode-revenant' || character.outfit === 'outfit-neon-plague-saint';
 
   return (
     <svg
@@ -73,33 +77,28 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       )}
       {character.outfit === 'outfit-godmode-revenant' && (
         <>
-          {/* Split-tail admin longcoat — distinct silhouette below the hem */}
-          <path d="M92 188 L78 244 L104 224 L110 200 Z" fill="#07070d" stroke="#f8d66d" strokeWidth="1.6" strokeLinejoin="round" />
-          <path d="M128 188 L142 244 L116 224 L110 200 Z" fill="#0b0c16" stroke="#f8d66d" strokeWidth="1.6" strokeLinejoin="round" />
-          <path d="M104 224 L110 206 L116 224" fill="none" stroke="#00f0ff" strokeWidth="1.4" opacity=".7" />
-          {/* Cyan-lit armored boots */}
-          <path d="M70 247 H102 M120 247 H150" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" opacity=".6" />
-          {/* Subtle preview-only glitch aura */}
-          <g opacity=".55">
-            <rect x="70" y="132" width="16" height="3" fill="#00f0ff" opacity=".4" />
-            <rect x="136" y="150" width="14" height="3" fill="#ff174d" opacity=".4" />
+          {/* Tattered gold-bound burial cloak below the hem */}
+          <path d="M92 188 L78 246 L104 224 L110 200 Z" fill="#07070d" stroke="#f8d66d" strokeWidth="1.6" strokeLinejoin="round" />
+          <path d="M128 188 L142 246 L116 224 L110 200 Z" fill="#0b0c16" stroke="#f8d66d" strokeWidth="1.6" strokeLinejoin="round" />
+          {/* Bone spaulders capping the shoulders */}
+          <path d="M64 116 Q78 99 97 110 Q90 123 73 127 Q63 125 64 116Z" fill="#e8e6da" stroke="#b9b6a6" strokeWidth="1.5" />
+          <path d="M156 116 Q142 101 123 110 Q130 123 147 127 Q157 125 156 116Z" fill="#d6d3c5" stroke="#b9b6a6" strokeWidth="1.5" />
+          <path d="M70 119 Q80 111 91 115 M150 119 Q140 111 129 115" fill="none" stroke="#b9b6a6" strokeWidth="1" opacity=".55" />
+          {/* Glowing sternum core */}
+          <g style={{ filter: `drop-shadow(0 0 7px ${glow})` }}>
+            <circle cx="110" cy="131" r="6" fill="#04141b" stroke="#f8d66d" strokeWidth="2" />
+            <circle cx="110" cy="131" r="2.4" fill={glow} />
           </g>
-          {/* High collar flaps framing the neck */}
-          <path d="M92 113 L100 91 L108 104 M128 113 L120 91 L112 104" fill="none" stroke="#f8d66d" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-          {/* Asymmetrical shoulder armor — heavy on the left */}
-          <path d="M68 116 L92 103 L98 122 L72 130 Z" fill="#1b2433" stroke="#f8d66d" strokeWidth="2" />
-          <path d="M150 112 L136 106 L132 119 L146 124 Z" fill="#1b2433" stroke="#f8d66d" strokeWidth="1.5" opacity=".85" />
-          {/* Glowing command-core chest emblem */}
-          <g style={{ filter: 'drop-shadow(0 0 6px #00f0ff)' }}>
-            <path d="M110 128 L121 135 L121 148 L110 155 L99 148 L99 135 Z" fill="#04141b" stroke="#00f0ff" strokeWidth="2.5" />
-            <path d="M106 138 L103 138 L103 145 L106 145 M114 138 L117 138 L117 145 L114 145" fill="none" stroke="#00f0ff" strokeWidth="1.6" strokeLinecap="round" />
-            <circle cx="110" cy="141" r="2.2" fill="#00f0ff" />
+          {/* Exposed ribcage + spine */}
+          <g fill="none" stroke="#e8e6da" strokeWidth="2" strokeLinecap="round" opacity=".92">
+            <path d="M110 139 V186" />
+            <path d="M110 146 Q96 150 90 162 M110 146 Q124 150 130 162" />
+            <path d="M110 156 Q93 160 88 173 M110 156 Q127 160 132 173" />
+            <path d="M110 167 Q96 171 92 183 M110 167 Q124 171 128 183" />
           </g>
-          {/* Terminal / debug seam lines */}
-          <path d="M96 159 V191 M124 159 V191" stroke="#00f0ff" strokeWidth="1.2" strokeDasharray="3 4" opacity=".7" />
-          <path d="M100 166 h7 M100 173 h4 M100 180 h8" stroke="#00f0ff" strokeWidth="1" strokeLinecap="round" opacity=".5" />
-          {/* Red corrupted override slashes */}
-          <path d="M84 150 L101 169 M127 142 L143 161 M91 178 L104 192" stroke="#ff174d" strokeWidth="3" strokeLinecap="round" opacity=".9" />
+          <circle cx="110" cy="151" r="1.5" fill={glow} opacity=".75" />
+          <circle cx="110" cy="162" r="1.5" fill={glow} opacity=".75" />
+          <circle cx="110" cy="173" r="1.5" fill={glow} opacity=".75" />
         </>
       )}
       {character.outfit === 'outfit-neon-plague-saint' && (
@@ -107,8 +106,6 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
           {/* Flared sealed plague robe — covers the legs for a robed silhouette */}
           <path d="M86 150 L60 250 L160 250 L134 150 Q110 164 86 150 Z" fill="url(#avatar-coat)" stroke="#9dff4f" strokeWidth="2" />
           <path d="M110 158 V248" stroke="#9dff4f" strokeOpacity=".45" strokeWidth="1.4" />
-          {/* Pointed plague-saint hood framing the head */}
-          <path d="M80 66 Q75 30 110 24 Q145 30 140 66 L131 58 Q110 42 89 58 Z" fill={outfit.secondary} stroke="#9dff4f" strokeWidth="2" />
           {/* Glowing toxic seams running down the robe */}
           <path d="M96 120 Q92 185 82 244 M124 120 Q128 185 138 244" fill="none" stroke="#00ff99" strokeWidth="2" opacity=".8" style={{ filter: 'drop-shadow(0 0 4px #00ff99)' }} />
           {/* Preview-only toxic mist aura */}
@@ -144,11 +141,13 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
 
       {/* Outfit-specific hands drawn over the bare skin */}
       {character.outfit === 'outfit-godmode-revenant' && (
-        <g stroke="#f8d66d" strokeWidth="1.3">
-          <path d="M56 167 L73 167 L70 185 L59 185 Z" fill="#111827" />
-          <path d="M147 167 L164 167 L161 185 L150 185 Z" fill="#111827" />
-          <circle cx="64" cy="176" r="2.6" fill="#00f0ff" stroke="none" style={{ filter: 'drop-shadow(0 0 4px #00f0ff)' }} />
-          <circle cx="154" cy="176" r="2.6" fill="#00f0ff" stroke="none" style={{ filter: 'drop-shadow(0 0 4px #00f0ff)' }} />
+        <g stroke="#e8e6da" strokeWidth="2" strokeLinecap="round" fill="none">
+          {/* Skeletal claw fingers */}
+          <path d="M59 174 L55 185 M64 175 L63 187 M69 174 L72 185" />
+          <path d="M161 174 L165 185 M156 175 L157 187 M151 174 L148 185" />
+          {/* Wrist knuckle bones */}
+          <circle cx="64" cy="172" r="3.4" fill="#e8e6da" stroke="#b9b6a6" strokeWidth="1" />
+          <circle cx="154" cy="172" r="3.4" fill="#e8e6da" stroke="#b9b6a6" strokeWidth="1" />
         </g>
       )}
       {character.outfit === 'outfit-neon-plague-saint' && (
@@ -160,19 +159,28 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
         </g>
       )}
 
-      {/* Neck + head */}
-      <rect x="100" y="83" width="20" height="24" rx="8" fill={skin} />
-      <ellipse cx="110" cy="66" rx="32" ry="37" fill={skin} />
-      <path d="M83 63 Q110 47 137 63 L134 85 Q110 100 86 84Z" fill="rgba(0,0,0,.08)" />
-      <Face expression={character.expression} glow={glow} lips={lips} />
-
-      <Hair style={character.hair} color={hair} accent={glow} />
+      {/* Neck + head — a normal survivor, or a wholly different mythic being */}
+      {!fullCharacter && (
+        <>
+          <rect x="100" y="83" width="20" height="24" rx="8" fill={skin} />
+          <ellipse cx="110" cy="66" rx="32" ry="37" fill={skin} />
+          <path d="M83 63 Q110 47 137 63 L134 85 Q110 100 86 84Z" fill="rgba(0,0,0,.08)" />
+          <Face expression={character.expression} glow={glow} lips={lips} />
+          <Hair style={character.hair} color={hair} accent={glow} />
+        </>
+      )}
+      {character.outfit === 'outfit-godmode-revenant' && <SkullHead glow={glow} />}
+      {character.outfit === 'outfit-neon-plague-saint' && <PlagueMask glow={glow} />}
       <Accessory type={character.accessory} glow={glow} />
 
-      {/* Outfit details */}
-      <path d="M110 105 V194" stroke={outfit.trim} strokeOpacity=".75" strokeWidth="3" />
-      <path d="M82 170 H100 V183 H82Z M120 170 H138 V183 H120Z" fill={outfit.secondary} stroke={outfit.trim} strokeOpacity=".45" />
-      <circle cx="110" cy="121" r="4" fill={glow} opacity=".9" />
+      {/* Outfit details (skipped for full-character mythics) */}
+      {!fullCharacter && (
+        <>
+          <path d="M110 105 V194" stroke={outfit.trim} strokeOpacity=".75" strokeWidth="3" />
+          <path d="M82 170 H100 V183 H82Z M120 170 H138 V183 H120Z" fill={outfit.secondary} stroke={outfit.trim} strokeOpacity=".45" />
+          <circle cx="110" cy="121" r="4" fill={glow} opacity=".9" />
+        </>
+      )}
 
       {armed && (
         <g transform="translate(52 151) rotate(-8)">
@@ -348,22 +356,28 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
     );
   }
   if (type === 'accessory-blackout-shoulder-drone') {
-    // Hovers near the right shoulder/back, not above the head.
+    // Hovers near the right shoulder and orbits the survivor on a smooth wide ellipse.
     return (
-      <g style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
-        {/* Drifts in a small orbit around the survivor */}
-        <animateTransform attributeName="transform" type="translate" values="0 0; 3 -2; 1 -4; -3 -2; 0 0" dur="3.2s" repeatCount="indefinite" />
-        {/* Angular black drone shell */}
-        <path d="M150 92 L168 85 L177 96 L170 109 L152 110 Z" fill="#0a0d12" stroke={glow} strokeWidth="2" strokeLinejoin="round" />
-        {/* Glowing scan lens */}
-        <circle cx="164" cy="98" r="4.2" fill="#04141b" stroke={glow} strokeWidth="1.6" />
-        <circle cx="164" cy="98" r="1.8" fill={glow} />
-        {/* Short scan beam sweeping the field */}
-        <path d="M163 102 L149 121 L161 119 Z" fill={glow} opacity=".18" />
-        {/* Signal line */}
-        <path d="M177 95 l7 -3 M177 100 l6 2" stroke={glow} strokeWidth="1.4" strokeLinecap="round" opacity=".8" />
-        {/* Tiny glitch sparks */}
-        <path d="M150 86 l-3 -3 M170 110 l2 4" stroke="#ff174d" strokeWidth="1.4" strokeLinecap="round" opacity=".75" />
+      <g style={{ filter: `drop-shadow(0 0 7px ${glow})` }}>
+        <animateMotion dur="4.5s" repeatCount="indefinite" path="M -11,0 a 11,7 0 1,0 22,0 a 11,7 0 1,0 -22,0 Z" />
+        {/* Faint thruster glow */}
+        <ellipse cx="150" cy="99" rx="4" ry="2" fill={glow} opacity=".18" />
+        {/* Sleek angular hull */}
+        <path d="M152 99 L158 92 L174 93 L181 99 L174 106 L158 105 Z" fill="#0a0d12" stroke={glow} strokeWidth="2" strokeLinejoin="round" />
+        {/* Swept wing fins */}
+        <path d="M158 92 L153 84 L165 91 M158 105 L153 113 L165 106" fill="none" stroke={glow} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Pulsing scan eye */}
+        <circle cx="167" cy="99" r="4.6" fill="#04141b" stroke={glow} strokeWidth="1.6" />
+        <circle cx="167" cy="99" r="2.1" fill={glow}>
+          <animate attributeName="r" values="1.4;2.7;1.4" dur="1.3s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.6;1;0.6" dur="1.3s" repeatCount="indefinite" />
+        </circle>
+        {/* Sweeping scan beam */}
+        <path d="M166 103 L151 121 L163 120 Z" fill={glow} opacity=".16" />
+        {/* Antenna + signal */}
+        <path d="M181 99 l7 -2 M181 99 l6 3" stroke={glow} strokeWidth="1.3" strokeLinecap="round" opacity=".75" />
+        {/* Glitch spark */}
+        <path d="M152 92 l-3 -3" stroke="#ff174d" strokeWidth="1.4" strokeLinecap="round" opacity=".8" />
       </g>
     );
   }
@@ -371,9 +385,7 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
     // Cracked, segmented saint-ring above the head — never a clean ring.
     return (
       <g style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
-        {/* Gentle vertical bounce */}
-        <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2.6; 0 0" dur="1.9s" repeatCount="indefinite" />
-        {/* Cracked segmented halo — dashes travel for a spinning look */}
+        {/* Cracked segmented halo — dashes travel for a spinning look (no bounce) */}
         <ellipse cx="110" cy="30" rx="31" ry="9" fill="none" stroke={glow} strokeWidth="3.4" strokeDasharray="13 5 8 6 11 5" opacity=".95">
           <animate attributeName="stroke-dashoffset" from="0" to="48" dur="2.6s" repeatCount="indefinite" />
         </ellipse>
@@ -390,4 +402,64 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
     );
   }
   return null;
+}
+
+/** Bonelord Revenant — a glowing-socket skull replacing the survivor's head. */
+function SkullHead({ glow }: { glow: string }) {
+  return (
+    <g>
+      {/* Spine vertebrae linking the skull to the ribcage */}
+      <rect x="103" y="93" width="14" height="15" rx="4" fill="#cdcbbd" stroke="#9a9786" strokeWidth="1.2" />
+      <path d="M104 97 H116 M104 102 H116" stroke="#9a9786" strokeWidth="1.2" opacity=".7" />
+      {/* Cranium */}
+      <path d="M110 28 Q143 31 143 64 Q143 82 131 91 L127 100 Q110 107 93 100 L89 91 Q77 82 77 64 Q77 31 110 28Z" fill="#e8e6da" stroke="#b9b6a6" strokeWidth="1.6" />
+      {/* Cheekbones / jaw shading */}
+      <path d="M90 84 Q110 95 130 84" fill="none" stroke="#b9b6a6" strokeWidth="1.4" opacity=".7" />
+      <path d="M86 60 Q83 74 92 84 M134 60 Q137 74 128 84" fill="none" stroke="#b9b6a6" strokeWidth="1" opacity=".5" />
+      {/* Burning eye sockets */}
+      <g style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
+        <ellipse cx="98" cy="63" rx="9.5" ry="11" fill="#06080d" />
+        <ellipse cx="122" cy="63" rx="9.5" ry="11" fill="#06080d" />
+        <circle cx="98" cy="64" r="3.4" fill={glow} />
+        <circle cx="122" cy="64" r="3.4" fill={glow} />
+      </g>
+      {/* Brow ridge */}
+      <path d="M88 52 Q98 48 107 52 M113 52 Q122 48 132 52" fill="none" stroke="#b9b6a6" strokeWidth="1.6" strokeLinecap="round" />
+      {/* Nasal cavity */}
+      <path d="M110 70 L105 83 L115 83 Z" fill="#06080d" />
+      {/* Grinning teeth */}
+      <path d="M95 89 H125 L123 97 Q110 101 97 97 Z" fill="#e8e6da" stroke="#b9b6a6" strokeWidth="1.2" />
+      <path d="M101 90 V98 M106 90 V99 M110 90 V99 M114 90 V99 M119 90 V98" stroke="#b9b6a6" strokeWidth="1" />
+      {/* Hairline cracks */}
+      <path d="M110 28 L114 40 L110 50 M126 38 L122 49 M94 40 L97 50" fill="none" stroke="#b9b6a6" strokeWidth="1" opacity=".55" />
+    </g>
+  );
+}
+
+/** Hollow Plague Doctor — a beaked mask + wide-brim hat replacing the head. */
+function PlagueMask({ glow }: { glow: string }) {
+  return (
+    <g>
+      {/* Neck wrap */}
+      <path d="M101 92 H119 L122 106 Q110 112 98 106 Z" fill="#0d140f" stroke="#9dff4f" strokeWidth="1.4" />
+      {/* Leather mask face */}
+      <path d="M90 52 Q110 47 130 52 L127 73 Q122 82 114 85 L110 104 L106 85 Q98 82 93 73 Z" fill="#14120d" stroke="#9dff4f" strokeWidth="1.7" />
+      {/* Long curved beak */}
+      <path d="M103 76 Q110 80 117 76 L113 100 L110 108 L107 100 Z" fill="#1c1a12" stroke="#9dff4f" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M109 86 h2 M108 91 h4 M108 96 h3" stroke="#9dff4f" strokeWidth="1" opacity=".6" />
+      {/* Glowing goggle lenses */}
+      <g style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
+        <circle cx="100" cy="62" r="7" fill="#04140b" stroke="#9dff4f" strokeWidth="2.2" />
+        <circle cx="120" cy="62" r="7" fill="#04140b" stroke="#9dff4f" strokeWidth="2.2" />
+        <circle cx="100" cy="62" r="2.7" fill={glow} />
+        <circle cx="120" cy="62" r="2.7" fill={glow} />
+      </g>
+      {/* Mask strap */}
+      <path d="M93 58 Q110 54 127 58" fill="none" stroke="#9dff4f" strokeWidth="1.2" opacity=".5" />
+      {/* Wide-brim hat */}
+      <path d="M76 46 Q110 37 144 46 Q144 53 110 55 Q76 53 76 46Z" fill="#0d140f" stroke="#9dff4f" strokeWidth="1.6" />
+      <path d="M94 24 Q110 18 126 24 L130 47 Q110 51 90 47 Z" fill="#0d140f" stroke="#9dff4f" strokeWidth="1.6" />
+      <path d="M93 40 Q110 44 127 40" fill="none" stroke="#9dff4f" strokeWidth="1.2" opacity=".5" />
+    </g>
+  );
 }

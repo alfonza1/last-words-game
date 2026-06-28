@@ -253,15 +253,16 @@ describe('riddle mode', () => {
     e.state.waveZombiesSpawned = 0;
     e.state.zombies = [];
 
+    const poolSize = puzzlePoolSize('riddles', 'easy')!;
     const prompts = new Set<string>();
-    for (let i = 0; i < 40 && e.state.status !== 'gameover'; i++) {
+    for (let i = 0; i < poolSize + 5 && e.state.status !== 'gameover'; i++) {
       const prompt = e.state.riddlePrompt;
       expect(prompt).toBeTruthy();
       prompts.add(prompt!);
       e.handleInput(firstWord(e) + ' ');
     }
 
-    expect(prompts.size).toBe(puzzlePoolSize('riddles', 'easy'));
+    expect(prompts.size).toBe(poolSize);
     expect(e.state.status).toBe('gameover');
     expect(e.state.survived).toBe(true);
   });

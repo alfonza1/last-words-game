@@ -37,9 +37,9 @@ describe('default character', () => {
 });
 
 describe('exclusive mythic cosmetics', () => {
-  it('adds the Godmode Revenant + Blackout Shoulder Drone set', () => {
+  it('adds the Bonelord Revenant + Blackout Shoulder Drone set', () => {
     const outfit = cosmeticByKey('outfit-godmode-revenant');
-    expect(outfit?.name).toBe('Godmode Revenant');
+    expect(outfit?.name).toBe('Bonelord Revenant');
     expect(outfit?.slot).toBe('outfit');
     expect(outfit?.rarity).toBe('exclusive-mythic');
     expect(outfit?.cost).toBe(66666);
@@ -52,9 +52,9 @@ describe('exclusive mythic cosmetics', () => {
     expect(drone?.outfitReactive).toBe(true);
   });
 
-  it('adds the Neon Plague Saint + Toxic Angel Halo set', () => {
+  it('adds the Hollow Plague Doctor + Toxic Angel Halo set', () => {
     const outfit = cosmeticByKey('outfit-neon-plague-saint');
-    expect(outfit?.name).toBe('Neon Plague Saint');
+    expect(outfit?.name).toBe('Hollow Plague Doctor');
     expect(outfit?.slot).toBe('outfit');
     expect(outfit?.rarity).toBe('exclusive-mythic');
     expect(outfit?.cost).toBe(66666);
