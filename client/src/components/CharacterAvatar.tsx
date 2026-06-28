@@ -77,38 +77,46 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       )}
       {character.outfit === 'outfit-godmode-revenant' && (
         <>
-          {/* Tattered gold-bound burial cloak below the hem */}
+          {/* Regal tattered cape tails */}
           <path d="M92 188 L80 244 L104 222 L110 200 Z" fill="#07070d" stroke="#f8d66d" strokeWidth="1.6" strokeLinejoin="round" />
           <path d="M128 188 L140 244 L116 222 L110 200 Z" fill="#0b0c16" stroke="#f8d66d" strokeWidth="1.6" strokeLinejoin="round" />
-          {/* Bone spaulders capping the shoulders */}
-          <path d="M64 116 Q78 100 96 110 Q90 123 73 127 Q63 125 64 116Z" fill="#e8e6da" stroke="#b9b6a6" strokeWidth="1.5" />
-          <path d="M156 116 Q142 100 124 110 Q130 123 147 127 Q157 125 156 116Z" fill="#d6d3c5" stroke="#b9b6a6" strokeWidth="1.5" />
-          {/* Glowing sternum core */}
+          {/* Gold-trimmed pauldrons */}
+          <path d="M64 116 Q78 99 98 110 Q92 124 72 128 Q62 126 64 116Z" fill="#1b2433" stroke="#f8d66d" strokeWidth="2" />
+          <path d="M156 116 Q142 99 122 110 Q128 124 148 128 Q158 126 156 116Z" fill="#1b2433" stroke="#f8d66d" strokeWidth="2" />
+          <path d="M70 116 Q80 108 92 113 M150 116 Q140 108 128 113" fill="none" stroke="#f8d66d" strokeWidth="1.2" opacity=".7" />
+          {/* Armored lich breastplate */}
+          <path d="M92 120 Q110 114 128 120 L124 180 Q110 190 96 180 Z" fill="#10131c" stroke="#f8d66d" strokeWidth="2" />
+          {/* Engraved chevrons */}
+          <path d="M100 152 L110 158 L120 152 M100 165 L110 171 L120 165" fill="none" stroke="#f8d66d" strokeWidth="1.4" opacity=".6" />
+          {/* Glowing core gem */}
           <g style={{ filter: `drop-shadow(0 0 7px ${glow})` }}>
-            <circle cx="110" cy="132" r="6" fill="#04141b" stroke="#f8d66d" strokeWidth="2" />
-            <circle cx="110" cy="132" r="2.4" fill={glow} />
-          </g>
-          {/* Simple exposed ribcage */}
-          <g fill="none" stroke="#e8e6da" strokeWidth="2" strokeLinecap="round" opacity=".9">
-            <path d="M110 140 V184" />
-            <path d="M110 150 Q96 154 91 165 M110 150 Q124 154 129 165" />
-            <path d="M110 164 Q96 168 92 179 M110 164 Q124 168 128 179" />
+            <path d="M110 128 L118 136 L110 144 L102 136 Z" fill="#04141b" stroke="#f8d66d" strokeWidth="1.8" />
+            <circle cx="110" cy="136" r="2.4" fill={glow} />
           </g>
         </>
       )}
       {character.outfit === 'outfit-neon-plague-saint' && (
         <>
-          {/* Flared bio-hazard robe — covers the legs for a robed silhouette */}
-          <path d="M86 150 L62 250 L158 250 L134 150 Q110 164 86 150 Z" fill="url(#avatar-coat)" stroke="#9dff4f" strokeWidth="2" />
-          {/* Two clean glowing toxic seams */}
-          <path d="M97 124 L90 244 M123 124 L130 244" fill="none" stroke="#00ff99" strokeWidth="1.8" opacity=".7" style={{ filter: 'drop-shadow(0 0 4px #00ff99)' }} />
+          {/* Long buttoned leather coat covering the legs */}
+          <path d="M86 150 L64 250 L156 250 L134 150 Q110 162 86 150 Z" fill="url(#avatar-coat)" stroke="#9dff4f" strokeWidth="2" />
+          {/* Lapels */}
+          <path d="M96 116 L110 150 L124 116" fill="none" stroke="#9dff4f" strokeWidth="2" strokeLinejoin="round" />
+          {/* Button row */}
+          <g fill="#9dff4f">
+            <circle cx="110" cy="138" r="1.6" />
+            <circle cx="110" cy="150" r="1.6" />
+            <circle cx="110" cy="162" r="1.6" />
+            <circle cx="110" cy="174" r="1.6" />
+          </g>
+          {/* Wide belt + buckle */}
+          <rect x="86" y="182" width="48" height="8" rx="2" fill="#0d140f" stroke="#9dff4f" strokeWidth="1.5" />
+          <rect x="104" y="182" width="12" height="8" rx="1.5" fill="#04140b" stroke="#9dff4f" strokeWidth="1.5" />
           {/* Sealed collar */}
           <path d="M90 112 Q110 95 130 112 L126 122 Q110 107 94 122 Z" fill={outfit.secondary} stroke="#9dff4f" strokeWidth="2" />
-          {/* Chest plague-core vial */}
-          <g style={{ filter: 'drop-shadow(0 0 6px #39ff14)' }}>
-            <rect x="102" y="127" width="16" height="24" rx="6" fill="#04140b" stroke="#9dff4f" strokeWidth="2" />
-            <rect x="106" y="136" width="8" height="11" rx="3" fill="#39ff14" opacity=".92" />
-            <circle cx="110" cy="141" r="1.7" fill="#f8ffe8" />
+          {/* Side plague vial on a strap */}
+          <g style={{ filter: 'drop-shadow(0 0 5px #39ff14)' }}>
+            <rect x="120" y="128" width="9" height="16" rx="3" fill="#04140b" stroke="#9dff4f" strokeWidth="1.6" />
+            <rect x="122" y="134" width="5" height="7" rx="1.5" fill="#39ff14" opacity=".92" />
           </g>
         </>
       )}
@@ -375,13 +383,10 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
         </ellipse>
         {/* Inner holy shimmer */}
         <ellipse cx="110" cy="30" rx="31" ry="9" fill="none" stroke="#f8ffe8" strokeWidth="1" strokeDasharray="9 10" opacity=".5" />
-        {/* Broken saint-ring pieces drifting free */}
-        <path d="M82 28 Q88 22 96 24" fill="none" stroke={glow} strokeWidth="3" strokeLinecap="round" />
-        <path d="M124 36 Q132 38 139 33" fill="none" stroke={glow} strokeWidth="3" strokeLinecap="round" />
         {/* Radioactive particles / mist */}
         <circle cx="92" cy="19" r="1.6" fill={glow} />
         <circle cx="130" cy="21" r="1.3" fill={glow} opacity=".85" />
-        <circle cx="110" cy="15" r="1.4" fill="#39ff14" opacity=".7" />
+        <circle cx="110" cy="15" r="1.4" fill={glow} opacity=".7" />
       </g>
     );
   }

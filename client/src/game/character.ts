@@ -418,89 +418,86 @@ function drawOutfitDetails(
     ctx.stroke();
   } else if (outfit === 'outfit-godmode-revenant') {
     ctx.save();
-    // Bold glowing command core on the chest.
+    // Gold-trimmed lich breastplate.
+    ctx.fillStyle = '#10131c';
+    ctx.strokeStyle = '#f8d66d';
+    ctx.lineWidth = 1.6 * scale;
+    roundRect(ctx, -11 * scale, -16 * scale, 24 * scale, 28 * scale, 4 * scale);
+    ctx.fill();
+    ctx.stroke();
+    // Engraved chevron.
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = scale;
+    ctx.beginPath();
+    ctx.moveTo(-6 * scale, 4 * scale);
+    ctx.lineTo(2 * scale, 8 * scale);
+    ctx.lineTo(10 * scale, 4 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Pauldron cap.
+    ctx.fillStyle = '#f8d66d';
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(-22 * scale, -17 * scale, 10 * scale, 4 * scale);
+    ctx.globalAlpha = 1;
+    // Glowing core gem.
     ctx.shadowColor = '#00f0ff';
     ctx.shadowBlur = 8 * scale;
     ctx.fillStyle = '#04141b';
-    ctx.strokeStyle = '#00f0ff';
-    ctx.lineWidth = 1.8 * scale;
     ctx.beginPath();
-    ctx.moveTo(2 * scale, -12 * scale);
-    ctx.lineTo(9 * scale, -8 * scale);
-    ctx.lineTo(9 * scale, -1 * scale);
-    ctx.lineTo(2 * scale, 3 * scale);
-    ctx.lineTo(-5 * scale, -1 * scale);
-    ctx.lineTo(-5 * scale, -8 * scale);
+    ctx.moveTo(2 * scale, -10 * scale);
+    ctx.lineTo(8 * scale, -4 * scale);
+    ctx.lineTo(2 * scale, 2 * scale);
+    ctx.lineTo(-4 * scale, -4 * scale);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = '#f8d66d';
+    ctx.lineWidth = 1.4 * scale;
     ctx.stroke();
     ctx.fillStyle = '#00f0ff';
     ctx.beginPath();
-    ctx.arc(2 * scale, -4 * scale, 1.7 * scale, 0, Math.PI * 2);
+    ctx.arc(2 * scale, -4 * scale, 1.6 * scale, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
-    // Two bright debug seam lines.
-    ctx.strokeStyle = '#00f0ff';
-    ctx.globalAlpha = 0.7;
-    ctx.lineWidth = 1.1 * scale;
-    ctx.beginPath();
-    ctx.moveTo(-14 * scale, -14 * scale);
-    ctx.lineTo(-15 * scale, 6 * scale);
-    ctx.moveTo(16 * scale, -12 * scale);
-    ctx.lineTo(16 * scale, 5 * scale);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    // Asymmetric shoulder/collar plate.
-    ctx.fillStyle = trim;
-    ctx.fillRect(-21 * scale, -17 * scale, 10 * scale, 5 * scale);
-    // Red corrupted override slash.
-    ctx.strokeStyle = '#ff174d';
-    ctx.lineWidth = 2.4 * scale;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(-9 * scale, 5 * scale);
-    ctx.lineTo(11 * scale, -9 * scale);
-    ctx.stroke();
     ctx.restore();
   } else if (outfit === 'outfit-neon-plague-saint') {
     ctx.save();
-    // Bold toxic chest vial / plague core.
-    ctx.shadowColor = '#39ff14';
-    ctx.shadowBlur = 8 * scale;
-    ctx.fillStyle = '#04140b';
-    ctx.strokeStyle = '#9dff4f';
-    ctx.lineWidth = 1.8 * scale;
-    roundRect(ctx, -4 * scale, -13 * scale, 12 * scale, 16 * scale, 4 * scale);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#39ff14';
-    roundRect(ctx, -1 * scale, -8 * scale, 6 * scale, 9 * scale, 2 * scale);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    // Glowing toxic robe seams.
-    ctx.strokeStyle = '#00ff99';
-    ctx.globalAlpha = 0.8;
-    ctx.lineWidth = 1.2 * scale;
-    ctx.beginPath();
-    ctx.moveTo(-15 * scale, -13 * scale);
-    ctx.lineTo(-16 * scale, 6 * scale);
-    ctx.moveTo(17 * scale, -12 * scale);
-    ctx.lineTo(18 * scale, 5 * scale);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    // Holy sigil — cross within a ring.
+    // Coat lapels.
     ctx.strokeStyle = '#9dff4f';
     ctx.lineWidth = 1.4 * scale;
     ctx.beginPath();
-    ctx.arc(14 * scale, -3 * scale, 4 * scale, 0, Math.PI * 2);
-    ctx.moveTo(14 * scale, -7 * scale);
-    ctx.lineTo(14 * scale, 1 * scale);
-    ctx.moveTo(10 * scale, -3 * scale);
-    ctx.lineTo(18 * scale, -3 * scale);
+    ctx.moveTo(-7 * scale, -16 * scale);
+    ctx.lineTo(2 * scale, -2 * scale);
+    ctx.lineTo(11 * scale, -16 * scale);
     ctx.stroke();
-    // Sealed collar/hood detail.
-    ctx.fillStyle = trim;
-    ctx.fillRect(-9 * scale, -20 * scale, 17 * scale, 3 * scale);
+    // Button row.
+    ctx.fillStyle = '#9dff4f';
+    for (const by of [-4, 1, 6]) {
+      ctx.beginPath();
+      ctx.arc(2 * scale, by * scale, 1.1 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Belt.
+    ctx.strokeStyle = '#9dff4f';
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = 2.4 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-12 * scale, 9 * scale);
+    ctx.lineTo(14 * scale, 9 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Side plague vial (glowing).
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur = 7 * scale;
+    ctx.fillStyle = '#04140b';
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = 1.4 * scale;
+    roundRect(ctx, 13 * scale, -10 * scale, 6 * scale, 11 * scale, 2 * scale);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#39ff14';
+    roundRect(ctx, 14.5 * scale, -6 * scale, 3 * scale, 5 * scale, 1 * scale);
+    ctx.fill();
+    ctx.shadowBlur = 0;
     ctx.restore();
   } else {
     ctx.fillRect(-4 * scale, -15 * scale, 3 * scale, 19 * scale);

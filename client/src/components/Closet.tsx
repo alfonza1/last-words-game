@@ -340,16 +340,6 @@ function CosmeticPicker({
                 </span>
               </div>
               <p className="mt-0.5 text-[9px] leading-snug text-white/60">{item.description}</p>
-              {exclusive && (
-                <span className="mr-1 mt-1 inline-block rounded border border-[#a855f7]/60 bg-[#a855f7]/10 px-1 py-0.5 text-[7px] font-black uppercase tracking-widest text-[#c084fc]">
-                  ★ Exclusive Mythic · Limited-time
-                </span>
-              )}
-              {item.outfitReactive && (
-                <span className="mt-1 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1 py-0.5 text-[7px] font-black uppercase tracking-widest text-neon-cyan">
-                  ◈ Outfit-reactive
-                </span>
-              )}
             </button>
           );
         })}
