@@ -322,12 +322,17 @@ export function Upgrades({
               </button>
               {!owned.has(tryOn.key) && (
                 <button
+                  disabled={coins < tryOn.cost}
                   onClick={() => {
                     const it = tryOn;
                     setTryOn(null);
                     setPending({ kind: 'cosmetic', id: it.key, label: it.name, cost: `${it.cost} 🪙` });
                   }}
-                  className="flex-1 rounded-lg border border-neon-green bg-neon-green/10 px-4 py-2 text-sm font-bold text-neon-green hover:bg-neon-green/20"
+                  className={`flex-1 rounded-lg border px-4 py-2 text-sm font-bold ${
+                    coins < tryOn.cost
+                      ? 'cursor-not-allowed border-white/15 text-white/45'
+                      : 'border-neon-green bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
+                  }`}
                 >
                   Buy {tryOn.cost.toLocaleString()} 🪙
                 </button>
