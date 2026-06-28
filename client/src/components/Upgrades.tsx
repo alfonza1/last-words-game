@@ -308,9 +308,7 @@ export function Upgrades({
             className="w-full max-w-sm rounded-xl border border-neon-cyan/40 bg-ink-800 p-5 text-center shadow-neon"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-black tracking-wide text-neon-cyan">TRY ON</h3>
-            <p className="mt-1 text-[11px] text-white/45">Preview only — nothing is bought or equipped.</p>
-            <div className="mx-auto my-3 h-64 w-52 overflow-hidden rounded-lg border border-white/10 bg-black/40">
+            <div className="mx-auto mb-3 h-64 w-52 overflow-hidden rounded-lg border border-white/10 bg-black/40">
               <CharacterAvatar character={{ ...character, [tryOn.slot]: tryOn.key }} className="h-full w-full" />
             </div>
             <div className="text-sm font-black text-neon-green">{tryOn.name}</div>
