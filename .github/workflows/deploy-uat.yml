@@ -97,10 +97,6 @@ jobs:
           service: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
           region: ${{ vars.GCP_REGION }}
           image: ${{ env.IMAGE }}
-          # Datasource is supplied per-environment via GitHub `uat` environment
-          # variables/secret (set SPRING_DATASOURCE_URL, SPRING_DATASOURCE_USERNAME,
-          # SPRING_DATASOURCE_PASSWORD_SECRET there). --update-secrets pulls the
-          # password from Secret Manager — it's the secret's name, not the value.
           flags: >-
             --allow-unauthenticated
             --cpu=1
@@ -108,8 +104,6 @@ jobs:
             --min-instances=0
             --max-instances=1
             --concurrency=40
-            --update-env-vars=SPRING_DATASOURCE_URL=${{vars.SPRING_DATASOURCE_URL}},SPRING_DATASOURCE_USERNAME=${{vars.SPRING_DATASOURCE_USERNAME}}
-            --update-secrets=SPRING_DATASOURCE_PASSWORD=${{vars.SPRING_DATASOURCE_PASSWORD_SECRET}}:latest
 
       - name: Smoke-test UAT API
         run: curl --fail --retry 8 --retry-delay 5 "${{ steps.deploy-api.outputs.url }}/api/health"
