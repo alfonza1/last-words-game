@@ -179,6 +179,12 @@ export interface GameState {
   zombies: Zombie[];
   /** The words the player can type — independent of the zombies. */
   wordQueue: string[];
+  /**
+   * Typing Defense: how many of the queued words are still needed to clear the
+   * current wave (capped at the queue size). The UI shows only this many so the
+   * final word of a wave isn't trailed by words you'll never need to type.
+   */
+  wordsToClearWave: number;
   input: string;
 
   /** Puzzle Mode: solve a prompt to fire a multi-kill volley. */

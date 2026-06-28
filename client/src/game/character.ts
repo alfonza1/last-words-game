@@ -25,6 +25,16 @@ export function drawSurvivor(
   const lips = lipColorForSkinTone(character.skinTone);
   const hair = hairColor(character.hairColor);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
+  const glow = outfit.glow ?? outfit.trim;
+  // Exclusive Mythics replace the survivor entirely (skull / plague-doctor mask).
+  const fullCharacter =
+    character.outfit === 'outfit-godmode-revenant' || character.outfit === 'outfit-neon-plague-saint';
+  // Mythics have bone / gloved hands rather than bare skin on the rifle.
+  const handColor = fullCharacter
+    ? character.outfit === 'outfit-godmode-revenant'
+      ? '#e8e6da'
+      : '#1b2a1f'
+    : skin;
   const breathing = Math.sin(time * 0.0024) * 0.85 * scale;
   const shotStrength = s.survivorShot ? Math.max(0, s.survivorShot.life / s.survivorShot.ttl) : 0;
   const recoil = shotStrength * 2.8 * scale;
@@ -95,27 +105,30 @@ export function drawSurvivor(
   drawOutfitDetails(ctx, character.outfit, outfit.trim, scale);
   ctx.restore();
 
-  // Head tucked low behind the optic.
+  // Head tucked low behind the optic. Mythics swap in a skull / beaked mask.
   ctx.fillStyle = `${outfit.secondary}dd`;
   ctx.beginPath();
   ctx.arc(17 * scale, -20 * scale, 13 * scale, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = skin;
-  ctx.beginPath();
-  ctx.arc(28 * scale, -27 * scale, 12 * scale, 0, Math.PI * 2);
-  ctx.fill();
+  if (!fullCharacter) {
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    ctx.arc(28 * scale, -27 * scale, 12 * scale, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.save();
   ctx.translate(5 * scale, 0);
-  drawHair(ctx, character.hair, hair, scale);
-  drawAccessory(ctx, character.accessory, outfit.trim, scale);
+  if (!fullCharacter) drawHair(ctx, character.hair, hair, glow, scale);
+  drawAccessory(ctx, character.accessory, glow, scale, time);
   ctx.restore();
-  drawCombatFace(ctx, character.expression, outfit.trim, lips, scale);
+  if (fullCharacter) drawMythicHead(ctx, character.outfit, glow, scale);
+  else drawCombatFace(ctx, character.expression, glow, lips, scale);
 
   // Trigger arm and braced support arm.
   limb(ctx, 0, -12, 24, -19, 8, outfit.primary, scale);
-  limb(ctx, 22, -19, 35, -19, 5.5, skin, scale);
+  limb(ctx, 22, -19, 35, -19, 5.5, handColor, scale);
   limb(ctx, -1, -4, 24, 2, 8, outfit.primary, scale);
-  limb(ctx, 24, 2, 45, -12, 5.5, skin, scale);
+  limb(ctx, 24, 2, 45, -12, 5.5, handColor, scale);
   ctx.fillStyle = outfit.trim;
   ctx.globalAlpha = 0.35;
   ctx.beginPath();
@@ -256,18 +269,34 @@ function drawCombatFace(
   }
 
   if (expression === 'not-yet-dead') {
+    ctx.strokeStyle = '#111719';
+    ctx.lineWidth = Math.max(0.9, 1.15 * scale);
+    ctx.beginPath();
+    ctx.moveTo(30 * scale, -33 * scale);
+    ctx.lineTo(37 * scale, -31 * scale);
+    ctx.stroke();
     ctx.fillStyle = glow;
     ctx.shadowColor = glow;
-    ctx.shadowBlur = 6 * scale;
+    ctx.shadowBlur = 8 * scale;
     ctx.beginPath();
-    ctx.arc(eyeX, eyeY, 1.8 * scale, 0, Math.PI * 2);
+    ctx.arc(eyeX, eyeY, 2.25 * scale, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#101416';
+    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, 3.1 * scale, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.strokeStyle = glow;
-    ctx.globalAlpha = 0.55;
+    ctx.globalAlpha = 0.62;
+    ctx.lineWidth = Math.max(0.65, 0.75 * scale);
     ctx.beginPath();
     ctx.moveTo(37 * scale, -27 * scale);
     ctx.lineTo(41 * scale, -25 * scale);
+    ctx.moveTo(36.5 * scale, -31 * scale);
+    ctx.lineTo(41.5 * scale, -34 * scale);
+    ctx.moveTo(36.8 * scale, -24.5 * scale);
+    ctx.lineTo(42.5 * scale, -21.5 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
   } else if (expression === 'grave-grin') {
@@ -288,11 +317,11 @@ function drawCombatFace(
     ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.strokeStyle = lips;
-    ctx.lineWidth = Math.max(0.9, 1.15 * scale);
+    ctx.lineWidth = Math.max(0.7, 0.8 * scale);
     ctx.globalAlpha = 0.9;
     ctx.beginPath();
-    ctx.moveTo(30.5 * scale, -30 * scale);
-    ctx.quadraticCurveTo(34 * scale, -32 * scale, 38 * scale, -30 * scale);
+    ctx.moveTo(31 * scale, -30 * scale);
+    ctx.quadraticCurveTo(34 * scale, -30.8 * scale, 37.5 * scale, -30 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
   } else {
@@ -306,23 +335,17 @@ function drawCombatFace(
   ctx.beginPath();
   if (expression === 'grave-grin' || expression === 'not-yet-dead') {
     if (expression === 'grave-grin') {
-      ctx.lineWidth = Math.max(0.95, 1.1 * scale);
-      ctx.moveTo(34.5 * scale, -22.5 * scale);
-      ctx.bezierCurveTo(37.5 * scale, -21.4 * scale, 40.5 * scale, -21.8 * scale, 43.2 * scale, -24.2 * scale);
-      ctx.stroke();
-      ctx.globalAlpha = 0.45;
-      ctx.lineWidth = Math.max(0.65, 0.75 * scale);
-      ctx.beginPath();
-      ctx.moveTo(36 * scale, -20.8 * scale);
-      ctx.bezierCurveTo(39 * scale, -19.5 * scale, 42 * scale, -21.2 * scale, 43.5 * scale, -23.5 * scale);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-      ctx.beginPath();
-      ctx.moveTo(43.2 * scale, -24.2 * scale);
-      ctx.lineTo(45.4 * scale, -25.4 * scale);
+      ctx.lineWidth = Math.max(0.95, 1.05 * scale);
+      ctx.moveTo(34.8 * scale, -22.5 * scale);
+      ctx.bezierCurveTo(38 * scale, -21.2 * scale, 41 * scale, -21.8 * scale, 43.2 * scale, -24 * scale);
+      ctx.moveTo(42.9 * scale, -24 * scale);
+      ctx.lineTo(45 * scale, -25.2 * scale);
     } else {
+      ctx.lineWidth = Math.max(0.85, scale);
       ctx.moveTo(35 * scale, -23 * scale);
-      ctx.quadraticCurveTo(39 * scale, -18 * scale, 43 * scale, -22 * scale);
+      ctx.bezierCurveTo(38.5 * scale, -19 * scale, 42.2 * scale, -20 * scale, 45 * scale, -23.5 * scale);
+      ctx.moveTo(44.7 * scale, -23.5 * scale);
+      ctx.lineTo(46.5 * scale, -24.8 * scale);
     }
   } else if (expression === 'blood-rush') {
     ctx.moveTo(32 * scale, -33 * scale);
@@ -380,10 +403,6 @@ function drawOutfitDetails(
     ctx.lineTo(2 * scale, 3 * scale);
     ctx.lineTo(17 * scale, -13 * scale);
     ctx.stroke();
-  } else if (outfit === 'outfit-hazmat') {
-    ctx.setLineDash([8 * scale, 3 * scale]);
-    ctx.strokeRect(-17 * scale, -14 * scale, 35 * scale, 17 * scale);
-    ctx.setLineDash([]);
   } else if (outfit === 'outfit-inferno') {
     ctx.beginPath();
     ctx.arc(2 * scale, -6 * scale, 5 * scale, 0, Math.PI * 2);
@@ -397,88 +416,227 @@ function drawOutfitDetails(
     ctx.lineTo(-32 * scale, 13 * scale);
     ctx.lineTo(16 * scale, 9 * scale);
     ctx.stroke();
+  } else if (outfit === 'outfit-godmode-revenant') {
+    ctx.save();
+    // Gold-trimmed lich breastplate.
+    ctx.fillStyle = '#10131c';
+    ctx.strokeStyle = '#f8d66d';
+    ctx.lineWidth = 1.6 * scale;
+    roundRect(ctx, -11 * scale, -16 * scale, 24 * scale, 28 * scale, 4 * scale);
+    ctx.fill();
+    ctx.stroke();
+    // Engraved chevron.
+    ctx.globalAlpha = 0.55;
+    ctx.lineWidth = scale;
+    ctx.beginPath();
+    ctx.moveTo(-6 * scale, 4 * scale);
+    ctx.lineTo(2 * scale, 8 * scale);
+    ctx.lineTo(10 * scale, 4 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Pauldron cap.
+    ctx.fillStyle = '#f8d66d';
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(-22 * scale, -17 * scale, 10 * scale, 4 * scale);
+    ctx.globalAlpha = 1;
+    // Glowing core gem.
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 8 * scale;
+    ctx.fillStyle = '#04141b';
+    ctx.beginPath();
+    ctx.moveTo(2 * scale, -10 * scale);
+    ctx.lineTo(8 * scale, -4 * scale);
+    ctx.lineTo(2 * scale, 2 * scale);
+    ctx.lineTo(-4 * scale, -4 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#f8d66d';
+    ctx.lineWidth = 1.4 * scale;
+    ctx.stroke();
+    ctx.fillStyle = '#00f0ff';
+    ctx.beginPath();
+    ctx.arc(2 * scale, -4 * scale, 1.6 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  } else if (outfit === 'outfit-neon-plague-saint') {
+    ctx.save();
+    // Coat lapels.
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = 1.4 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-7 * scale, -16 * scale);
+    ctx.lineTo(2 * scale, -2 * scale);
+    ctx.lineTo(11 * scale, -16 * scale);
+    ctx.stroke();
+    // Button row.
+    ctx.fillStyle = '#9dff4f';
+    for (const by of [-4, 1, 6]) {
+      ctx.beginPath();
+      ctx.arc(2 * scale, by * scale, 1.1 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Belt.
+    ctx.strokeStyle = '#9dff4f';
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = 2.4 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-12 * scale, 9 * scale);
+    ctx.lineTo(14 * scale, 9 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Side plague vial (glowing).
+    ctx.shadowColor = '#39ff14';
+    ctx.shadowBlur = 7 * scale;
+    ctx.fillStyle = '#04140b';
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = 1.4 * scale;
+    roundRect(ctx, 13 * scale, -10 * scale, 6 * scale, 11 * scale, 2 * scale);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#39ff14';
+    roundRect(ctx, 14.5 * scale, -6 * scale, 3 * scale, 5 * scale, 1 * scale);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   } else {
     ctx.fillRect(-4 * scale, -15 * scale, 3 * scale, 19 * scale);
   }
 }
 
-function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, scale: number) {
+function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, accent: string, scale: number) {
   if (style === 'bald') return;
   ctx.save();
-  const shadow = 'rgba(0,0,0,.34)';
+  const shadow = 'rgba(0,0,0,.38)';
+  const dark = 'rgba(0,0,0,.58)';
+  const sheen = 'rgba(255,255,255,.2)';
+  const hatColor = accent;
   ctx.fillStyle = color;
-  if (style === 'mohawk') {
+
+  if (style === 'buzz') {
     ctx.beginPath();
-    ctx.moveTo(17 * scale, -31 * scale);
-    ctx.lineTo(23 * scale, -46 * scale);
-    ctx.lineTo(29 * scale, -31 * scale);
-    ctx.closePath();
+    ctx.ellipse(23 * scale, -28 * scale, 12.8 * scale, 11.2 * scale, 0, Math.PI, Math.PI * 2);
     ctx.fill();
-  } else if (style === 'ponytail') {
-    ctx.strokeStyle = color;
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 4.2 * scale;
-    ctx.beginPath();
-    ctx.moveTo(15 * scale, -35 * scale);
-    ctx.quadraticCurveTo(8 * scale, -20 * scale, 7 * scale, -6 * scale);
-    ctx.moveTo(18 * scale, -33 * scale);
-    ctx.quadraticCurveTo(14 * scale, -18 * scale, 13 * scale, -3 * scale);
-    ctx.moveTo(28 * scale, -33 * scale);
-    ctx.quadraticCurveTo(34 * scale, -18 * scale, 33 * scale, -3 * scale);
-    ctx.moveTo(31 * scale, -35 * scale);
-    ctx.quadraticCurveTo(40 * scale, -20 * scale, 40 * scale, -6 * scale);
-    ctx.stroke();
-    ctx.strokeStyle = shadow;
-    ctx.lineWidth = Math.max(1, 1.1 * scale);
-    ctx.stroke();
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(23 * scale, -28 * scale, 11 * scale, Math.PI, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = shadow;
-    ctx.lineWidth = Math.max(1, 1.2 * scale);
-    ctx.beginPath();
-    ctx.moveTo(14 * scale, -28 * scale);
-    ctx.quadraticCurveTo(23 * scale, -22 * scale, 33 * scale, -28 * scale);
-    ctx.stroke();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(1.8, 3.4 * scale);
-    ctx.beginPath();
-    ctx.moveTo(13 * scale, -28 * scale);
-    ctx.quadraticCurveTo(23 * scale, -34 * scale, 34 * scale, -28 * scale);
-    ctx.stroke();
     ctx.strokeStyle = shadow;
     ctx.lineWidth = Math.max(1, scale);
     ctx.beginPath();
-    ctx.moveTo(14 * scale, -28 * scale);
-    ctx.quadraticCurveTo(23 * scale, -32 * scale, 33 * scale, -28 * scale);
+    ctx.moveTo(12 * scale, -31 * scale);
+    ctx.lineTo(34 * scale, -31 * scale);
+    ctx.moveTo(17 * scale, -37 * scale);
+    ctx.lineTo(29 * scale, -37 * scale);
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,255,255,.18)';
-    ctx.lineWidth = Math.max(1, 0.8 * scale);
+  } else if (style === 'mohawk') {
+    ctx.fillStyle = shadow;
     ctx.beginPath();
-    ctx.moveTo(11 * scale, -19 * scale);
-    ctx.quadraticCurveTo(9 * scale, -12 * scale, 8 * scale, -7 * scale);
-    ctx.moveTo(17 * scale, -19 * scale);
-    ctx.quadraticCurveTo(15 * scale, -12 * scale, 14 * scale, -6 * scale);
-    ctx.moveTo(31 * scale, -19 * scale);
-    ctx.quadraticCurveTo(33 * scale, -12 * scale, 33 * scale, -6 * scale);
+    ctx.arc(23 * scale, -28 * scale, 11 * scale, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(15 * scale, -29 * scale);
+    ctx.quadraticCurveTo(18 * scale, -43 * scale, 22 * scale, -49 * scale);
+    ctx.quadraticCurveTo(26 * scale, -43 * scale, 31 * scale, -29 * scale);
+    ctx.quadraticCurveTo(23 * scale, -34 * scale, 15 * scale, -29 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = Math.max(1, scale);
+    ctx.stroke();
+    ctx.strokeStyle = sheen;
+    ctx.lineWidth = Math.max(0.8, 0.8 * scale);
+    ctx.beginPath();
+    ctx.moveTo(21 * scale, -46 * scale);
+    ctx.quadraticCurveTo(21 * scale, -37 * scale, 17 * scale, -30 * scale);
+    ctx.moveTo(24 * scale, -46 * scale);
+    ctx.quadraticCurveTo(25 * scale, -37 * scale, 30 * scale, -30 * scale);
+    ctx.stroke();
+  } else if (style === 'ponytail') {
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 3.15 * scale;
+    ctx.beginPath();
+    ctx.moveTo(8 * scale, -30 * scale);
+    ctx.quadraticCurveTo(1 * scale, -13 * scale, 0 * scale, 7 * scale);
+    ctx.moveTo(11 * scale, -34 * scale);
+    ctx.quadraticCurveTo(5 * scale, -17 * scale, 4 * scale, 3 * scale);
+    ctx.moveTo(15 * scale, -37 * scale);
+    ctx.quadraticCurveTo(10 * scale, -18 * scale, 9 * scale, -1 * scale);
+    ctx.moveTo(19 * scale, -38 * scale);
+    ctx.quadraticCurveTo(16 * scale, -18 * scale, 16 * scale, 1 * scale);
+    ctx.moveTo(29 * scale, -38 * scale);
+    ctx.quadraticCurveTo(31 * scale, -18 * scale, 31 * scale, 1 * scale);
+    ctx.moveTo(33 * scale, -37 * scale);
+    ctx.quadraticCurveTo(38 * scale, -18 * scale, 38 * scale, -1 * scale);
+    ctx.moveTo(37 * scale, -34 * scale);
+    ctx.quadraticCurveTo(43 * scale, -17 * scale, 44 * scale, 3 * scale);
+    ctx.moveTo(40 * scale, -30 * scale);
+    ctx.quadraticCurveTo(48 * scale, -13 * scale, 48 * scale, 7 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = Math.max(0.7, 0.85 * scale);
+    ctx.stroke();
+    ctx.fillStyle = hatColor;
+    ctx.beginPath();
+    ctx.ellipse(23 * scale, -28 * scale, 13.1 * scale, 11.7 * scale, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = Math.max(1, 1.15 * scale);
+    ctx.beginPath();
+    ctx.moveTo(12 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -23 * scale, 35 * scale, -28 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = hatColor;
+    ctx.lineWidth = Math.max(1.7, 2.6 * scale);
+    ctx.beginPath();
+    ctx.moveTo(12 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -35 * scale, 35 * scale, -28 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = Math.max(0.9, 0.95 * scale);
+    ctx.beginPath();
+    ctx.moveTo(13 * scale, -28 * scale);
+    ctx.quadraticCurveTo(23 * scale, -32 * scale, 34 * scale, -28 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = sheen;
+    ctx.lineWidth = Math.max(0.6, 0.62 * scale);
+    ctx.beginPath();
+    ctx.moveTo(6 * scale, -15 * scale);
+    ctx.quadraticCurveTo(4 * scale, -7 * scale, 3 * scale, 4 * scale);
+    ctx.moveTo(10 * scale, -18 * scale);
+    ctx.quadraticCurveTo(8 * scale, -12 * scale, 7 * scale, -7 * scale);
+    ctx.moveTo(14 * scale, -20 * scale);
+    ctx.quadraticCurveTo(12 * scale, -12 * scale, 12 * scale, -4 * scale);
+    ctx.moveTo(28 * scale, -21 * scale);
+    ctx.quadraticCurveTo(29 * scale, -12 * scale, 29 * scale, -3 * scale);
+    ctx.moveTo(34 * scale, -20 * scale);
+    ctx.quadraticCurveTo(36 * scale, -12 * scale, 36 * scale, -4 * scale);
+    ctx.moveTo(39 * scale, -15 * scale);
+    ctx.quadraticCurveTo(43 * scale, -6 * scale, 44 * scale, 4 * scale);
     ctx.stroke();
   } else if (style === 'undercut') {
+    ctx.translate(-2.5 * scale, 0);
     ctx.beginPath();
-    ctx.moveTo(13 * scale, -31 * scale);
-    ctx.quadraticCurveTo(20 * scale, -46 * scale, 36 * scale, -39 * scale);
-    ctx.quadraticCurveTo(30 * scale, -37 * scale, 18 * scale, -27 * scale);
+    ctx.moveTo(12 * scale, -29 * scale);
+    ctx.quadraticCurveTo(19 * scale, -44 * scale, 35 * scale, -39 * scale);
+    ctx.quadraticCurveTo(29 * scale, -36 * scale, 17 * scale, -26 * scale);
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.moveTo(15 * scale, -27 * scale);
-    ctx.quadraticCurveTo(26 * scale, -40 * scale, 38 * scale, -36 * scale);
-    ctx.quadraticCurveTo(31 * scale, -31 * scale, 18 * scale, -22 * scale);
+    ctx.moveTo(13 * scale, -26 * scale);
+    ctx.quadraticCurveTo(26 * scale, -41 * scale, 39 * scale, -36 * scale);
+    ctx.quadraticCurveTo(32 * scale, -30 * scale, 18 * scale, -21 * scale);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = shadow;
+    ctx.strokeStyle = dark;
     ctx.lineWidth = Math.max(1, 1.2 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = sheen;
+    ctx.lineWidth = Math.max(0.8, 0.85 * scale);
+    ctx.beginPath();
+    ctx.moveTo(18 * scale, -27 * scale);
+    ctx.quadraticCurveTo(28 * scale, -37 * scale, 37 * scale, -35 * scale);
+    ctx.moveTo(22 * scale, -23 * scale);
+    ctx.quadraticCurveTo(30 * scale, -30 * scale, 36 * scale, -32 * scale);
     ctx.stroke();
   } else {
     ctx.beginPath();
@@ -496,14 +654,8 @@ function drawHair(ctx: CanvasRenderingContext2D, style: string, color: string, s
   ctx.restore();
 }
 
-function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number) {
-  if (type === 'accessory-cap') {
-    ctx.fillStyle = '#1a252b';
-    ctx.beginPath();
-    ctx.arc(23 * scale, -30 * scale, 11 * scale, Math.PI, Math.PI * 2);
-    ctx.fill();
-    ctx.fillRect(23 * scale, -31 * scale, 13 * scale, 3 * scale);
-  } else if (type === 'accessory-headphones') {
+function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string, scale: number, time: number) {
+  if (type === 'accessory-headphones') {
     ctx.strokeStyle = glow;
     ctx.lineWidth = 3 * scale;
     ctx.beginPath();
@@ -518,18 +670,6 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.fillRect(15 * scale, -27 * scale, 7 * scale, 4 * scale);
     ctx.fillRect(25 * scale, -27 * scale, 7 * scale, 4 * scale);
     ctx.globalAlpha = 1;
-  } else if (type === 'accessory-mask') {
-    ctx.fillStyle = '#11191d';
-    ctx.strokeStyle = '#dce6df';
-    ctx.lineWidth = 1 * scale;
-    ctx.beginPath();
-    ctx.moveTo(14 * scale, -23 * scale);
-    ctx.lineTo(32 * scale, -23 * scale);
-    ctx.lineTo(28 * scale, -14 * scale);
-    ctx.lineTo(18 * scale, -14 * scale);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
   } else if (type === 'accessory-crown') {
     ctx.strokeStyle = glow;
     ctx.shadowColor = glow;
@@ -543,7 +683,193 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.lineTo(34 * scale, -35 * scale);
     ctx.stroke();
     ctx.shadowBlur = 0;
+  } else if (type === 'accessory-blackout-shoulder-drone') {
+    ctx.save();
+    // Smoothly orbits around the survivor's head/shoulder on a wide ellipse.
+    const a = time * 0.0021;
+    ctx.translate(20 * scale + Math.cos(a) * 13 * scale, -38 * scale + Math.sin(a) * 7 * scale);
+    ctx.lineJoin = 'round';
+    // Faint thruster glow trailing the hull.
+    ctx.fillStyle = glow;
+    ctx.globalAlpha = 0.18;
+    ctx.beginPath();
+    ctx.ellipse(-9 * scale, 0, 4 * scale, 2 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // Sleek angular hull.
+    ctx.fillStyle = '#0a0d12';
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 1.3 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-7 * scale, 0);
+    ctx.lineTo(-2 * scale, -4 * scale);
+    ctx.lineTo(7 * scale, -3 * scale);
+    ctx.lineTo(9 * scale, 0);
+    ctx.lineTo(7 * scale, 3 * scale);
+    ctx.lineTo(-2 * scale, 4 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Swept wing fins.
+    ctx.beginPath();
+    ctx.moveTo(-2 * scale, -4 * scale);
+    ctx.lineTo(-6 * scale, -8 * scale);
+    ctx.lineTo(1 * scale, -4.5 * scale);
+    ctx.moveTo(-2 * scale, 4 * scale);
+    ctx.lineTo(-6 * scale, 8 * scale);
+    ctx.lineTo(1 * scale, 4.5 * scale);
+    ctx.stroke();
+    // Pulsing scan eye.
+    const pulse = 1.5 + Math.sin(time * 0.006) * 0.6;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 9 * scale;
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(3 * scale, 0, pulse * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Sweeping scan beam toward the field.
+    ctx.strokeStyle = glow;
+    ctx.globalAlpha = 0.32;
+    ctx.lineWidth = 1.4 * scale;
+    ctx.beginPath();
+    ctx.moveTo(5 * scale, 1 * scale);
+    ctx.lineTo(16 * scale, 10 * scale + Math.sin(time * 0.004) * 3 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  } else if (type === 'accessory-toxic-angel-halo') {
+    ctx.save();
+    // Spins in place — segmented dashes travel around the ring.
+    ctx.strokeStyle = glow;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    ctx.lineWidth = 2.2 * scale;
+    ctx.setLineDash([5 * scale, 3 * scale]);
+    ctx.lineDashOffset = (time * 0.03) % 64;
+    ctx.beginPath();
+    ctx.ellipse(24 * scale, -42 * scale, 15 * scale, 5 * scale, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineDashOffset = 0;
+    // Radioactive particles / mist.
+    ctx.shadowBlur = 4 * scale;
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(11 * scale, -47 * scale, 1.4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(37 * scale, -45 * scale, 1.2 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(24 * scale, -50 * scale, 1.3 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   }
+}
+
+/** Mythic head replacement for the prone survivor: a skull or a beaked plague mask. */
+function drawMythicHead(ctx: CanvasRenderingContext2D, outfit: string, glow: string, scale: number) {
+  ctx.save();
+  ctx.lineJoin = 'round';
+  if (outfit === 'outfit-godmode-revenant') {
+    // Skull cranium + jaw.
+    ctx.fillStyle = '#e8e6da';
+    ctx.strokeStyle = '#b9b6a6';
+    ctx.lineWidth = scale;
+    ctx.beginPath();
+    ctx.arc(28 * scale, -28 * scale, 12 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    roundRect(ctx, 23 * scale, -20 * scale, 12 * scale, 7 * scale, 2 * scale);
+    ctx.fill();
+    ctx.stroke();
+    // Burning eye sockets.
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    ctx.fillStyle = '#06080d';
+    ctx.beginPath();
+    ctx.arc(25 * scale, -30 * scale, 3.4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(34 * scale, -29 * scale, 3.4 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(25 * scale, -30 * scale, 1.5 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(34 * scale, -29 * scale, 1.5 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Nasal cavity.
+    ctx.fillStyle = '#06080d';
+    ctx.beginPath();
+    ctx.moveTo(31 * scale, -26 * scale);
+    ctx.lineTo(29 * scale, -21 * scale);
+    ctx.lineTo(33 * scale, -21 * scale);
+    ctx.closePath();
+    ctx.fill();
+    // Teeth.
+    ctx.strokeStyle = '#b9b6a6';
+    ctx.lineWidth = 0.8 * scale;
+    ctx.beginPath();
+    ctx.moveTo(26 * scale, -19 * scale);
+    ctx.lineTo(26 * scale, -14 * scale);
+    ctx.moveTo(30 * scale, -19 * scale);
+    ctx.lineTo(30 * scale, -13 * scale);
+    ctx.moveTo(34 * scale, -19 * scale);
+    ctx.lineTo(34 * scale, -14 * scale);
+    ctx.stroke();
+  } else {
+    // Plague-doctor mask face.
+    ctx.fillStyle = '#14120d';
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = scale;
+    ctx.beginPath();
+    ctx.arc(28 * scale, -28 * scale, 12 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Downward beak toward the field.
+    ctx.fillStyle = '#1c1a12';
+    ctx.beginPath();
+    ctx.moveTo(33 * scale, -31 * scale);
+    ctx.lineTo(43 * scale, -22 * scale);
+    ctx.lineTo(33 * scale, -19 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Glowing goggle lenses.
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    for (const lx of [25, 34]) {
+      ctx.fillStyle = '#04140b';
+      ctx.strokeStyle = '#9dff4f';
+      ctx.lineWidth = 0.9 * scale;
+      ctx.beginPath();
+      ctx.arc(lx * scale, -30 * scale, 3.6 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(lx * scale, -30 * scale, 1.5 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    // Wide-brim hat.
+    ctx.fillStyle = '#0d140f';
+    ctx.strokeStyle = '#9dff4f';
+    ctx.lineWidth = scale;
+    ctx.beginPath();
+    ctx.ellipse(28 * scale, -38 * scale, 15 * scale, 4 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    roundRect(ctx, 21 * scale, -49 * scale, 14 * scale, 12 * scale, 3 * scale);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function limb(

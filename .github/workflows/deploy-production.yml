@@ -105,6 +105,10 @@ jobs:
           service: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
           region: ${{ vars.GCP_REGION }}
           image: ${{ env.IMAGE }}
+          # NOTE: the --update-secrets entry below is a Secret Manager *reference*
+          # (secret name : version), NOT the database password. Cloud Run resolves
+          # the real value from Secret Manager at deploy time; the password is never
+          # stored in this repo.
           flags: >-
             --allow-unauthenticated
             --cpu=1
@@ -112,6 +116,8 @@ jobs:
             --min-instances=0
             --max-instances=1
             --concurrency=40
+            --update-env-vars=SPRING_DATASOURCE_URL=jdbc:postgresql://ep-ancient-dawn-at2m962z-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require,SPRING_DATASOURCE_USERNAME=neondb_owner
+            --update-secrets=SPRING_DATASOURCE_PASSWORD=PROD_SPRING_DATASOURCE_PASSWORD:latest
 
       - name: Smoke-test production API
         run: curl --fail --retry 8 --retry-delay 5 "${{ steps.deploy-api.outputs.url }}/api/health"

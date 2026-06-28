@@ -320,6 +320,7 @@ function CosmeticPicker({
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const active = selected === item.key;
+          const exclusive = item.rarity === 'exclusive-mythic';
           return (
             <button
               key={item.key}
@@ -327,7 +328,9 @@ function CosmeticPicker({
               className={`rounded-lg border p-2 text-left transition ${
                 active
                   ? 'border-neon-cyan bg-neon-cyan/10 shadow-[0_0_16px_rgba(0,240,255,0.14)]'
-                  : 'border-white/20 bg-black/35 hover:border-neon-cyan/60'
+                  : exclusive
+                    ? 'border-[#a855f7]/50 bg-[#a855f7]/10 shadow-[0_0_16px_rgba(168,85,247,0.28)] hover:border-[#c084fc]'
+                    : 'border-white/20 bg-black/35 hover:border-neon-cyan/60'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -337,11 +340,6 @@ function CosmeticPicker({
                 </span>
               </div>
               <p className="mt-0.5 text-[9px] leading-snug text-white/60">{item.description}</p>
-              {item.outfitReactive && (
-                <span className="mt-1 inline-block rounded border border-neon-cyan/40 bg-neon-cyan/10 px-1 py-0.5 text-[7px] font-black uppercase tracking-widest text-neon-cyan">
-                  ◈ Outfit-reactive
-                </span>
-              )}
             </button>
           );
         })}

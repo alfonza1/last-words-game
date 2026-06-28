@@ -57,7 +57,7 @@ class ProfileServiceGuestImportTest {
     character.hairColor = "cyan";
     character.expression = "haunted";
     character.outfit = "outfit-hoodie";
-    character.accessory = "accessory-cap";
+    character.accessory = "unknown-accessory";
 
     GuestProgressImport guest = new GuestProgressImport(
         stats,
@@ -66,7 +66,7 @@ class ProfileServiceGuestImportTest {
         4,
         Map.of("grenade", 2, "unknown", 99),
         List.of("graveyard", "city", "unknown"),
-        List.of("outfit-field", "accessory-none", "outfit-hoodie", "accessory-cap", "unknown"),
+        List.of("outfit-field", "accessory-none", "outfit-hoodie", "unknown"),
         character);
 
     when(store.ensureProfile("uid-1", "account-name"))
@@ -91,9 +91,11 @@ class ProfileServiceGuestImportTest {
     assertTrue(profile.maps.contains("city"));
     assertFalse(profile.maps.contains("unknown"));
     assertTrue(profile.cosmetics.contains("outfit-hoodie"));
+    assertFalse(profile.cosmetics.contains("unknown"));
     assertEquals("deep", profile.character.skinTone);
     assertEquals("haunted", profile.character.expression);
     assertEquals("outfit-hoodie", profile.character.outfit);
+    assertEquals("accessory-none", profile.character.accessory);
     assertTrue(profile.guestProgressImported);
 
     ProfileService.ProfileBootstrap second = service.bootstrapProfile("uid-1", "account-name", guest);

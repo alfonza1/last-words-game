@@ -166,23 +166,15 @@ export function GameScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine]);
 
-  // A full page reload can't resume a live action run (that's non-standard and
-  // would invite save-scumming), so instead: warn before a refresh/close throws
-  // the run away, and auto-pause when the tab is hidden so the player isn't
-  // overrun while away. GameScreen is only mounted during a run.
+  // Auto-pause when the tab is hidden so the player isn't overrun while away.
+  // Refresh/close must not show the browser's blocking confirmation dialog:
+  // that modal freezes the game and can be used as a free thinking pause.
   useEffect(() => {
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (engine.state.status === 'gameover') return;
-      e.preventDefault();
-      e.returnValue = ''; // shows the browser's "leave site?" confirmation
-    };
     const onVisibility = () => {
       if (document.hidden && engine.state.status === 'playing') doPause();
     };
-    window.addEventListener('beforeunload', onBeforeUnload);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload);
       document.removeEventListener('visibilitychange', onVisibility);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

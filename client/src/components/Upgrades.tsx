@@ -16,6 +16,8 @@ interface Props {
   /** Owned consumable powerup charges (key -> count). */
   powerups: Record<string, number>;
   ownedCosmetics: string[];
+  /** The player's equipped look, so shop items can be tried on their character. */
+  character: CharacterLoadout;
   /** Whether the player is signed in (required to purchase). */
   signedIn: boolean;
   /** Purchase is authoritative on the backend — just send the key. */
@@ -36,6 +38,7 @@ export function Upgrades({
   gamesLeft,
   powerups,
   ownedCosmetics,
+  character,
   signedIn,
   onBuy,
   onBuyPowerup,
@@ -49,10 +52,16 @@ export function Upgrades({
   const active = gamesLeft > 0 && anyOwned;
   const owned = new Set(ownedCosmetics);
   // Stable catalog order — bought items don't jump to the front of the list.
-  const gearFor = (slot: CosmeticSlot) => COSMETICS.filter((item) => item.slot === slot && item.cost > 0);
+  // Exclusive Mythic gear is showcased at the top of its section, above Legendary.
+  const gearFor = (slot: CosmeticSlot) =>
+    COSMETICS.filter((item) => item.slot === slot && item.cost > 0).sort(
+      (a, b) => Number(b.rarity === 'exclusive-mythic') - Number(a.rarity === 'exclusive-mythic'),
+    );
 
   // Purchases require an explicit confirm so nobody buys by accident / spam-clicks.
   const [pending, setPending] = useState<Pending | null>(null);
+  // Try-on is a pure local preview — it never equips, owns, or persists anything.
+  const [tryOn, setTryOn] = useState<CosmeticDef | null>(null);
   const confirmPurchase = () => {
     if (!pending) return;
     const p = pending;
@@ -66,8 +75,11 @@ export function Upgrades({
     const isOwned = owned.has(item.key);
     const affordable = coins >= item.cost;
     const preview: CharacterLoadout = { ...DEFAULT_CHARACTER, [item.slot]: item.key };
-    const rarityColor =
-      item.rarity === 'legendary'
+    const exclusive = item.rarity === 'exclusive-mythic';
+    // Exclusive Mythic gets a purple haze; other rarities keep their accent border.
+    const rarityColor = exclusive
+      ? 'border-[#a855f7]/70 shadow-[0_0_26px_rgba(168,85,247,0.45)] ring-1 ring-[#a855f7]/40'
+      : item.rarity === 'legendary'
         ? 'border-neon-amber/60'
         : item.rarity === 'epic'
           ? 'border-neon-pink/50'
@@ -76,10 +88,12 @@ export function Upgrades({
             : 'border-white/20';
     return (
       <div key={item.key} className={`relative overflow-hidden rounded-xl border bg-ink-800/70 p-3 ${rarityColor}`}>
-        <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/45">
-          {item.rarity}
-        </div>
-        <div className="flex items-center gap-3">
+        {!exclusive && (
+          <div className="absolute right-2 top-2 text-[9px] font-black uppercase tracking-widest text-white/45">
+            {item.rarity}
+          </div>
+        )}
+        <div className="flex items-start gap-3">
           <div className="h-28 w-24 flex-none overflow-hidden rounded-lg border border-white/15 bg-black/35">
             <CharacterAvatar character={preview} armed={false} className="h-32 w-full -translate-y-1" />
           </div>
@@ -91,21 +105,34 @@ export function Upgrades({
                 ◈ Outfit-reactive
               </span>
             )}
+            {exclusive && (
+              <div className="mt-1.5 text-center text-[9px] font-black uppercase tracking-[0.18em] text-[#c084fc]">
+                · Exclusive Mythic ·
+              </div>
+            )}
           </div>
         </div>
-        <button
-          disabled={isOwned || !affordable}
-          onClick={() => setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })}
-          className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-black ${
-            isOwned
-              ? 'border-neon-green/60 bg-neon-green/10 text-neon-green'
-              : !affordable
-                ? 'cursor-not-allowed border-white/15 text-white/45'
-                : 'border-neon-green/60 bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
-          }`}
-        >
-          {isOwned ? 'OWNED' : `${item.cost.toLocaleString()} 🪙`}
-        </button>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={() => setTryOn(item)}
+            className="flex-none rounded-lg border border-neon-cyan/45 bg-neon-cyan/5 px-3 py-2 text-xs font-black text-neon-cyan transition hover:bg-neon-cyan/15"
+          >
+            Try On
+          </button>
+          <button
+            disabled={isOwned || !affordable}
+            onClick={() => setPending({ kind: 'cosmetic', id: item.key, label: item.name, cost: `${item.cost} 🪙` })}
+            className={`flex-1 rounded-lg border px-3 py-2 text-xs font-black ${
+              isOwned
+                ? 'border-neon-green/60 bg-neon-green/10 text-neon-green'
+                : !affordable
+                  ? 'cursor-not-allowed border-white/15 text-white/45'
+                  : 'border-neon-green/60 bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
+            }`}
+          >
+            {isOwned ? 'OWNED' : `${item.cost.toLocaleString()} 🪙`}
+          </button>
+        </div>
       </div>
     );
   };
@@ -165,8 +192,8 @@ export function Upgrades({
         ))}
       </div>
 
-      <h2 className="mt-1 text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
-      <p className="-mt-2 text-xs text-white/55">Clothes give no advantage — cosmetic only.</p>
+      <p className="mt-1 text-xs text-white/55">Cosmetics give no competitive advantage.</p>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
 
       <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Outfits</h3>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('outfit').map(gearCard)}</div>
@@ -270,6 +297,45 @@ export function Upgrades({
       </div>
 
       <AdBanner className="mt-2" />
+
+      {/* Try-on preview — pure local render: never equips, owns, or persists anything */}
+      {tryOn && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setTryOn(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl border border-neon-cyan/40 bg-ink-800 p-5 text-center shadow-neon"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 h-64 w-52 overflow-hidden rounded-lg border border-white/10 bg-black/40">
+              <CharacterAvatar character={{ ...character, [tryOn.slot]: tryOn.key }} className="h-full w-full" />
+            </div>
+            <div className="text-sm font-black text-neon-green">{tryOn.name}</div>
+            <p className="mt-1 text-[11px] leading-snug text-white/60">{tryOn.description}</p>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setTryOn(null)}
+                className="flex-1 rounded-lg border border-white/15 px-4 py-2 text-sm font-bold text-white/70 hover:border-white/40"
+              >
+                Close
+              </button>
+              {!owned.has(tryOn.key) && (
+                <button
+                  onClick={() => {
+                    const it = tryOn;
+                    setTryOn(null);
+                    setPending({ kind: 'cosmetic', id: it.key, label: it.name, cost: `${it.cost} 🪙` });
+                  }}
+                  className="flex-1 rounded-lg border border-neon-green bg-neon-green/10 px-4 py-2 text-sm font-bold text-neon-green hover:bg-neon-green/20"
+                >
+                  Buy {tryOn.cost.toLocaleString()} 🪙
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirm purchase popup — prevents accidental / spam buys */}
       {pending && (
