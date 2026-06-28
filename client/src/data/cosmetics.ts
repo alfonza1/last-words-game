@@ -209,7 +209,7 @@ export const COSMETICS: CosmeticDef[] = [
   {
     key: 'accessory-blackout-shoulder-drone',
     slot: 'accessory',
-    name: 'Blackout Shoulder Drone',
+    name: 'Blackout Drone',
     description: 'A hovering blackout field-scan drone.',
     cost: 33333,
     rarity: 'exclusive-mythic',

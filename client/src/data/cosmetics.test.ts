@@ -37,7 +37,7 @@ describe('default character', () => {
 });
 
 describe('exclusive mythic cosmetics', () => {
-  it('adds the Bonelord Revenant + Blackout Shoulder Drone set', () => {
+  it('adds the Bonelord Revenant + Blackout Drone set', () => {
     const outfit = cosmeticByKey('outfit-godmode-revenant');
     expect(outfit?.name).toBe('Bonelord Revenant');
     expect(outfit?.slot).toBe('outfit');
@@ -45,7 +45,7 @@ describe('exclusive mythic cosmetics', () => {
     expect(outfit?.cost).toBe(66666);
 
     const drone = cosmeticByKey('accessory-blackout-shoulder-drone');
-    expect(drone?.name).toBe('Blackout Shoulder Drone');
+    expect(drone?.name).toBe('Blackout Drone');
     expect(drone?.slot).toBe('accessory');
     expect(drone?.rarity).toBe('exclusive-mythic');
     expect(drone?.cost).toBe(33333);
