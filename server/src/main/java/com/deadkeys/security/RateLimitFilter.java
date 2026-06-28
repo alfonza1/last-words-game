@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -37,6 +38,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
   private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
   private volatile long lastSweep;
 
+  // @Autowired marks THIS as the constructor Spring injects — required because a
+  // second (test) constructor exists; without it Spring can't choose and the bean
+  // fails to instantiate, taking down the whole web context.
+  @Autowired
   public RateLimitFilter(ObjectMapper mapper) {
     this(mapper, System::currentTimeMillis);
   }
