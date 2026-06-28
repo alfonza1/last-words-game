@@ -52,9 +52,9 @@ describe('exclusive mythic cosmetics', () => {
     expect(drone?.outfitReactive).toBe(true);
   });
 
-  it('adds the Hollow Plague Doctor + Toxic Angel Halo set', () => {
+  it('adds the Plague Doctor + Toxic Angel Halo set', () => {
     const outfit = cosmeticByKey('outfit-neon-plague-saint');
-    expect(outfit?.name).toBe('Hollow Plague Doctor');
+    expect(outfit?.name).toBe('Plague Doctor');
     expect(outfit?.slot).toBe('outfit');
     expect(outfit?.rarity).toBe('exclusive-mythic');
     expect(outfit?.cost).toBe(66666);
