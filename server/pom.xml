@@ -80,4 +80,41 @@
       </plugin>
     </plugins>
   </build>
+
+  <!-- Sentry source context (see your source code in stack traces) is uploaded
+       at build time by the sentry-maven-plugin. The Gradle plugin from Sentry's
+       setup guide doesn't apply here (this is a Maven project), so this is the
+       Maven equivalent. It runs ONLY when SENTRY_AUTH_TOKEN is set, so ordinary
+       builds without the token are completely unaffected. Generate a token at
+       Sentry -> Settings -> Auth Tokens and export it as SENTRY_AUTH_TOKEN. -->
+  <profiles>
+    <profile>
+      <id>sentry-source-context</id>
+      <activation>
+        <property>
+          <name>env.SENTRY_AUTH_TOKEN</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.sentry</groupId>
+            <artifactId>sentry-maven-plugin</artifactId>
+            <version>0.11.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <org>dead-keys</org>
+              <project>dead-keys-api</project>
+              <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
+              <!-- The Sentry SDK is declared explicitly above; don't let the
+                   plugin auto-add (and potentially version-bump) it. -->
+              <autoInstallation>
+                <enabled>false</enabled>
+              </autoInstallation>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
