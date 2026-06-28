@@ -136,8 +136,12 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
       {/* Arms */}
       <path d="M77 116 Q54 136 64 174" fill="none" stroke={outfit.primary} strokeWidth="19" strokeLinecap="round" />
       <path d="M143 116 Q165 136 154 174" fill="none" stroke={outfit.primary} strokeWidth="19" strokeLinecap="round" />
-      <circle cx="64" cy="176" r="8" fill={skin} />
-      <circle cx="154" cy="176" r="8" fill={skin} />
+      {!fullCharacter && (
+        <>
+          <circle cx="64" cy="176" r="8" fill={skin} />
+          <circle cx="154" cy="176" r="8" fill={skin} />
+        </>
+      )}
 
       {/* Outfit-specific hands drawn over the bare skin */}
       {character.outfit === 'outfit-godmode-revenant' && (

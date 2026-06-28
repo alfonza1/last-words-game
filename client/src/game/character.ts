@@ -29,6 +29,12 @@ export function drawSurvivor(
   // Exclusive Mythics replace the survivor entirely (skull / plague-doctor mask).
   const fullCharacter =
     character.outfit === 'outfit-godmode-revenant' || character.outfit === 'outfit-neon-plague-saint';
+  // Mythics have bone / gloved hands rather than bare skin on the rifle.
+  const handColor = fullCharacter
+    ? character.outfit === 'outfit-godmode-revenant'
+      ? '#e8e6da'
+      : '#1b2a1f'
+    : skin;
   const breathing = Math.sin(time * 0.0024) * 0.85 * scale;
   const shotStrength = s.survivorShot ? Math.max(0, s.survivorShot.life / s.survivorShot.ttl) : 0;
   const recoil = shotStrength * 2.8 * scale;
@@ -120,9 +126,9 @@ export function drawSurvivor(
 
   // Trigger arm and braced support arm.
   limb(ctx, 0, -12, 24, -19, 8, outfit.primary, scale);
-  limb(ctx, 22, -19, 35, -19, 5.5, skin, scale);
+  limb(ctx, 22, -19, 35, -19, 5.5, handColor, scale);
   limb(ctx, -1, -4, 24, 2, 8, outfit.primary, scale);
-  limb(ctx, 24, 2, 45, -12, 5.5, skin, scale);
+  limb(ctx, 24, 2, 45, -12, 5.5, handColor, scale);
   ctx.fillStyle = outfit.trim;
   ctx.globalAlpha = 0.35;
   ctx.beginPath();
