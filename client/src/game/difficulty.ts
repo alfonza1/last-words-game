@@ -34,6 +34,12 @@ export interface DifficultyConfig {
  */
 export const RIDDLE_SPEED_MULT = 0.65;
 
+/**
+ * Mobile sessions play on a smaller screen and answer by voice (slower than
+ * typing), so zombies are eased a notch — mobile only; desktop is unaffected.
+ */
+export const MOBILE_SPEED_MULT = 0.8;
+
 export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
   easy: {
     label: 'Easy',
