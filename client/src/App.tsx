@@ -681,7 +681,12 @@ export default function App() {
           />
         );
       case 'leaderboard':
-        return <Leaderboard onBack={() => setScreen('menu')} />;
+        return (
+          <Leaderboard
+            onBack={() => setScreen('menu')}
+            mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+          />
+        );
       case 'menu':
       default:
         return (
@@ -763,7 +768,7 @@ export default function App() {
 
   const accountLabel = signedIn ? username || user?.email || 'Player' : username || 'Survivor';
   const showAccountChip = screen !== 'game' && screen !== 'signin';
-  const showWalletChip = showAccountChip && screen !== 'upgrades';
+  const showWalletChip = showAccountChip;
   const mobileHomeChrome = screen === 'menu' && showAccountChip;
 
   return (
