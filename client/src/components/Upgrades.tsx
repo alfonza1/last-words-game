@@ -11,11 +11,11 @@ type Pending = { kind: 'upgrade' | 'powerup' | 'coinpack' | 'cosmetic'; id: stri
 
 type StoreTab = 'coins' | 'gear' | 'accessories' | 'powerups' | 'upgrades';
 const STORE_TABS: { id: StoreTab; label: string; icon: string }[] = [
-  { id: 'coins', label: 'Coins', icon: '🪙' },
   { id: 'gear', label: 'Gear', icon: '🧥' },
   { id: 'accessories', label: 'Extras', icon: '🎒' },
   { id: 'powerups', label: 'Power', icon: '🧨' },
   { id: 'upgrades', label: 'Upgrades', icon: '⚡' },
+  { id: 'coins', label: 'Coins', icon: '🪙' },
 ];
 
 interface Props {
@@ -73,7 +73,7 @@ export function Upgrades({
   const [tryOn, setTryOn] = useState<CosmeticDef | null>(null);
   // Mobile shows one section at a time (via the sticky tab bar) so the store
   // isn't an endless scroll; desktop (sm+) always shows everything.
-  const [tab, setTab] = useState<StoreTab>('coins');
+  const [tab, setTab] = useState<StoreTab>('gear');
   // Each section is its own flex column; on mobile only the active tab shows.
   const sectionClass = (id: StoreTab) => `${tab === id ? 'flex' : 'hidden'} flex-col gap-4 sm:flex`;
   const confirmPurchase = () => {
