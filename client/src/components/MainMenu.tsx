@@ -24,32 +24,28 @@ interface Props {
 type Style = 'typing' | PuzzleStyle;
 const STYLE_ORDER: Style[] = ['typing', 'math', 'trivia', 'riddles'];
 
-const STYLE_META: Record<Style, { label: string; short: string; active: string; blurb: string; tagWord: string }> = {
+const STYLE_META: Record<Style, { label: string; short: string; blurb: string; tagWord: string }> = {
   typing: {
     label: 'Typing',
     short: 'TYPE',
-    active: 'bg-neon-green/15 text-neon-green shadow-neon',
     blurb: 'Each completed word fires one shot. High WPM earns extra points and coins.',
     tagWord: 'WORD',
   },
   riddles: {
     label: 'Riddle',
     short: 'CLUE',
-    active: 'bg-neon-pink/15 text-neon-pink shadow-neon',
     blurb: 'Solve short riddles to fire a multi-kill volley.',
     tagWord: 'RIDDLE',
   },
   math: {
     label: 'Math',
     short: 'MATH',
-    active: 'bg-neon-cyan/15 text-neon-cyan shadow-neon',
     blurb: 'Solve math problems to fire a multi-kill volley.',
     tagWord: 'PROBLEM',
   },
   trivia: {
     label: 'Trivia',
     short: 'QUIZ',
-    active: 'bg-neon-amber/15 text-neon-amber shadow-neon',
     blurb: 'Answer trivia questions to fire a multi-kill volley.',
     tagWord: 'QUESTION',
   },
@@ -147,7 +143,7 @@ export function MainMenu({
                   onClick={() => selectStyle(s)}
                   aria-pressed={activeStyle === s}
                   className={`min-h-10 rounded-md px-1.5 py-1.5 text-center text-[11px] font-bold transition-all sm:min-h-11 sm:px-3 sm:py-2 sm:text-left sm:text-sm ${
-                    activeStyle === s ? STYLE_META[s].active : 'text-white/55 hover:text-white/90'
+                    activeStyle === s ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
                   <span className="hidden text-[8px] font-black uppercase tracking-widest text-white/35 sm:block">{STYLE_META[s].short}</span>
@@ -168,7 +164,7 @@ export function MainMenu({
 
           <button
             onClick={() => setMobileRecordsOpen(true)}
-            className="flex w-full items-center justify-between rounded-lg border border-neon-pink/35 bg-neon-pink/10 px-3 py-2 text-left text-xs font-black uppercase tracking-wider text-neon-pink sm:hidden"
+            className="flex w-full items-center justify-between rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-black uppercase tracking-wider text-neon-green transition hover:border-neon-green hover:bg-ink-600 sm:hidden"
           >
             <span>{recordsTitle}</span>
             <span className="text-white/45">View</span>

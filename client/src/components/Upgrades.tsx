@@ -147,9 +147,8 @@ export function Upgrades({
           ← Back
         </button>
         <h1 className="text-center text-2xl font-black tracking-wide text-neon-green sm:text-3xl">STORE</h1>
-        <div className="justify-self-end rounded-lg border border-neon-amber/40 bg-black/50 px-2 py-2 text-xs font-bold text-neon-amber sm:px-4 sm:text-base">
-          🪙 {coins.toLocaleString()} <span className="hidden sm:inline">coins</span>
-        </div>
+        {/* Coin balance shows in the fixed top-left wallet chip (App), matching the home page. */}
+        <div aria-hidden />
       </div>
       {!signedIn && (
         <button
