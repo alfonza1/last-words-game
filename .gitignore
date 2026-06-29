@@ -60,5 +60,8 @@ desktop.ini
 .tools/
 *.tmp
 
-# Documentation (kept local — not tracked in VCS)
-docs/
+# Documentation defaults local; selected guides are tracked.
+docs/*
+!docs/COST_EFFICIENCY_AUDIT.md
+!docs/MOBILE_IMPLEMENTATION_GUIDE.md
+!docs/REUSABLE_ACCOUNTS_AND_COST_PLAYBOOK.md

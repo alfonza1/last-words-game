@@ -106,6 +106,8 @@ export function MainMenu({
         <p className="mt-2 text-xs tracking-[0.3em] text-neon-cyan sm:text-sm sm:tracking-[0.35em]">TYPE OR BE DEVOURED</p>
       </div>
 
+      <MobileSurvivorPreview character={character} username={username} onOpenCloset={() => onNav('closet')} />
+
       <div className="grid w-full gap-4 lg:grid-cols-[1.2fr_0.85fr_0.8fr] lg:gap-5">
         <div className="space-y-3 sm:space-y-4">
           {/* Difficulty */}
@@ -182,7 +184,7 @@ export function MainMenu({
         <button
           onClick={() => onNav('closet')}
           aria-label="Open closet to customize survivor"
-          className="group relative min-h-[360px] overflow-hidden rounded-2xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon"
+          className="group relative hidden min-h-[360px] overflow-hidden rounded-2xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon lg:block"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
           <div className="absolute left-3 top-3 z-10">
@@ -202,12 +204,44 @@ export function MainMenu({
         </button>
 
         {/* Records */}
-        <Records stats={stats} riddleStats={riddleStats} riddleMode={riddleMode} />
+        <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} />
       </div>
 
       <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT · OUTLAST THE DEAD</p>
       <AdBanner />
     </div>
+  );
+}
+
+function MobileSurvivorPreview({
+  character,
+  username,
+  onOpenCloset,
+}: {
+  character: CharacterLoadout;
+  username: string;
+  onOpenCloset: () => void;
+}) {
+  return (
+    <button
+      onClick={onOpenCloset}
+      aria-label="Open closet to customize survivor"
+      className="group relative h-28 w-full max-w-md overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 px-4 text-left shadow-[0_0_22px_rgba(57,255,20,0.12)] transition hover:border-neon-green/70 lg:hidden"
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-neon-green/10 via-transparent to-neon-pink/10" />
+      <div className="relative z-10 flex h-full flex-col justify-center pr-32">
+        <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-neon-cyan/70">Survivor</div>
+        <div className="mt-1 truncate text-lg font-black tracking-wide text-neon-green drop-shadow-[0_0_12px_rgba(57,255,20,0.55)]">
+          {username}
+        </div>
+        <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-white/35">Customize</div>
+      </div>
+      <CharacterAvatar
+        character={character}
+        armed={false}
+        className="absolute -bottom-8 right-2 h-36 w-28 transition group-hover:scale-[1.03]"
+      />
+    </button>
   );
 }
 
