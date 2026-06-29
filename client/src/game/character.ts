@@ -11,7 +11,9 @@ export function drawSurvivor(
   const mobile = s.width < 600;
   const scale = Math.max(mobile ? 0.78 : 0.7, Math.min(1.38, Math.min(s.width / 900, s.height / 560)));
   const x = mobile ? s.width * 0.23 : Math.max(86, s.width * 0.11);
-  const y = mobile ? s.height - 205 : s.height - 88;
+  // Mobile sits the survivor lower now that the bottom voice/power-up UI is
+  // compact — frees up the middle of the map and stops the scene feeling crammed.
+  const y = mobile ? s.height - 150 : s.height - 88;
   const target = s.survivorShot ?? {
     x: Math.min(s.width - 24, x + 220 * scale),
     y: y - 72 * scale,

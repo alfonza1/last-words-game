@@ -9,10 +9,11 @@ import { CharacterAvatar } from './CharacterAvatar';
 
 type Pending = { kind: 'upgrade' | 'powerup' | 'coinpack' | 'cosmetic'; id: string; label: string; cost: string; real?: boolean };
 
-type StoreTab = 'coins' | 'gear' | 'powerups' | 'upgrades';
+type StoreTab = 'coins' | 'gear' | 'accessories' | 'powerups' | 'upgrades';
 const STORE_TABS: { id: StoreTab; label: string; icon: string }[] = [
   { id: 'gear', label: 'Gear', icon: '🧥' },
-  { id: 'powerups', label: 'Powerups', icon: '🧨' },
+  { id: 'accessories', label: 'Extras', icon: '🎒' },
+  { id: 'powerups', label: 'Power', icon: '🧨' },
   { id: 'upgrades', label: 'Upgrades', icon: '⚡' },
   { id: 'coins', label: 'Coins', icon: '🪙' },
 ];
@@ -187,12 +188,12 @@ export function Upgrades({
             key={t.id}
             onClick={() => setTab(t.id)}
             aria-pressed={tab === t.id}
-            className={`flex-1 rounded-md px-1 py-2 text-[11px] font-bold transition-all ${
+            className={`flex-1 rounded-md px-0.5 py-1.5 text-[10px] font-bold transition-all ${
               tab === t.id ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
             }`}
           >
-            <span className="block text-base leading-none">{t.icon}</span>
-            <span className="mt-0.5 block">{t.label}</span>
+            <span className="block text-sm leading-none">{t.icon}</span>
+            <span className="mt-0.5 block truncate">{t.label}</span>
           </button>
         ))}
       </div>
@@ -233,11 +234,12 @@ export function Upgrades({
       <section className={sectionClass('gear')}>
       <p className="text-xs text-white/55">Cosmetics give no competitive advantage.</p>
       <h2 className="text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
-
       <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Outfits</h3>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('outfit').map(gearCard)}</div>
+      </section>
 
-      <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Accessories</h3>
+      <section className={sectionClass('accessories')}>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-neon-pink">Accessories</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('accessory').map(gearCard)}</div>
       </section>
 

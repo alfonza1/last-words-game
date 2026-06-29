@@ -101,9 +101,9 @@ export function MainMenu({
   const recordsTitle = 'Survivor Records';
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-16 pt-2 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-24 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
-        <h1 className="text-3xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
+        <h1 className="text-2xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
         </h1>
         <p className="mt-1 hidden text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:block sm:text-sm sm:tracking-[0.35em]">
@@ -129,7 +129,7 @@ export function MainMenu({
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">
+            <p className="mt-1 min-h-0 text-[11px] leading-snug text-white/40 sm:mt-1.5 sm:min-h-[2.25rem] sm:text-xs">
               {DIFF_BLURB[activeStyle][difficulty]}
             </p>
           </div>
@@ -157,10 +157,11 @@ export function MainMenu({
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">{STYLE_META[activeStyle].blurb}</p>
+            <p className="mt-1 min-h-0 text-[11px] leading-snug text-white/40 sm:mt-1.5 sm:min-h-[2.25rem] sm:text-xs">{STYLE_META[activeStyle].blurb}</p>
           </div>
 
-          <div>
+          {/* Desktop deploy (in flow). On mobile these live in a fixed bottom bar. */}
+          <div className="hidden sm:block">
             <SectionLabel>Deploy</SectionLabel>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
               <DeployButton tone="green" title="Start Survival" detail="Endless waves" onClick={() => onStart('survival')} />
@@ -212,7 +213,7 @@ export function MainMenu({
         <button
           onClick={() => onNav('closet')}
           aria-label="Open closet to customize survivor"
-          className="group relative order-1 min-h-[218px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
+          className="group relative order-1 min-h-[150px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
           <div className="absolute left-3 right-44 top-3 z-10 sm:right-3">
@@ -239,6 +240,24 @@ export function MainMenu({
       <p className="hidden text-xs tracking-[0.25em] text-white/25 sm:block">SURVIVE THE NIGHT | OUTLAST THE DEAD</p>
       <div className="hidden w-full sm:block">
         <AdBanner />
+      </div>
+
+      {/* Mobile deploy — fixed at the bottom, no "Deploy" label, always reachable. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-white/10 bg-ink-900/95 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2.5 backdrop-blur sm:hidden">
+        <button
+          onClick={() => onStart('survival')}
+          className="flex-1 rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2.5 text-center transition active:scale-95"
+        >
+          <span className="block text-sm font-black uppercase tracking-wide text-neon-green">▶ Start Survival</span>
+          <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Endless waves</span>
+        </button>
+        <button
+          onClick={() => onStart('bossrush')}
+          className="flex-1 rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2.5 text-center transition active:scale-95"
+        >
+          <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">Boss Rush</span>
+          <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Boss gauntlet</span>
+        </button>
       </div>
 
       {mobileRecordsOpen && (
