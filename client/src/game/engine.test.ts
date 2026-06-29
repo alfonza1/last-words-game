@@ -488,4 +488,20 @@ describe('powerups (consumables)', () => {
     e.handleInput('grenade ');
     expect(e.state.zombies.length).toBe(2); // no charge → no clear
   });
+
+  it('activatePowerup spends a charge and fires the effect (mobile button)', () => {
+    const e = makeEngine();
+    e.state.powerups.consumables.grenade = 1;
+    e.state.zombies = [zombie({ y: 500 }), zombie({ y: 480 })];
+    expect(e.activatePowerup('grenade')).toBe(true);
+    expect(e.state.powerups.consumables.grenade).toBe(0);
+    expect(e.state.zombies.length).toBe(0);
+  });
+
+  it('activatePowerup returns false when the charge is not owned', () => {
+    const e = makeEngine();
+    e.state.powerups.consumables.freeze = 0;
+    expect(e.activatePowerup('freeze')).toBe(false);
+    expect(e.state.powerups.freezeMs).toBe(0);
+  });
 });

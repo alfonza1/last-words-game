@@ -333,6 +333,19 @@ export class GameEngine {
   }
 
   /**
+   * Activate a consumable powerup from a UI button (mobile, where typing the
+   * command word isn't practical). Returns true if a charge was spent.
+   */
+  activatePowerup(key: string): boolean {
+    const s = this.state;
+    if (s.status !== 'playing' || (s.wave > 0 && s.betweenWaves > 0)) return false;
+    const owned = (s.powerups.consumables as unknown as Record<string, number>)[key] ?? 0;
+    if (owned <= 0) return false;
+    this.runCommand(key);
+    return true;
+  }
+
+  /**
    * Forward the current input box value. A word fires only when the player
    * presses SPACE — never mid-word — so nothing fires unless typed in full.
    */
