@@ -15,9 +15,9 @@ function Bar({ value, max, color }: { value: number; max: number; color: string 
 
 function Stat({ label, value, accent }: { label: string; value: string | number; accent?: string }) {
   return (
-    <div className="min-w-[4.25rem] rounded-md border border-white/10 bg-ink-800/85 px-2 py-1 text-center sm:min-w-[5rem] sm:px-3 sm:py-1.5">
-      <div className="text-[8px] uppercase tracking-wider text-white/40 sm:text-[10px] sm:tracking-widest">{label}</div>
-      <div className="text-sm font-bold leading-tight sm:text-lg" style={{ color: accent ?? '#e8ffe8' }}>
+    <div className="min-w-0 flex-1 rounded-md border border-white/10 bg-ink-800/85 px-1.5 py-0.5 text-center sm:min-w-[5rem] sm:flex-none sm:px-3 sm:py-1.5">
+      <div className="text-[7px] uppercase tracking-wider text-white/40 sm:text-[10px] sm:tracking-widest">{label}</div>
+      <div className="text-xs font-bold leading-tight sm:text-lg" style={{ color: accent ?? '#e8ffe8' }}>
         {value}
       </div>
     </div>
@@ -64,9 +64,9 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
           </div>
         </div>
 
-        {/* Core stats + controls */}
+        {/* Core stats + controls. On mobile the chips stay on a single row. */}
         <div className="flex max-w-[58vw] flex-col items-end gap-1.5 sm:max-w-none">
-          <div className={`grid gap-1.5 ${showWpm ? 'grid-cols-2 sm:grid-cols-5' : 'grid-cols-2'}`}>
+          <div className={`flex w-full gap-1 sm:grid sm:gap-1.5 ${showWpm ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
             <Stat label="Score" value={s.score.toLocaleString()} accent="#ffb300" />
             {showWpm && <Stat label="WPM" value={s.wpm} accent="#00f0ff" />}
             <Stat label="Acc" value={`${s.accuracy}%`} accent="#39ff14" />

@@ -774,24 +774,21 @@ export default function App() {
   const accountLabel = signedIn ? username || user?.email || 'Player' : username || 'Survivor';
   const showAccountChip = screen !== 'game' && screen !== 'signin';
   const showWalletChip = showAccountChip;
-  const mobileHomeChrome = screen === 'menu' && showAccountChip;
 
   return (
     <div className="h-full w-full">
       {showWalletChip && (
         <button
           onClick={() => setShowCoinPacks(true)}
-          className={`${mobileHomeChrome ? 'hidden sm:block' : ''} safe-top-left fixed z-40 rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1 text-xs font-black tracking-wider text-neon-amber transition hover:bg-neon-amber/15`}
+          className="safe-top-left fixed z-40 rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1 text-xs font-black tracking-wider text-neon-amber transition hover:bg-neon-amber/15"
         >
           🪙 {stats.totalCoins.toLocaleString()} COINS
         </button>
       )}
 
       {showAccountChip && (
-        <div
-          className={`${mobileHomeChrome ? 'hidden sm:flex' : 'flex'} safe-top-right fixed z-40 items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs`}
-        >
-          <span className="max-w-[140px] truncate text-white/60">{accountLabel}</span>
+        <div className="safe-top-right fixed z-40 flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs">
+          <span className="max-w-[120px] truncate text-white/60 sm:max-w-[140px]">{accountLabel}</span>
           {signedIn ? (
             <button onClick={() => setConfirmSignOut(true)} className="font-bold text-neon-green hover:text-neon-pink">
               Sign out
@@ -804,32 +801,7 @@ export default function App() {
         </div>
       )}
 
-      {mobileHomeChrome && (
-        <div className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 flex items-center gap-2 sm:hidden">
-          {showWalletChip && (
-            <button
-              onClick={() => setShowCoinPacks(true)}
-              className="min-w-0 flex-1 truncate rounded-full border border-neon-amber/50 bg-black/75 px-3 py-2 text-center text-[11px] font-black tracking-wider text-neon-amber backdrop-blur transition hover:bg-neon-amber/15"
-            >
-              {stats.totalCoins.toLocaleString()} COINS
-            </button>
-          )}
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-white/10 bg-black/75 px-3 py-2 text-center text-[11px] backdrop-blur">
-            <span className="min-w-0 truncate text-white/60">{accountLabel}</span>
-            {signedIn ? (
-              <button onClick={() => setConfirmSignOut(true)} className="flex-none font-bold text-neon-green hover:text-neon-pink">
-                Sign out
-              </button>
-            ) : (
-              <button onClick={() => requireSignIn()} className="flex-none font-bold text-neon-green hover:text-neon-pink">
-                Sign in
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className={`h-full w-full ${showAccountChip ? (mobileHomeChrome ? 'sm:pt-11' : 'pt-11') : ''}`}>
+      <div className={`h-full w-full ${showAccountChip ? 'pt-11' : ''}`}>
         <Suspense fallback={<ScreenLoader />}>{content}</Suspense>
       </div>
 

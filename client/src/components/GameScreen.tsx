@@ -328,7 +328,7 @@ export function GameScreen({
       {acceptingInput && (
         <div
           className={`pointer-events-none absolute inset-x-0 z-30 flex flex-col items-center gap-2 px-4 ${
-            s.riddleMode ? 'top-[calc(env(safe-area-inset-top)+8.5rem)] sm:top-24' : 'top-14'
+            s.riddleMode ? 'top-[calc(env(safe-area-inset-top)+5.75rem)] sm:top-24' : 'top-14'
           }`}
         >
           <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/55 px-4 py-2.5 backdrop-blur-sm sm:px-5">
@@ -346,7 +346,7 @@ export function GameScreen({
 
       {/* Input + powerups, at the bottom. */}
       {acceptingInput && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-1.5 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:gap-2 sm:p-4 sm:pb-[max(1rem,env(safe-area-inset-bottom))]">
           <PowerupBar
             consumables={s.powerups.consumables}
             pressable={mobileSpeechExperience}
@@ -589,8 +589,8 @@ function SpeechAnswerPanel({
   };
 
   return (
-    <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-neon-cyan/35 bg-black/75 p-3 shadow-[0_0_22px_rgba(0,240,255,0.2)] backdrop-blur-sm">
-      <div className="flex items-center gap-3">
+    <div className="pointer-events-auto w-full max-w-sm select-none rounded-xl border border-neon-cyan/35 bg-black/75 p-2 shadow-[0_0_22px_rgba(0,240,255,0.2)] backdrop-blur-sm">
+      <div className="flex items-center gap-2.5">
         <button
           type="button"
           onPointerDown={startHolding}
@@ -606,9 +606,11 @@ function SpeechAnswerPanel({
             if (event.key === ' ' || event.key === 'Enter') stopHolding(event);
           }}
           onClick={(event) => event.preventDefault()}
+          onContextMenu={(event) => event.preventDefault()}
           disabled={!canUseVoice}
           aria-label="Hold button and speak the answer"
-          className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full border text-xs font-black tracking-widest transition ${
+          style={{ touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}
+          className={`flex h-12 w-12 shrink-0 select-none touch-none items-center justify-center rounded-full border text-[10px] font-black tracking-widest transition ${
             state === 'matched'
               ? 'border-neon-green bg-neon-green/15 text-neon-green shadow-neon'
               : state === 'no-match' || state === 'permission-denied' || state === 'unsupported'
@@ -621,13 +623,13 @@ function SpeechAnswerPanel({
           {label}
         </button>
         <div className="min-w-0 flex-1 text-left">
-          <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/35">Voice Answer</div>
-          <div className="mt-1 truncate text-sm font-bold text-white/85">{line}</div>
+          <div className="text-[9px] font-black uppercase tracking-[0.3em] text-white/35">Voice Answer</div>
+          <div className="truncate text-xs font-bold text-white/85">{line}</div>
         </div>
       </div>
 
       {fallback && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg border border-white/10 bg-ink-800/80 px-3 py-2">
+        <div className="mt-2 flex items-center gap-2 rounded-lg border border-white/10 bg-ink-800/80 px-3 py-1.5">
           <span className="text-neon-green">&gt;</span>
           <input
             ref={inputRef}
@@ -704,7 +706,7 @@ function PowerupBar({
 }) {
   if (pressable) {
     return (
-      <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2">
+      <div className="pointer-events-auto flex max-w-full items-center justify-center gap-1.5">
         {POWERUP_DEFS.map((def) => {
           const count = (consumables as unknown as Record<string, number>)[def.key] ?? 0;
           const owned = count > 0;
@@ -717,13 +719,13 @@ function PowerupBar({
               onClick={() => owned && onActivate?.(def.key)}
               title={def.description}
               aria-label={`Use ${def.name}, ${count} left`}
-              className={`flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-bold transition active:scale-95 ${
+              className={`flex select-none items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs font-bold transition active:scale-95 ${
                 owned
                   ? 'border-neon-cyan bg-neon-cyan/10 text-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.35)] hover:bg-neon-cyan/20'
                   : 'border-white/10 bg-black/40 text-white/30'
               }`}
             >
-              <span className="text-base">{def.icon}</span>
+              <span className="text-sm">{def.icon}</span>
               <span>{def.name}</span>
               <span className={owned ? 'text-white/70' : 'text-white/25'}>×{count}</span>
             </button>

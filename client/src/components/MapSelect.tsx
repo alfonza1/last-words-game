@@ -119,7 +119,7 @@ export function MapSelect({
         })}
       </div>
 
-      <div className="sticky bottom-0 z-20 -mx-4 mt-auto flex justify-center bg-gradient-to-t from-ink-900 via-ink-900/95 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5 sm:static sm:mx-0 sm:bg-transparent sm:p-0">
+      <div className="fixed inset-x-0 bottom-0 z-20 flex justify-center bg-gradient-to-t from-ink-900 via-ink-900/95 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5 sm:static sm:mt-auto sm:bg-transparent sm:p-0">
         <button className="menu-btn max-w-xs flex-1 text-center shadow-neon" onClick={onDeploy}>
           ▶ Deploy
         </button>
