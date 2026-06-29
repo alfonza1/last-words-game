@@ -106,10 +106,8 @@ export function MainMenu({
         <p className="mt-2 text-xs tracking-[0.3em] text-neon-cyan sm:text-sm sm:tracking-[0.35em]">TYPE OR BE DEVOURED</p>
       </div>
 
-      <MobileSurvivorPreview character={character} username={username} onOpenCloset={() => onNav('closet')} />
-
       <div className="grid w-full gap-4 lg:grid-cols-[1.2fr_0.85fr_0.8fr] lg:gap-5">
-        <div className="space-y-3 sm:space-y-4">
+        <div className="order-2 space-y-3 sm:space-y-4 lg:order-none">
           {/* Difficulty */}
           <div>
             <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Difficulty</div>
@@ -184,7 +182,7 @@ export function MainMenu({
         <button
           onClick={() => onNav('closet')}
           aria-label="Open closet to customize survivor"
-          className="group relative hidden min-h-[360px] overflow-hidden rounded-2xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon lg:block"
+          className="group relative order-1 min-h-[260px] overflow-hidden rounded-2xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] lg:order-none lg:min-h-[360px]"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
           <div className="absolute left-3 top-3 z-10">
@@ -196,7 +194,7 @@ export function MainMenu({
           <CharacterAvatar
             character={character}
             armed={false}
-            className="absolute inset-x-0 bottom-9 mx-auto h-[310px] w-[245px] transition group-hover:scale-[1.025]"
+            className="absolute inset-x-0 bottom-9 mx-auto h-[230px] w-[182px] transition group-hover:scale-[1.025] sm:h-[270px] sm:w-[214px] lg:h-[310px] lg:w-[245px]"
           />
           <div className="absolute inset-x-4 bottom-3 flex justify-end border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest">
             <span className="font-bold text-neon-green">Customize →</span>
@@ -204,44 +202,14 @@ export function MainMenu({
         </button>
 
         {/* Records */}
-        <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} />
+        <div className="order-3 lg:order-none">
+          <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} />
+        </div>
       </div>
 
       <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT · OUTLAST THE DEAD</p>
       <AdBanner />
     </div>
-  );
-}
-
-function MobileSurvivorPreview({
-  character,
-  username,
-  onOpenCloset,
-}: {
-  character: CharacterLoadout;
-  username: string;
-  onOpenCloset: () => void;
-}) {
-  return (
-    <button
-      onClick={onOpenCloset}
-      aria-label="Open closet to customize survivor"
-      className="group relative h-28 w-full max-w-md overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 px-4 text-left shadow-[0_0_22px_rgba(57,255,20,0.12)] transition hover:border-neon-green/70 lg:hidden"
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-neon-green/10 via-transparent to-neon-pink/10" />
-      <div className="relative z-10 flex h-full flex-col justify-center pr-32">
-        <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-neon-cyan/70">Survivor</div>
-        <div className="mt-1 truncate text-lg font-black tracking-wide text-neon-green drop-shadow-[0_0_12px_rgba(57,255,20,0.55)]">
-          {username}
-        </div>
-        <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-white/35">Customize</div>
-      </div>
-      <CharacterAvatar
-        character={character}
-        armed={false}
-        className="absolute -bottom-8 right-2 h-36 w-28 transition group-hover:scale-[1.03]"
-      />
-    </button>
   );
 }
 
