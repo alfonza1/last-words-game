@@ -104,7 +104,7 @@ export function Closet({
   };
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4 pb-32 sm:pb-4">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4 pb-24 sm:pb-4">
       <div className="flex flex-wrap items-start gap-2 sm:gap-3">
         <button
           onClick={requestBack}
@@ -307,13 +307,13 @@ export function Closet({
         </section>
       </div>
 
-      {/* Mobile-only equip bar. Desktop uses the Survivor Look card in the left column (above). */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neon-cyan/25 bg-ink-900/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(0,0,0,0.38)] backdrop-blur-md sm:hidden">
+      {/* Mobile-only equip bar (smaller). Desktop uses the Survivor Look card in the left column (above). */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neon-cyan/25 bg-ink-900/95 px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(0,0,0,0.38)] backdrop-blur-md sm:hidden">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <button
             onClick={save}
             disabled={!dirty || saved || saving}
-            className={`w-full rounded-xl border px-5 py-3 text-sm font-black uppercase tracking-wider sm:max-w-xs ${
+            className={`w-full rounded-xl border px-5 py-2 text-xs font-black uppercase tracking-wider sm:max-w-xs sm:py-3 sm:text-sm ${
               hasUnsavedChanges
                 ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-neon'
                 : 'border-neon-cyan/25 bg-neon-cyan/5 text-neon-cyan/60'
