@@ -774,9 +774,10 @@ export default function App() {
   const accountLabel = signedIn ? username || user?.email || 'Player' : username || 'Survivor';
   const showAccountChip = screen !== 'game' && screen !== 'signin';
   const showWalletChip = showAccountChip;
-  // On the mobile home page the fixed chips are hidden so the menu can use the
-  // full height (it scrolls); they still show on desktop and on other screens.
-  const hideChipsOnMobile = screen === 'menu';
+  // On the mobile home and closet screens the fixed chips are hidden so those
+  // components can use the full height (they scroll); chips still show on
+  // desktop and on every other screen (e.g. the store keeps its coin chip).
+  const hideChipsOnMobile = screen === 'menu' || screen === 'closet';
 
   return (
     <div className="h-full w-full">
