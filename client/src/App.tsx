@@ -68,6 +68,44 @@ const Closet = lazy(() => import('./components/Closet').then((m) => ({ default: 
 const REWARD_COINS = 50; // bonus for an optional rewarded ad (server is authoritative)
 const EMPTY_WPM_BONUS: WpmBonus = { tiers: 0, coins: 0, score: 0 };
 
+const SCREEN_ROUTES: Record<Screen, string> = {
+  menu: '/menu',
+  mapselect: '/maps',
+  game: '/game',
+  gameover: '/game-over',
+  upgrades: '/store',
+  closet: '/closet',
+  howto: '/how-to-play',
+  settings: '/settings',
+  signin: '/sign-in',
+  leaderboard: '/leaderboard',
+};
+
+const ROUTE_SCREENS = Object.entries(SCREEN_ROUTES).reduce(
+  (acc, [screen, route]) => ({ ...acc, [route]: screen as Screen }),
+  {} as Record<string, Screen>,
+);
+
+const SCREEN_TITLES: Record<Screen, string> = {
+  menu: 'Menu',
+  mapselect: 'Select Map',
+  game: 'Run',
+  gameover: 'Game Over',
+  upgrades: 'Store',
+  closet: 'Closet',
+  howto: 'How to Play',
+  settings: 'Settings',
+  signin: 'Sign In',
+  leaderboard: 'Leaderboard',
+};
+
+function screenFromHash(): Screen | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window.location.hash.replace(/^#/, '');
+  if (!raw) return null;
+  return ROUTE_SCREENS[raw] ?? null;
+}
+
 function difficultyForMode(mode: GameMode, difficulty: Difficulty): Difficulty {
   return mode === 'bossrush' ? 'normal' : difficulty;
 }
@@ -79,7 +117,7 @@ export default function App() {
     (e: unknown) => toast.error((e as Error)?.message || 'Something went wrong. Please try again.'),
     [toast],
   );
-  const [screen, setScreen] = useState<Screen>('menu');
+  const [screen, setScreen] = useState<Screen>(() => screenFromHash() ?? 'menu');
   const [storeReturn, setStoreReturn] = useState<'menu' | 'closet'>('menu');
   const [username, setUsername] = useState<string>('');
   const [signInReason, setSignInReason] = useState<string | undefined>(undefined);
@@ -94,6 +132,31 @@ export default function App() {
   // Always-current screen, so requireSignIn can return you where you came from.
   const screenRef = useRef(screen);
   screenRef.current = screen;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncFromHash = () => {
+      const routed = screenFromHash();
+      if (routed) setScreen(routed);
+    };
+
+    if (!screenFromHash()) {
+      window.history.replaceState(null, '', `#${SCREEN_ROUTES.menu}`);
+    }
+    window.addEventListener('hashchange', syncFromHash);
+    window.addEventListener('popstate', syncFromHash);
+    return () => {
+      window.removeEventListener('hashchange', syncFromHash);
+      window.removeEventListener('popstate', syncFromHash);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const nextHash = `#${SCREEN_ROUTES[screen]}`;
+    if (window.location.hash !== nextHash) window.history.pushState(null, '', nextHash);
+    document.title = `Dead Keys - ${SCREEN_TITLES[screen]}`;
+  }, [screen]);
 
   // Signed-in progress lives on the server (keyed to the Firebase uid).
   // Guests are fully local — no server calls — and only keep lifetime stats.
@@ -533,6 +596,10 @@ export default function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [activeDaily, screen, mode, startDaily, startGame]);
+
+  useEffect(() => {
+    if (!loading && screen === 'gameover' && !result) setScreen('menu');
+  }, [loading, result, screen]);
 
   const content = useMemo(() => {
     switch (screen) {
