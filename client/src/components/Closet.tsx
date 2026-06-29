@@ -20,6 +20,14 @@ interface Props {
   onBack: () => void;
 }
 
+type ClosetTab = 'body' | 'face' | 'outfit' | 'extras';
+const CLOSET_TABS: { id: ClosetTab; label: string; icon: string }[] = [
+  { id: 'body', label: 'Body', icon: '🧍' },
+  { id: 'face', label: 'Face', icon: '🙂' },
+  { id: 'outfit', label: 'Outfit', icon: '🧥' },
+  { id: 'extras', label: 'Extras', icon: '🎒' },
+];
+
 export function Closet({
   character,
   ownedCosmetics,
@@ -42,6 +50,10 @@ export function Closet({
   const owned = useMemo(() => new Set(ownedCosmetics), [ownedCosmetics]);
   const ownedOutfits = useMemo(() => cosmeticsFor('outfit').filter((item) => owned.has(item.key)), [owned]);
   const ownedAccessories = useMemo(() => cosmeticsFor('accessory').filter((item) => owned.has(item.key)), [owned]);
+  // Mobile shows one customization category at a time (like the shop) to cut
+  // scrolling; desktop (sm+) shows every group.
+  const [tab, setTab] = useState<ClosetTab>('body');
+  const groupClass = (id: ClosetTab) => `${tab === id ? 'block' : 'hidden'} space-y-3 sm:block`;
 
   const updateDraft = (change: Partial<CharacterLoadout>) => {
     setDraft((prev) => ({ ...prev, ...change }));
@@ -155,6 +167,24 @@ export function Closet({
       </section>
 
         <section className="space-y-3">
+        {/* Mobile category tabs — one section at a time, shop-style. */}
+        <div className="sticky top-0 z-10 flex gap-1 rounded-lg border border-white/10 bg-ink-900/95 p-1 backdrop-blur sm:hidden">
+          {CLOSET_TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              aria-pressed={tab === t.id}
+              className={`flex-1 rounded-md px-1 py-1.5 text-[10px] font-bold transition-all ${
+                tab === t.id ? 'bg-neon-cyan/15 text-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.25)]' : 'text-white/55'
+              }`}
+            >
+              <span className="block text-sm leading-none">{t.icon}</span>
+              <span className="mt-0.5 block truncate">{t.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className={groupClass('body')}>
         <Picker title="Skin tone">
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {SKIN_TONES.map((tone) => (
@@ -208,7 +238,9 @@ export function Closet({
             </div>
           </Picker>
         </div>
+        </div>
 
+        <div className={groupClass('face')}>
         <Picker title="Face Expression">
           <p className="-mt-1 mb-2 text-[9px] uppercase tracking-[0.18em] text-white/35">
             Choose the look you give the dead.
@@ -253,19 +285,25 @@ export function Closet({
             })}
           </div>
         </Picker>
+        </div>
 
+        <div className={groupClass('outfit')}>
         <CosmeticPicker
           title="Outfits"
           items={ownedOutfits}
           selected={draft.outfit}
           onChoose={(key) => chooseCosmetic(key, 'outfit')}
         />
+        </div>
+
+        <div className={groupClass('extras')}>
         <CosmeticPicker
           title="Accessories"
           items={ownedAccessories}
           selected={draft.accessory}
           onChoose={(key) => chooseCosmetic(key, 'accessory')}
         />
+        </div>
         </section>
       </div>
 
