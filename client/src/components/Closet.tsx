@@ -96,7 +96,7 @@ export function Closet({
       <div className="flex flex-wrap items-start gap-2 sm:gap-3">
         <button
           onClick={requestBack}
-          className="order-2 flex-1 rounded-lg border border-white/15 bg-black/50 px-3 py-2 text-center text-sm font-bold text-white/70 hover:border-neon-green hover:text-neon-green sm:order-none sm:flex-none sm:py-1.5 sm:text-left sm:font-normal"
+          className="order-2 flex min-h-11 flex-1 basis-0 items-center justify-center rounded-lg border border-white/15 bg-black/50 px-3 py-2 text-center text-sm font-bold text-white/70 hover:border-neon-green hover:text-neon-green sm:order-none sm:flex-none sm:basis-auto sm:py-1.5 sm:text-left sm:font-normal"
         >
           ← Back
         </button>
@@ -108,7 +108,7 @@ export function Closet({
         </div>
         <button
           onClick={requestStore}
-          className="group order-3 flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-4 py-2 text-center shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)] sm:order-none sm:ml-auto sm:flex-none sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-left"
+          className="group order-3 flex min-h-11 flex-1 basis-0 items-center justify-center gap-2 rounded-lg border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-3 py-2 text-center shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)] sm:order-none sm:ml-auto sm:flex-none sm:basis-auto sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-left"
         >
           <span className="h-2 w-2 rounded-full bg-neon-pink shadow-[0_0_12px_rgba(255,43,214,0.9)] transition group-hover:bg-neon-cyan group-hover:shadow-[0_0_14px_rgba(0,240,255,0.9)]" />
           <span className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Open Shop</span>

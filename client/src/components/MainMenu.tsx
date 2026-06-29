@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { CharacterLoadout, Difficulty, GameMode, GameStats, PuzzleStyle } from '../types';
 import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
@@ -96,9 +97,11 @@ export function MainMenu({
   const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
+  const [mobileRecordsOpen, setMobileRecordsOpen] = useState(false);
+  const recordsTitle = activeStyle !== 'typing' ? 'Solver Records' : 'Typing Records';
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-24 pt-2 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-16 pt-2 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
         <h1 className="text-3xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
@@ -163,17 +166,25 @@ export function MainMenu({
             </div>
           </div>
 
+          <button
+            onClick={() => setMobileRecordsOpen(true)}
+            className="flex w-full items-center justify-between rounded-lg border border-neon-pink/35 bg-neon-pink/10 px-3 py-2 text-left text-xs font-black uppercase tracking-wider text-neon-pink sm:hidden"
+          >
+            <span>{recordsTitle}</span>
+            <span className="text-white/45">View</span>
+          </button>
+
           <div className="grid grid-cols-2 gap-2 sm:gap-3" aria-label="Menu navigation">
-            <button className="menu-btn text-sm sm:text-base" onClick={() => onNav('upgrades')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('upgrades')}>
               Store
             </button>
-            <button className="menu-btn text-sm sm:text-base" onClick={() => onNav('leaderboard')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('leaderboard')}>
               Leaderboard
             </button>
-            <button className="menu-btn text-sm sm:text-base" onClick={() => onNav('howto')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('howto')}>
               How to Play
             </button>
-            <button className="menu-btn text-sm sm:text-base" onClick={() => onNav('settings')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('settings')}>
               Settings
             </button>
           </div>
@@ -182,10 +193,10 @@ export function MainMenu({
         <button
           onClick={() => onNav('closet')}
           aria-label="Open closet to customize survivor"
-          className="group relative order-1 min-h-[158px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
+          className="group relative order-1 min-h-[218px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
-          <div className="absolute left-3 right-36 top-3 z-10 sm:right-3">
+          <div className="absolute left-3 right-44 top-3 z-10 sm:right-3">
             <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-neon-cyan/70">Survivor</div>
             <div className="max-w-[min(100%,14rem)] truncate text-xl font-black tracking-wide text-neon-green drop-shadow-[0_0_12px_rgba(57,255,20,0.55)] sm:max-w-[220px]">
               {username}
@@ -194,20 +205,42 @@ export function MainMenu({
           <CharacterAvatar
             character={character}
             armed={false}
-            className="absolute bottom-[-18px] right-1 h-[186px] w-[147px] transition group-hover:scale-[1.025] sm:inset-x-0 sm:bottom-9 sm:mx-auto sm:h-[270px] sm:w-[214px] lg:h-[310px] lg:w-[245px]"
+            className="absolute bottom-[-22px] right-0 h-[252px] w-[199px] transition group-hover:scale-[1.025] sm:inset-x-0 sm:bottom-9 sm:mx-auto sm:h-[270px] sm:w-[214px] lg:h-[310px] lg:w-[245px]"
           />
-          <div className="absolute bottom-3 left-3 right-36 flex justify-start border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest sm:inset-x-4 sm:justify-end">
+          <div className="absolute bottom-3 left-3 right-44 flex justify-start border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest sm:inset-x-4 sm:justify-end">
             <span className="font-bold text-neon-green">Customize</span>
           </div>
         </button>
 
-        <div className="order-3 lg:order-none">
+        <div className="order-3 hidden sm:block lg:order-none">
           <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} />
         </div>
       </div>
 
-      <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT | OUTLAST THE DEAD</p>
-      <AdBanner />
+      <p className="hidden text-xs tracking-[0.25em] text-white/25 sm:block">SURVIVE THE NIGHT | OUTLAST THE DEAD</p>
+      <div className="hidden w-full sm:block">
+        <AdBanner />
+      </div>
+
+      {mobileRecordsOpen && (
+        <div className="fixed inset-0 z-[60] flex items-end bg-black/70 p-3 sm:hidden" onClick={() => setMobileRecordsOpen(false)}>
+          <div
+            className="w-full rounded-2xl border border-neon-pink/35 bg-ink-900 p-3 shadow-[0_0_28px_rgba(255,43,214,0.2)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">{recordsTitle}</div>
+              <button
+                onClick={() => setMobileRecordsOpen(false)}
+                className="rounded-md border border-white/15 bg-black/45 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/60"
+              >
+                Close
+              </button>
+            </div>
+            <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} compact />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -238,19 +271,21 @@ function Records({
   stats,
   riddleStats,
   riddleMode,
+  compact = false,
 }: {
   stats: GameStats;
   riddleStats: GameStats;
   riddleMode: boolean;
+  compact?: boolean;
 }) {
   const selected = riddleMode ? riddleStats : stats;
   const bestMode = STYLE_META[(riddleStats.bestMode as Style) || 'riddles']?.label ?? '-';
   return (
-    <div className="rounded-xl border border-neon-pink/25 bg-ink-800/70 p-4">
-      <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-neon-pink">
+    <div className={`rounded-xl border border-neon-pink/25 bg-ink-800/70 ${compact ? 'p-3' : 'p-4'}`}>
+      <h3 className={`${compact ? 'mb-2 text-xs' : 'mb-3 text-sm'} font-bold uppercase tracking-widest text-neon-pink`}>
         {riddleMode ? 'Solver' : 'Typing'} Records
       </h3>
-      <dl className="space-y-1.5 text-sm">
+      <dl className={`${compact ? 'space-y-1 text-xs' : 'space-y-1.5 text-sm'}`}>
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
         <Row k="Longest Survival" v={formatTime(selected.longestSurvivalMs)} />
         {riddleMode ? <Row k="Best Mode" v={riddleStats.bestMode ? bestMode : '-'} /> : <Row k="Highest WPM" v={selected.highestWpm} />}
