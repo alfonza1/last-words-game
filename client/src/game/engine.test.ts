@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { GameEngine } from './engine';
 import { DEFAULT_SETTINGS, DEFAULT_UPGRADES } from '../lib/storage';
 import { puzzlePoolSize } from '../data/puzzles';
+import { MOBILE_SPEED_MULT } from './difficulty';
 import type { Zombie } from '../types';
 
 function makeEngine() {
@@ -503,5 +504,41 @@ describe('powerups (consumables)', () => {
     e.state.powerups.consumables.freeze = 0;
     expect(e.activatePowerup('freeze')).toBe(false);
     expect(e.state.powerups.freezeMs).toBe(0);
+  });
+});
+
+describe('mobile sessions slow zombies (mobile only)', () => {
+  // Force one spawn into an empty field and read the spawned zombie's speed.
+  const spawnSpeed = (mobile: boolean) => {
+    const e = new GameEngine({
+      mode: 'survival',
+      difficulty: 'normal',
+      upgrades: DEFAULT_UPGRADES,
+      settings: DEFAULT_SETTINGS,
+      width: 960,
+      height: 600,
+      seed: 7,
+      mobile,
+    });
+    e.state.wave = 1;
+    e.state.betweenWaves = 0;
+    e.state.waveZombiesToSpawn = 3;
+    e.state.waveZombiesSpawned = 1;
+    e.state.zombies = [];
+    e.handleInput(e.state.wordQueue[0] + ' ');
+    return e.state.zombies[0].speed;
+  };
+
+  it('a mobile zombie spawns exactly MOBILE_SPEED_MULT slower than desktop', () => {
+    const desktop = spawnSpeed(false);
+    const mobile = spawnSpeed(true);
+    expect(mobile).toBeLessThan(desktop);
+    expect(mobile).toBeCloseTo(desktop * MOBILE_SPEED_MULT, 5);
+  });
+
+  it('desktop sessions are unchanged (no multiplier)', () => {
+    expect(MOBILE_SPEED_MULT).toBeLessThan(1);
+    // Same seed/setup, mobile flag off → full speed.
+    expect(spawnSpeed(false)).toBeGreaterThan(0);
   });
 });

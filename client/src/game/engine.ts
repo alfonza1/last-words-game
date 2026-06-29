@@ -23,6 +23,7 @@ import {
 import {
   getDifficultyConfig,
   isBossWave,
+  MOBILE_SPEED_MULT,
   waveSpawnInterval,
   waveSpeed,
   waveZombieCount,
@@ -72,6 +73,8 @@ export interface EngineOptions {
   riddleMode?: boolean;
   /** Which puzzle to solve when riddleMode is on (default 'riddles'). */
   puzzleStyle?: PuzzleStyle;
+  /** Mobile session: smaller screen + voice input, so zombies move a bit slower. */
+  mobile?: boolean;
 }
 
 const DOUBLE_DAMAGE_MS = 5000;
@@ -112,6 +115,7 @@ export class GameEngine {
   // so we can show prompts and accept synonyms while reusing the typing pipeline.
   private riddleQueue: Puzzle[] = [];
   private puzzleStyle: PuzzleStyle = 'riddles';
+  private mobile = false;
   private solvedPuzzlePrompts = new Set<string>();
   private finitePuzzleGoal: number | null = null;
   private queuedSolverShots: SolverShot[] = [];
@@ -121,6 +125,7 @@ export class GameEngine {
   constructor(opts: EngineOptions) {
     this.rng = mulberry32(opts.seed ?? hashSeed(`${Date.now()}-${Math.random()}`));
     this.puzzleStyle = opts.puzzleStyle ?? 'riddles';
+    this.mobile = !!opts.mobile;
     const difficulty = opts.mode === 'bossrush' ? 'normal' : opts.difficulty;
     const cfg = getDifficultyConfig(difficulty);
     const maxHealth = cfg.startHealth + maxHealthBonus(opts.upgrades);
@@ -535,6 +540,8 @@ export class GameEngine {
     }
     // Puzzle Mode slows zombies — kills come in bursts after each solve.
     if (s.riddleMode) speed *= puzzleSpeedMult(this.puzzleStyle);
+    // Mobile sessions (smaller screen + slower voice input) ease zombie speed.
+    if (this.mobile) speed *= MOBILE_SPEED_MULT;
 
     const spawnY = s.height * SPAWN_FRAC; // appear just below the word panel
     const bossWave = s.mode === 'bossrush' || isBossWave(s.wave);

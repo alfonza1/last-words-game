@@ -101,6 +101,7 @@ export function GameScreen({
       settings,
       riddleMode,
       puzzleStyle,
+      mobile: mobileSpeechExperience,
       width: 960,
       height: 600,
       seed,
