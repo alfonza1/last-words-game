@@ -1,7 +1,6 @@
 import type { CharacterLoadout, Difficulty, GameMode, GameStats, PuzzleStyle } from '../types';
 import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
-import type { DailyOutbreak } from '../data/dailyOutbreak';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -19,9 +18,6 @@ interface Props {
   onRiddleMode: (v: boolean) => void;
   onPuzzleStyle: (s: PuzzleStyle) => void;
   mobileSpeechExperience?: boolean;
-  dailyChallenge: DailyOutbreak;
-  dailyBest: number;
-  onDailyStart: () => void;
 }
 
 /** A play style for the menu: plain typing, or one of the puzzle styles. */
@@ -97,9 +93,6 @@ export function MainMenu({
   onRiddleMode,
   onPuzzleStyle,
   mobileSpeechExperience = false,
-  dailyChallenge,
-  dailyBest,
-  onDailyStart,
 }: Props) {
   const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
@@ -168,8 +161,6 @@ export function MainMenu({
               <span className="mr-3 inline-block w-6 text-center">💀</span>Boss Rush
             </button>
           </div>
-
-          <DailyOutbreakCard challenge={dailyChallenge} best={dailyBest} onStart={onDailyStart} />
 
           <div className="grid grid-cols-2 gap-3" aria-label="Menu navigation">
               <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
@@ -249,48 +240,6 @@ function Records({
         <Row k="Longest Streak" v={selected.longestStreak} />
         <Row k="Coins Earned" v={(selected.coinsEarned ?? 0).toLocaleString()} />
       </dl>
-    </div>
-  );
-}
-
-function DailyOutbreakCard({
-  challenge,
-  best,
-  onStart,
-}: {
-  challenge: DailyOutbreak;
-  best: number;
-  onStart: () => void;
-}) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-neon-amber/35 bg-gradient-to-br from-neon-amber/10 via-ink-800/80 to-neon-pink/10 p-3 shadow-[0_0_22px_rgba(255,179,0,0.12)]">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-neon-amber">Daily Outbreak</div>
-          <h3 className="mt-1 truncate text-sm font-black text-white/90">{challenge.title}</h3>
-        </div>
-        <div className="shrink-0 rounded border border-white/10 bg-black/35 px-2 py-1 text-[10px] font-bold text-white/45">
-          {challenge.id.slice(5)}
-        </div>
-      </div>
-      <p className="mt-2 min-h-[2rem] text-xs leading-snug text-white/55">{challenge.briefing}</p>
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wider">
-        <span className="rounded border border-neon-cyan/30 bg-black/25 px-2 py-1 text-neon-cyan">{challenge.styleLabel}</span>
-        <span className="rounded border border-neon-green/30 bg-black/25 px-2 py-1 text-neon-green">
-          {DIFFICULTY_CONFIGS[challenge.difficulty].label}
-        </span>
-        <span className="rounded border border-neon-pink/30 bg-black/25 px-2 py-1 text-neon-pink">
-          {challenge.mode === 'bossrush' ? 'Boss' : 'Survival'}
-        </span>
-        <span className="ml-auto text-white/40">Best {best.toLocaleString()}</span>
-      </div>
-      <button
-        className="mt-3 w-full rounded-lg border border-neon-amber/70 bg-neon-amber/10 px-4 py-2 text-sm font-black text-neon-amber transition hover:bg-neon-amber/20"
-        onClick={onStart}
-        aria-label={`Deploy daily outbreak: ${challenge.title}`}
-      >
-        Deploy Daily
-      </button>
     </div>
   );
 }

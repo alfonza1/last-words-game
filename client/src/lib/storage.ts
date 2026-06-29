@@ -11,7 +11,6 @@ const KEYS = {
   upgradeGames: 'ztr.upgradeGames',
   settings: 'ztr.settings',
   highscores: 'ztr.highscores',
-  daily: 'ztr.daily',
   guest: 'ztr.guest',
 } as const;
 
@@ -272,23 +271,6 @@ export function mergeRunIntoStats(
     totalCoins: prev.totalCoins + run.coins,
     gamesPlayed: prev.gamesPlayed + 1,
   };
-}
-
-export interface DailyRecord {
-  date: string;
-  best: number;
-}
-
-export function loadDailyBest(date: string, store?: Storage): number {
-  const rec = loadJSON<DailyRecord | null>(KEYS.daily, null, store);
-  return rec && rec.date === date ? rec.best : 0;
-}
-
-export function saveDailyBest(date: string, score: number, store?: Storage): number {
-  const current = loadDailyBest(date, store);
-  const best = Math.max(current, score);
-  saveJSON<DailyRecord>(KEYS.daily, { date, best }, store);
-  return best;
 }
 
 export const STORAGE_KEYS = KEYS;

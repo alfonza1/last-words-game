@@ -10,8 +10,6 @@ import {
   addHighScore,
   loadHighScores,
   mergeRunIntoStats,
-  loadDailyBest,
-  saveDailyBest,
   DEFAULT_UPGRADES,
   generateGuestName,
   loadGuest,
@@ -185,15 +183,5 @@ describe('legacy weak-word cleanup', () => {
     expect(loaded.bestScore).toBe(100);
     expect(loaded).not.toHaveProperty('missedWords');
     expect(JSON.parse(store.getItem(STORAGE_KEYS.stats)!)).not.toHaveProperty('missedWords');
-  });
-});
-
-describe('daily best', () => {
-  it('stores and updates the best for a date', () => {
-    expect(loadDailyBest('2026-06-21', store)).toBe(0);
-    expect(saveDailyBest('2026-06-21', 300, store)).toBe(300);
-    expect(saveDailyBest('2026-06-21', 100, store)).toBe(300); // keeps higher
-    expect(loadDailyBest('2026-06-21', store)).toBe(300);
-    expect(loadDailyBest('2026-06-22', store)).toBe(0); // different day
   });
 });
