@@ -209,9 +209,9 @@ export function MainMenu({
             </button>
             <button
               onClick={() => onStart('bossrush')}
-              className="rounded-lg border border-[#a855f7]/60 bg-[#a855f7]/10 px-3 py-2.5 text-center transition active:scale-95"
+              className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2.5 text-center transition active:scale-95"
             >
-              <span className="block text-sm font-black uppercase tracking-wide" style={{ color: '#a855f7' }}>▶ Start Boss Rush</span>
+              <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">▶ Start Boss Rush</span>
               <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Boss gauntlet</span>
             </button>
           </div>

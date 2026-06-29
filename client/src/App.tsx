@@ -774,20 +774,23 @@ export default function App() {
   const accountLabel = signedIn ? username || user?.email || 'Player' : username || 'Survivor';
   const showAccountChip = screen !== 'game' && screen !== 'signin';
   const showWalletChip = showAccountChip;
+  // On the mobile home page the fixed chips are hidden so the menu can use the
+  // full height (it scrolls); they still show on desktop and on other screens.
+  const hideChipsOnMobile = screen === 'menu';
 
   return (
     <div className="h-full w-full">
       {showWalletChip && (
         <button
           onClick={() => setShowCoinPacks(true)}
-          className="safe-top-left fixed z-40 rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1 text-xs font-black tracking-wider text-neon-amber transition hover:bg-neon-amber/15"
+          className={`${hideChipsOnMobile ? 'hidden sm:block' : ''} safe-top-left fixed z-40 rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1 text-xs font-black tracking-wider text-neon-amber transition hover:bg-neon-amber/15`}
         >
           🪙 {stats.totalCoins.toLocaleString()} COINS
         </button>
       )}
 
       {showAccountChip && (
-        <div className="safe-top-right fixed z-40 flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs">
+        <div className={`${hideChipsOnMobile ? 'hidden sm:flex' : 'flex'} safe-top-right fixed z-40 items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs`}>
           <span className="max-w-[120px] truncate text-white/60 sm:max-w-[140px]">{accountLabel}</span>
           {signedIn ? (
             <button onClick={() => setConfirmSignOut(true)} className="font-bold text-neon-green hover:text-neon-pink">
@@ -801,7 +804,7 @@ export default function App() {
         </div>
       )}
 
-      <div className={`h-full w-full ${showAccountChip ? 'pt-11' : ''}`}>
+      <div className={`h-full w-full ${showAccountChip ? (hideChipsOnMobile ? 'sm:pt-11' : 'pt-11') : ''}`}>
         <Suspense fallback={<ScreenLoader />}>{content}</Suspense>
       </div>
 
