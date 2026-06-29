@@ -7,13 +7,11 @@ import {
   hasGuestProgress,
   loadGuest,
   loadGuestProgress,
-  loadDailyBest,
   loadRiddleStats,
   loadSettings,
   loadStats,
   mergeRunIntoStats,
   saveGuest,
-  saveDailyBest,
   saveRiddleStats,
   saveSettings,
   saveStats,
@@ -36,7 +34,6 @@ import {
   type RunPayload,
 } from './lib/api';
 import { getMap, MAPS } from './data/maps';
-import { getDailyOutbreak, type DailyOutbreak } from './data/dailyOutbreak';
 import { DEFAULT_CHARACTER, DEFAULT_COSMETICS, cosmeticByKey, normalizeCharacter } from './data/cosmetics';
 import { POWERUP_DEFS } from './data/powerups';
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from './data/upgrades';
@@ -126,8 +123,6 @@ export default function App() {
   const [showCoinPacks, setShowCoinPacks] = useState(false);
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
   const mobileExperience = useMobileExperience();
-  const dailyChallenge = useMemo(() => getDailyOutbreak(), []);
-  const [dailyBest, setDailyBest] = useState(() => loadDailyBest(dailyChallenge.id));
 
   // Always-current screen, so requireSignIn can return you where you came from.
   const screenRef = useRef(screen);
@@ -176,7 +171,6 @@ export default function App() {
   const [result, setResult] = useState<RunResult | null>(null);
   const [isHighScore, setIsHighScore] = useState(false);
   const [wpmBonus, setWpmBonus] = useState<WpmBonus>(EMPTY_WPM_BONUS);
-  const [activeDaily, setActiveDaily] = useState<DailyOutbreak | null>(null);
 
   // Upgrades only apply while they have games left (signed-in only).
   const activeUpgrades = upgradeGames > 0 ? upgrades : DEFAULT_UPGRADES;
@@ -290,7 +284,6 @@ export default function App() {
   );
 
   const startGame = useCallback((m: GameMode) => {
-    setActiveDaily(null);
     setMode(m);
     setGameKey((k) => k + 1);
     setResult(null);
@@ -298,22 +291,11 @@ export default function App() {
     setScreen('game');
   }, []);
 
-  const startDaily = useCallback((challenge: DailyOutbreak = dailyChallenge) => {
-    setActiveDaily(challenge);
-    setMode(challenge.mode);
-    setGameKey((k) => k + 1);
-    setResult(null);
-    setWpmBonus(EMPTY_WPM_BONUS);
-    setScreen('game');
-  }, [dailyChallenge]);
-
   // Save a finished run: server for accounts, localStorage for guests.
   const saveRun = useCallback(
     (r: RunResult, onResult?: (high: boolean) => void) => {
       const records = r.riddle ? riddleStats : stats;
-      const runDifficulty = activeDaily
-        ? difficultyForMode(activeDaily.mode, activeDaily.difficulty)
-        : difficultyForMode(mode, settings.difficulty);
+      const runDifficulty = difficultyForMode(mode, settings.difficulty);
       const high = r.score > records.bestScore && r.score > 0;
       if (user) {
         const payload: RunPayload = {
@@ -326,7 +308,7 @@ export default function App() {
           bossesDefeated: r.bossesDefeated,
           streak: r.streak,
           coins: r.coins,
-          mode: activeDaily?.mode ?? mode,
+          mode,
           difficulty: runDifficulty,
           riddle: r.riddle,
           style: r.style,
@@ -365,25 +347,20 @@ export default function App() {
         onResult?.(high);
       }
     },
-    [user, stats, riddleStats, upgrades, upgradeGames, activeDaily, mode, settings.difficulty, applyProfile, persistGuest, toast],
+    [user, stats, riddleStats, upgrades, upgradeGames, mode, settings.difficulty, applyProfile, persistGuest, toast],
   );
 
   const handleGameOver = useCallback(
     (r: RunResult) => {
       const records = r.riddle ? riddleStats : stats;
-      const runDifficulty = activeDaily
-        ? difficultyForMode(activeDaily.mode, activeDaily.difficulty)
-        : difficultyForMode(mode, settings.difficulty);
-      if (activeDaily) {
-        setDailyBest(saveDailyBest(activeDaily.id, r.score));
-      }
+      const runDifficulty = difficultyForMode(mode, settings.difficulty);
       setResult(r);
       setWpmBonus(r.riddle ? EMPTY_WPM_BONUS : calculateWpmBonus(r.wpm, runDifficulty));
       setIsHighScore(r.score > records.bestScore && r.score > 0);
       setScreen('gameover');
       saveRun(r, setIsHighScore);
     },
-    [activeDaily, mode, settings.difficulty, stats, riddleStats, saveRun],
+    [mode, settings.difficulty, stats, riddleStats, saveRun],
   );
 
   // Quitting/restarting mid-run still saves the stats earned this game and uses
@@ -588,14 +565,11 @@ export default function App() {
   useEffect(() => {
     if (screen !== 'gameover') return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        if (activeDaily) startDaily(activeDaily);
-        else startGame(mode);
-      }
+      if (e.key === 'Enter') startGame(mode);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeDaily, screen, mode, startDaily, startGame]);
+  }, [screen, mode, startGame]);
 
   useEffect(() => {
     if (!loading && screen === 'gameover' && !result) setScreen('menu');
@@ -604,44 +578,27 @@ export default function App() {
   const content = useMemo(() => {
     switch (screen) {
       case 'game': {
-        const gameSettings = activeDaily
-          ? {
-              ...settings,
-              difficulty: activeDaily.difficulty,
-              map: activeDaily.mapId,
-              riddleMode: true,
-              puzzleStyle: activeDaily.style,
-            }
-          : settings;
-        const gameMode = activeDaily?.mode ?? mode;
-        const gameRiddleMode = activeDaily ? true : mobileExperience.mobileSpeechExperience ? true : settings.riddleMode;
-        const gamePuzzleStyle = activeDaily?.style ?? settings.puzzleStyle;
+        const gameRiddleMode = mobileExperience.mobileSpeechExperience ? true : settings.riddleMode;
         return (
           <GameScreen
             key={gameKey}
-            mode={gameMode}
-            difficulty={activeDaily ? difficultyForMode(activeDaily.mode, activeDaily.difficulty) : difficultyForMode(mode, settings.difficulty)}
+            mode={mode}
+            difficulty={difficultyForMode(mode, settings.difficulty)}
             upgrades={activeUpgrades}
             powerups={powerups}
             upgradesActive={upgradeGames > 0}
-            settings={gameSettings}
+            settings={settings}
             character={character}
             riddleMode={gameRiddleMode}
-            puzzleStyle={gamePuzzleStyle}
+            puzzleStyle={settings.puzzleStyle}
             onGameOver={handleGameOver}
             onUsePowerup={onUsePowerup}
-            onQuit={(r) =>
-              endRun(r, () => {
-                setActiveDaily(null);
-                setScreen('menu');
-              })
-            }
-            onRestart={(r) => endRun(r, () => (activeDaily ? startDaily(activeDaily) : startGame(mode)))}
+            onQuit={(r) => endRun(r, () => setScreen('menu'))}
+            onRestart={(r) => endRun(r, () => startGame(mode))}
             onMusicToggle={(on) => persistSettings({ ...settings, music: on })}
             onMusicVolume={(v) => persistSettings({ ...settings, musicVolume: v })}
             onSfxVolume={(v) => persistSettings({ ...settings, sfxVolume: v })}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
-            seed={activeDaily?.seed}
           />
         );
       }
@@ -666,14 +623,9 @@ export default function App() {
             isHighScore={isHighScore}
             rewardCoins={REWARD_COINS}
             wpmBonus={wpmBonus}
-            dailyChallenge={activeDaily ?? undefined}
-            dailyBest={dailyBest}
             onWatchAd={claimReward}
-            onRestart={() => (activeDaily ? startDaily(activeDaily) : startGame(mode))}
-            onMenu={() => {
-              setActiveDaily(null);
-              setScreen('menu');
-            }}
+            onRestart={() => startGame(mode)}
+            onMenu={() => setScreen('menu')}
           />
         ) : null;
       case 'upgrades':
@@ -746,9 +698,6 @@ export default function App() {
             onRiddleMode={(v) => persistSettings({ ...settings, riddleMode: v })}
             onPuzzleStyle={(s) => persistSettings({ ...settings, riddleMode: true, puzzleStyle: s })}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
-            dailyChallenge={dailyChallenge}
-            dailyBest={dailyBest}
-            onDailyStart={() => startDaily(dailyChallenge)}
           />
         );
     }
@@ -767,9 +716,6 @@ export default function App() {
     result,
     isHighScore,
     wpmBonus,
-    activeDaily,
-    dailyBest,
-    dailyChallenge,
     stats,
     riddleStats,
     signedIn,
@@ -790,7 +736,6 @@ export default function App() {
     saveUsername,
     persistSettings,
     startGame,
-    startDaily,
     mobileExperience.mobileSpeechExperience,
     chooseMode,
     setDifficulty,
