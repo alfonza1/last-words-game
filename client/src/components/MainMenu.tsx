@@ -150,7 +150,6 @@ export function MainMenu({
                     activeStyle === s ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
-                  <span className="hidden text-[8px] font-black uppercase tracking-widest text-white/35 sm:block">{STYLE_META[s].short}</span>
                   <span>
                     <span className="mr-1">{STYLE_META[s].emoji}</span>
                     {STYLE_META[s].label} Defense
@@ -177,18 +176,35 @@ export function MainMenu({
             <span className="text-white/45">View</span>
           </button>
 
-          <div className="grid grid-cols-2 gap-2 sm:gap-3" aria-label="Menu navigation">
-            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('upgrades')}>
+          {/* Mobile nav (kept): large tappable buttons. */}
+          <div className="grid grid-cols-2 gap-2 sm:hidden" aria-label="Menu navigation">
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('upgrades')}>
               Store
             </button>
-            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('leaderboard')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('leaderboard')}>
               Leaderboard
             </button>
-            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('howto')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('howto')}>
               How to Play
             </button>
-            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('settings')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('settings')}>
               Settings
+            </button>
+          </div>
+
+          {/* Desktop nav (reverted to prior menu-btn + emojis). */}
+          <div className="hidden grid-cols-2 gap-3 sm:grid" aria-label="Menu navigation">
+            <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
+              <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
+            </button>
+            <button className="menu-btn text-base" onClick={() => onNav('leaderboard')}>
+              <span className="mr-2 inline-block w-5 text-center">🏆</span>Leaderboard
+            </button>
+            <button className="menu-btn text-base" onClick={() => onNav('howto')}>
+              <span className="mr-2 inline-block w-5 text-center">❓</span>How to Play
+            </button>
+            <button className="menu-btn text-base" onClick={() => onNav('settings')}>
+              <span className="mr-2 inline-block w-5 text-center">🔧</span>Settings
             </button>
           </div>
         </div>
@@ -261,7 +277,7 @@ function DeployButton({ title, detail, tone, onClick }: { title: string; detail:
 
   return (
     <button
-      className={`rounded-lg border px-3 py-2 text-left transition focus:outline-none focus:ring-2 sm:px-6 sm:py-3 ${toneClass}`}
+      className={`rounded-lg border px-3 py-1.5 text-left transition focus:outline-none focus:ring-2 sm:px-6 sm:py-3 ${toneClass}`}
       onClick={onClick}
     >
       <span className={`block text-sm font-black uppercase tracking-wide sm:text-base ${titleClass}`}>{title}</span>

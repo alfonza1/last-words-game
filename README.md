@@ -42,7 +42,7 @@
 
 ## 🎯 Why this project is worth a look
 
-> A complete, full-stack product — not a tutorial clone — built to **run in production for near-zero idle cost** while still demonstrating the patterns reviewers care about: stateless auth, a server-authoritative economy, keyless CI/CD, and a cleanly decoupled, unit-tested game engine.
+> A complete, full-stack product — not a tutorial clone — built to **run in production for near-zero idle cost** while still demonstrating the patterns reviewers care about: stateless auth, a server-authoritative economy, keyless CI/CD, production observability, automated test gates, and a cleanly decoupled, unit-tested game engine.
 
 | | |
 | --- | --- |
@@ -50,6 +50,13 @@
 | 🔐 **Stateless auth** | The backend verifies **Firebase ID tokens against Google's public keys** — no auth secrets on the server, no session store. |
 | 🛡️ **Anti-cheat by design** | Coins, purchases, rewards, and run results are validated and applied **on the server**; the client can never grant itself currency or items. |
 | 🔑 **Keyless deploys** | GitHub Actions authenticates to GCP via **Workload Identity Federation (OIDC)** — zero long-lived service-account keys in the repo. |
+| 📈 **Error monitoring & tracing** | **Sentry** captures backend exceptions and performance traces (environment-gated DSN), with structured access logs in **Google Cloud Logging** — real production visibility, not `println` debugging. |
+| 🔁 **Multi-environment CD** | Automated **GitFlow** pipelines (`feature → develop → UAT`, `release → prod`) with deploy smoke tests and a release-branch-base validator that blocks malformed releases. |
+| ✅ **Tested & CI-gated** | **Vitest** (client engine + UI) and **JUnit + a full Spring context-load test** (server) run as required gates before every deploy, so bean-wiring and logic regressions fail CI, not prod. |
+| 🚦 **Abuse protection** | Per-IP, memory-bounded **rate limiting** and security headers run ahead of auth — CDN/WAF-ready for real traffic. |
+| 🔒 **Secrets hygiene** | Database password and API tokens live in **GCP Secret Manager** / CI secrets and are injected at runtime — nothing sensitive is committed. |
+| ⚡ **Fast, resilient client** | Route-level **code-splitting** keeps the game engine out of the initial load; guests play **fully offline** (localStorage) and import progress after signing in. |
+| 💳 **Payments-ready** | **Stripe** hosted checkout is scaffolded for real-money coin packs. |
 | 🎮 **Framework-agnostic engine** | A deterministic, **seeded** TypeScript game engine (spawning, waves, scoring, power-ups) rendered to `<canvas>`, fully decoupled from React and unit-tested. |
 | 🎨 **Zero image assets** | Every character, outfit, and rarity-tiered "Exclusive Mythic" skin is **drawn in code** (SVG + canvas). Nothing to host, nothing to cache-bust. |
 
