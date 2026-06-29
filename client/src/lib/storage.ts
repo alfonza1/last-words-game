@@ -99,8 +99,15 @@ function loadCleanStats(key: string, store?: Storage): GameStats {
 
 export const loadStats = (store?: Storage) => loadCleanStats(KEYS.stats, store);
 export const saveStats = (v: GameStats, store?: Storage) => saveJSON(KEYS.stats, v, store);
-export const loadRiddleStats = (store?: Storage) => loadCleanStats(KEYS.riddleStats, store);
-export const saveRiddleStats = (v: GameStats, store?: Storage) => saveJSON(KEYS.riddleStats, v, store);
+export function loadRiddleStats(store?: Storage): GameStats {
+  const loaded = loadCleanStats(KEYS.riddleStats, store);
+  if (loaded.highestWpm === 0) return loaded;
+  const clean = { ...loaded, highestWpm: 0 };
+  saveJSON(KEYS.riddleStats, clean, store);
+  return clean;
+}
+export const saveRiddleStats = (v: GameStats, store?: Storage) =>
+  saveJSON(KEYS.riddleStats, { ...v, highestWpm: 0 }, store);
 
 export const loadUpgrades = (store?: Storage) => loadJSON(KEYS.upgrades, DEFAULT_UPGRADES, store);
 export const saveUpgrades = (v: Upgrades, store?: Storage) => saveJSON(KEYS.upgrades, v, store);
@@ -258,11 +265,12 @@ export function mergeRunIntoStats(
   },
 ): GameStats {
   const isNewBest = run.score > prev.bestScore || (run.score === prev.bestScore && !prev.bestMode);
+  const runWpm = run.style === 'typing' ? run.wpm : 0;
   return {
     bestScore: Math.max(prev.bestScore, run.score),
     bestMode: isNewBest ? run.style : prev.bestMode,
     longestSurvivalMs: Math.max(prev.longestSurvivalMs, run.survivalMs),
-    highestWpm: Math.max(prev.highestWpm, run.wpm),
+    highestWpm: Math.max(prev.highestWpm, runWpm),
     bestAccuracy: Math.max(prev.bestAccuracy, run.accuracy),
     totalKills: prev.totalKills + run.kills,
     bossesDefeated: prev.bossesDefeated + run.bossesDefeated,

@@ -146,6 +146,7 @@ export function GameScreen({
   // Typing Defense gets a safe pause. Puzzle modes only open the menu; their
   // horde keeps advancing so the player cannot pause indefinitely to solve.
   const pausedRef = useRef(false);
+  const hiddenAtRef = useRef<number | null>(null);
   const freezeOnPause = !riddleMode;
   const doPause = () => {
     if (pausedRef.current) return;
@@ -180,19 +181,46 @@ export function GameScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine]);
 
-  // Auto-pause when the tab is hidden so the player isn't overrun while away.
-  // Refresh/close must not show the browser's blocking confirmation dialog:
-  // that modal freezes the game and can be used as a free thinking pause.
+  // Auto-pause typing, but catch solver modes up after mobile browsers suspend
+  // the tab so backgrounding the app is not a free thinking pause.
   useEffect(() => {
+    const getEngineStatus = (): GameState['status'] => engine.state.status;
+    const catchUpSolver = () => {
+      const hiddenAt = hiddenAtRef.current;
+      hiddenAtRef.current = null;
+      if (hiddenAt === null || freezeOnPause || getEngineStatus() !== 'playing') return;
+      const hiddenSeconds = Math.max(0, (performance.now() - hiddenAt) / 1000);
+      const maxCatchUpSeconds = 30;
+      let remaining = Math.min(maxCatchUpSeconds, hiddenSeconds);
+      while (remaining > 0 && getEngineStatus() === 'playing') {
+        const step = Math.min(0.05, remaining);
+        engine.update(step);
+        remaining -= step;
+      }
+      if (hiddenSeconds > maxCatchUpSeconds && getEngineStatus() === 'playing') {
+        engine.forfeit();
+      }
+      setTick((t) => t + 1);
+      if (getEngineStatus() === 'gameover' && !endedRef.current) {
+        endedRef.current = true;
+        onGameOver(toResult(engine.state));
+      }
+    };
+
     const onVisibility = () => {
-      if (document.hidden && engine.state.status === 'playing') doPause();
+      if (document.hidden && engine.state.status === 'playing') {
+        if (freezeOnPause) doPause();
+        else hiddenAtRef.current = performance.now();
+      } else if (!document.hidden) {
+        catchUpSolver();
+      }
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [engine]);
+  }, [engine, freezeOnPause, onGameOver]);
 
   const toggleMusic = () => {
     const next = !musicOn;
@@ -300,10 +328,10 @@ export function GameScreen({
       {acceptingInput && (
         <div
           className={`pointer-events-none absolute inset-x-0 z-30 flex flex-col items-center gap-2 px-4 ${
-            mobileSpeechSolver ? 'top-[calc(env(safe-area-inset-top)+3.5rem)]' : 'top-14'
+            s.riddleMode ? 'top-[calc(env(safe-area-inset-top)+8.5rem)] sm:top-24' : 'top-14'
           }`}
         >
-          <div className="rounded-2xl border border-white/10 bg-black/55 px-5 py-2.5 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/55 px-4 py-2.5 backdrop-blur-sm sm:px-5">
             {s.riddleMode ? (
               <RiddlePrompt prompt={s.riddlePrompt} wrong={wrong} />
             ) : (
@@ -622,8 +650,10 @@ function SpeechAnswerPanel({
 function RiddlePrompt({ prompt, wrong }: { prompt: string | null; wrong: boolean }) {
   return (
     <div className="flex w-full max-w-2xl flex-col items-center gap-1 text-center">
-      <span className="text-[10px] uppercase tracking-[0.35em] text-neon-pink">Solve to fire</span>
-      <p className={`max-w-xl text-lg font-bold leading-snug ${wrong ? 'text-neon-red' : 'text-white/90'}`}>
+      <span className="text-[9px] uppercase tracking-[0.24em] text-neon-pink sm:text-[10px] sm:tracking-[0.35em]">
+        Solve to fire
+      </span>
+      <p className={`max-w-full text-sm font-bold leading-snug sm:text-lg ${wrong ? 'text-neon-red' : 'text-white/90'}`}>
         {prompt ?? '—'}
       </p>
     </div>
@@ -683,7 +713,7 @@ function toResult(s: GameState): RunResult {
   return {
     score: s.score,
     wave: s.wave,
-    wpm: s.maxWpm,
+    wpm: s.riddleMode ? 0 : s.maxWpm,
     accuracy: s.accuracy,
     survivalMs: s.elapsedMs,
     kills: s.kills,

@@ -291,6 +291,12 @@ export class GameEngine {
     else if (this.state.status === 'paused') this.resume();
   }
 
+  forfeit() {
+    if (this.state.status === 'gameover') return;
+    this.state.health = 0;
+    this.state.status = 'gameover';
+  }
+
   get matchOptions(): MatchOptions {
     // Strictness is dictated by difficulty: harder modes require exact
     // capitalization & punctuation, no matter the player's preference.
@@ -930,6 +936,12 @@ export class GameEngine {
   private recomputeMetrics() {
     const s = this.state;
     s.accuracy = calcAccuracy(s.correctWords, s.mistakes);
+    if (s.riddleMode) {
+      s.wpm = 0;
+      s.maxWpm = 0;
+      this.recentWords = [];
+      return;
+    }
     // Live WPM over a rolling window so it responds to current typing speed.
     const windowMs = 6000;
     const cutoff = this.typingElapsedMs - windowMs;
