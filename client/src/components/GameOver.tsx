@@ -63,7 +63,7 @@ export function GameOver({
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
         <Big label="Score" value={result.score.toLocaleString()} accent="#ffb300" />
         <Big label="Wave" value={result.wave} accent="#39ff14" />
-        <Big label="WPM" value={result.wpm} accent="#00f0ff" />
+        {!result.riddle && <Big label="WPM" value={result.wpm} accent="#00f0ff" />}
         <Big label="Accuracy" value={`${result.accuracy}%`} accent="#39ff14" />
         <Big label="Survived" value={formatTime(result.survivalMs)} accent="#e8ffe8" />
         <Big label="Kills" value={result.kills} accent="#ff2bd6" />

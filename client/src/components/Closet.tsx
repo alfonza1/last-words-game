@@ -92,7 +92,7 @@ export function Closet({
   };
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4 pb-32">
       <div className="flex flex-wrap items-start gap-3">
         <button
           onClick={requestBack}
@@ -116,7 +116,7 @@ export function Closet({
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[300px_1fr] lg:gap-4">
-        <section className="relative flex min-h-[430px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-3">
+        <section className="relative flex min-h-[340px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-3 sm:min-h-[430px]">
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-cyan/10 to-transparent" />
 
           <div className="relative flex flex-1 items-center justify-center">
@@ -124,32 +124,6 @@ export function Closet({
           <CharacterAvatar character={draft} armed={false} className="relative h-[275px] w-[220px] max-w-full" />
         </div>
 
-        <div className="relative overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/55 p-2.5">
-          <div className="absolute inset-y-0 left-0 w-1 bg-neon-cyan shadow-[0_0_14px_rgba(0,240,255,0.8)]" />
-          <div className="flex items-center justify-between gap-3 pl-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">Survivor Look</span>
-            <span
-              className={`rounded border px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
-                hasUnsavedChanges
-                  ? 'border-neon-amber/50 bg-neon-amber/10 text-neon-amber'
-                  : 'border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan'
-              }`}
-            >
-              {hasUnsavedChanges ? 'Unsaved' : 'Equipped'}
-            </span>
-          </div>
-          <button
-            onClick={save}
-            disabled={!dirty || saved || saving}
-            className={`mt-2 w-full rounded-lg border px-4 py-1.5 text-xs font-black tracking-wider ${
-              hasUnsavedChanges
-                ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-neon'
-                : 'border-neon-cyan/25 bg-neon-cyan/5 text-neon-cyan/60'
-            }`}
-          >
-            {saving ? 'EQUIPPING…' : 'EQUIP LOOK'}
-          </button>
-        </div>
       </section>
 
         <section className="space-y-3">
@@ -265,6 +239,38 @@ export function Closet({
           onChoose={(key) => chooseCosmetic(key, 'accessory')}
         />
         </section>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neon-cyan/25 bg-ink-900/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(0,0,0,0.38)] backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/45 px-3 py-2">
+            <div className="text-[9px] font-black uppercase tracking-[0.24em] text-white/45">Survivor Look</div>
+            <div
+              className={`mt-0.5 text-xs font-black uppercase tracking-widest ${
+                saving
+                  ? 'text-neon-amber'
+                  : hasUnsavedChanges
+                    ? 'text-neon-amber'
+                    : saved
+                      ? 'text-neon-green'
+                      : 'text-neon-cyan'
+              }`}
+            >
+              {saving ? 'Equipping' : hasUnsavedChanges ? 'Unsaved changes' : saved ? 'Look equipped' : 'Equipped'}
+            </div>
+          </div>
+          <button
+            onClick={save}
+            disabled={!dirty || saved || saving}
+            className={`w-full rounded-xl border px-5 py-3 text-sm font-black uppercase tracking-wider sm:max-w-xs ${
+              hasUnsavedChanges
+                ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-neon'
+                : 'border-neon-cyan/25 bg-neon-cyan/5 text-neon-cyan/60'
+            } disabled:cursor-default disabled:opacity-75`}
+          >
+            {saving ? 'EQUIPPING...' : hasUnsavedChanges ? 'EQUIP LOOK' : 'LOOK EQUIPPED'}
+          </button>
+        </div>
       </div>
 
       {pendingExit && (

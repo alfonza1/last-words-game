@@ -294,24 +294,25 @@ export default function App() {
   // Save a finished run: server for accounts, localStorage for guests.
   const saveRun = useCallback(
     (r: RunResult, onResult?: (high: boolean) => void) => {
+      const run = r.riddle ? { ...r, wpm: 0 } : r;
       const records = r.riddle ? riddleStats : stats;
       const runDifficulty = difficultyForMode(mode, settings.difficulty);
-      const high = r.score > records.bestScore && r.score > 0;
+      const high = run.score > records.bestScore && run.score > 0;
       if (user) {
         const payload: RunPayload = {
-          score: r.score,
-          wave: r.wave,
-          wpm: r.wpm,
-          accuracy: r.accuracy,
-          survivalMs: r.survivalMs,
-          kills: r.kills,
-          bossesDefeated: r.bossesDefeated,
-          streak: r.streak,
-          coins: r.coins,
+          score: run.score,
+          wave: run.wave,
+          wpm: run.wpm,
+          accuracy: run.accuracy,
+          survivalMs: run.survivalMs,
+          kills: run.kills,
+          bossesDefeated: run.bossesDefeated,
+          streak: run.streak,
+          coins: run.coins,
           mode,
           difficulty: runDifficulty,
-          riddle: r.riddle,
-          style: r.style,
+          riddle: run.riddle,
+          style: run.style,
         };
         apiSubmitRun(payload)
           .then(({ profile, isHighScore }) => {
@@ -324,15 +325,15 @@ export default function App() {
             onResult?.(high);
           });
       } else {
-        if (r.riddle) {
-          const mergedRiddle = mergeRunIntoStats(riddleStats, r);
-          const wallet = { ...stats, totalCoins: stats.totalCoins + r.coins };
+        if (run.riddle) {
+          const mergedRiddle = mergeRunIntoStats(riddleStats, run);
+          const wallet = { ...stats, totalCoins: stats.totalCoins + run.coins };
           setRiddleStats(mergedRiddle);
           setStats(wallet);
           saveRiddleStats(mergedRiddle);
           saveStats(wallet);
         } else {
-          const merged = mergeRunIntoStats(stats, r);
+          const merged = mergeRunIntoStats(stats, run);
           setStats(merged);
           saveStats(merged);
         }

@@ -287,6 +287,16 @@ describe('riddle mode', () => {
     expect(e.state.kills).toBe(4); // puzzleKills.math.normal
     expect(e.state.zombies).toHaveLength(4);
   });
+
+  it('does not track WPM for solver answers', () => {
+    const e = riddleEngine();
+    e.state.zombies = [zombie({ y: 400 })];
+    e.handleInput(firstWord(e) + ' ');
+    e.update(0.1);
+
+    expect(e.state.wpm).toBe(0);
+    expect(e.state.maxWpm).toBe(0);
+  });
 });
 
 describe('live WPM', () => {
