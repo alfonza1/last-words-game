@@ -59,23 +59,23 @@ const DIFFS: Difficulty[] = ['easy', 'normal', 'nightmare'];
 const DIFF_BLURB: Record<Style, Record<Difficulty, string>> = {
   typing: {
     easy: 'Short words with a relaxed horde.',
-    normal: 'Words and numbers against the full outbreak. Earn 1.25x coins and score.',
-    nightmare: 'Exact-case words, numbers, and symbols. Earn 2x coins and score.',
+    normal: 'Words + numbers. Earn 1.25x coins and score.',
+    nightmare: 'Exact case + symbols. Earn 2x coins and score.',
   },
   riddles: {
     easy: 'Straightforward clues with extra time to solve.',
-    normal: 'Sharper clues and a faster approaching horde. Earn 1.25x coins and score.',
-    nightmare: 'The hardest clues under maximum pressure. Earn 2x coins and score.',
+    normal: 'Sharper clues. Earn 1.25x coins and score.',
+    nightmare: 'Hardest clues. Earn 2x coins and score.',
   },
   math: {
     easy: 'Quick addition and subtraction, relaxed horde.',
-    normal: 'Multiplication and bigger sums against the outbreak. Earn 1.25x coins and score.',
-    nightmare: 'Multi-step problems under max pressure. Earn 2x coins and score.',
+    normal: 'Bigger sums. Earn 1.25x coins and score.',
+    nightmare: 'Multi-step problems. Earn 2x coins and score.',
   },
   trivia: {
     easy: 'Everyday questions with time to think.',
-    normal: 'Trickier questions and a faster approaching horde. Earn 1.25x coins and score.',
-    nightmare: 'Tough questions under maximum pressure. Earn 2x coins and score.',
+    normal: 'Trickier questions. Earn 1.25x coins and score.',
+    nightmare: 'Tough questions. Earn 2x coins and score.',
   },
 };
 
@@ -98,7 +98,7 @@ export function MainMenu({
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
   const [mobileRecordsOpen, setMobileRecordsOpen] = useState(false);
-  const recordsTitle = 'Survivor Records';
+  const recordsTitle = 'Your Career Stats';
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-24 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
@@ -197,7 +197,7 @@ export function MainMenu({
         <button
           onClick={() => onNav('closet')}
           aria-label="Open closet to customize survivor"
-          className="group relative order-1 min-h-[150px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
+          className="group relative order-1 min-h-[218px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
           <div className="absolute left-3 right-44 top-3 z-10 sm:right-3">
@@ -239,7 +239,9 @@ export function MainMenu({
           onClick={() => onStart('bossrush')}
           className="flex-1 rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2.5 text-center transition active:scale-95"
         >
-          <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">Boss Rush</span>
+          <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">
+            <span style={{ color: '#a855f7' }}>▶</span> Start Boss Rush
+          </span>
           <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Boss gauntlet</span>
         </button>
       </div>
@@ -305,7 +307,7 @@ function Records({
   return (
     <div className={`rounded-xl border border-neon-pink/25 bg-ink-800/70 ${compact ? 'p-3' : 'p-4'}`}>
       <h3 className={`${compact ? 'mb-2 text-xs' : 'mb-3 text-sm'} font-bold uppercase tracking-widest text-neon-pink`}>
-        Survivor Records
+        Your Career Stats
       </h3>
       <dl className={`${compact ? 'space-y-1 text-xs' : 'space-y-1.5 text-sm'}`}>
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
