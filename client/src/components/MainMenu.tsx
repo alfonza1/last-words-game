@@ -105,16 +105,16 @@ export function MainMenu({
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-5 overflow-y-auto px-4 pb-10 pt-16 sm:px-6 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-4 overflow-y-auto px-4 pb-10 pt-14 sm:gap-5 sm:px-6 sm:pt-16 lg:justify-center lg:p-6">
       <div className="text-center">
-        <h1 className="text-5xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-7xl">
+        <h1 className="text-4xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
         </h1>
-        <p className="mt-2 text-sm tracking-[0.35em] text-neon-cyan">TYPE OR BE DEVOURED</p>
+        <p className="mt-2 text-xs tracking-[0.3em] text-neon-cyan sm:text-sm sm:tracking-[0.35em]">TYPE OR BE DEVOURED</p>
       </div>
 
-      <div className="grid w-full gap-5 lg:grid-cols-[1.2fr_0.85fr_0.8fr]">
-        <div className="space-y-4">
+      <div className="grid w-full gap-4 lg:grid-cols-[1.2fr_0.85fr_0.8fr] lg:gap-5">
+        <div className="space-y-3 sm:space-y-4">
           {/* Difficulty */}
           <div>
             <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Difficulty</div>
@@ -123,6 +123,7 @@ export function MainMenu({
                 <button
                   key={d}
                   onClick={() => onDifficulty(d)}
+                  aria-pressed={difficulty === d}
                   className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
                     difficulty === d ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
@@ -145,6 +146,7 @@ export function MainMenu({
                 <button
                   key={s}
                   onClick={() => selectStyle(s)}
+                  aria-pressed={activeStyle === s}
                   className={`min-h-11 rounded-md px-3 py-2 text-sm font-bold transition-all ${
                     activeStyle === s ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
@@ -156,17 +158,20 @@ export function MainMenu({
             <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">{STYLE_META[activeStyle].blurb}</p>
           </div>
 
-          <DailyOutbreakCard challenge={dailyChallenge} best={dailyBest} onStart={onDailyStart} />
-
-          {/* Modes + nav */}
-          <div className="space-y-3">
+          {/* Start actions stay next to play style on phones. */}
+          <div className="space-y-2">
+            <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Start run</div>
             <button className="menu-btn text-base" onClick={() => onStart('survival')}>
               <span className="mr-3 inline-block w-6 text-center">▶</span>Zombie Survival
             </button>
             <button className="menu-btn text-base" onClick={() => onStart('bossrush')}>
               <span className="mr-3 inline-block w-6 text-center">💀</span>Boss Rush
             </button>
-            <div className="grid grid-cols-2 gap-3">
+          </div>
+
+          <DailyOutbreakCard challenge={dailyChallenge} best={dailyBest} onStart={onDailyStart} />
+
+          <div className="grid grid-cols-2 gap-3" aria-label="Menu navigation">
               <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
                 <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
               </button>
@@ -179,13 +184,13 @@ export function MainMenu({
               <button className="menu-btn text-base" onClick={() => onNav('settings')}>
                 <span className="mr-2 inline-block w-5 text-center">🔧</span>Settings
               </button>
-            </div>
           </div>
         </div>
 
         {/* Equipped survivor */}
         <button
           onClick={() => onNav('closet')}
+          aria-label="Open closet to customize survivor"
           className="group relative min-h-[360px] overflow-hidden rounded-2xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
@@ -279,7 +284,11 @@ function DailyOutbreakCard({
         </span>
         <span className="ml-auto text-white/40">Best {best.toLocaleString()}</span>
       </div>
-      <button className="mt-3 w-full rounded-lg border border-neon-amber/70 bg-neon-amber/10 px-4 py-2 text-sm font-black text-neon-amber transition hover:bg-neon-amber/20" onClick={onStart}>
+      <button
+        className="mt-3 w-full rounded-lg border border-neon-amber/70 bg-neon-amber/10 px-4 py-2 text-sm font-black text-neon-amber transition hover:bg-neon-amber/20"
+        onClick={onStart}
+        aria-label={`Deploy daily outbreak: ${challenge.title}`}
+      >
         Deploy Daily
       </button>
     </div>
