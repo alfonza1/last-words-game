@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+} from 'react';
 import type { CharacterLoadout, Difficulty, GameMode, GameState, PuzzleStyle, Settings, Upgrades } from '../types';
 import { GameEngine } from '../game/engine';
 import { drawGame } from '../game/render';
@@ -319,6 +327,7 @@ export function GameScreen({
               supported={speech.supported}
               disabled={!acceptingInput || paused}
               onListen={speech.startListening}
+              onStopListen={speech.stopListening}
               inputRef={inputRef}
               input={s.input}
               onInput={(value) => {
@@ -485,6 +494,7 @@ function SpeechAnswerPanel({
   supported,
   disabled,
   onListen,
+  onStopListen,
   inputRef,
   input,
   onInput,
@@ -495,6 +505,7 @@ function SpeechAnswerPanel({
   supported: boolean;
   disabled: boolean;
   onListen: () => Promise<void>;
+  onStopListen: () => Promise<void>;
   inputRef: RefObject<HTMLInputElement>;
   input: string;
   onInput: (value: string) => void;
@@ -502,6 +513,7 @@ function SpeechAnswerPanel({
 }) {
   const fallback = state === 'unsupported' || state === 'permission-denied';
   const active = state === 'listening' || state === 'processing';
+  const canUseVoice = !disabled && supported;
   const label =
     state === 'listening'
       ? 'LISTEN'
@@ -511,28 +523,57 @@ function SpeechAnswerPanel({
           ? 'HIT'
           : state === 'no-match'
             ? 'MISS'
-            : fallback
-              ? 'TYPE'
-              : 'MIC';
+          : fallback
+            ? 'TYPE'
+            : 'HOLD';
   const line =
     state === 'listening'
-      ? transcript || 'Say the answer'
+      ? transcript || 'Keep holding and say the answer'
       : state === 'matched'
         ? 'Answer locked'
         : state === 'no-match'
           ? transcript || 'Try again'
           : fallback
             ? 'Speech unavailable'
-            : transcript || 'Tap mic to answer';
+            : transcript || 'Hold button and speak the answer';
+
+  const startHolding = (event: ReactPointerEvent<HTMLButtonElement> | ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (!canUseVoice || active) return;
+    event.preventDefault();
+    if ('pointerId' in event && !event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    void onListen();
+  };
+  const stopHolding = (event: ReactPointerEvent<HTMLButtonElement> | ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (!canUseVoice) return;
+    event.preventDefault();
+    if ('pointerId' in event && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    void onStopListen();
+  };
 
   return (
     <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-neon-cyan/35 bg-black/75 p-3 shadow-[0_0_22px_rgba(0,240,255,0.2)] backdrop-blur-sm">
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => void onListen()}
-          disabled={disabled || !supported || active}
-          aria-label="Answer by voice"
+          onPointerDown={startHolding}
+          onPointerUp={stopHolding}
+          onPointerCancel={stopHolding}
+          onPointerLeave={(event) => {
+            if (!event.currentTarget.hasPointerCapture(event.pointerId)) stopHolding(event);
+          }}
+          onKeyDown={(event) => {
+            if ((event.key === ' ' || event.key === 'Enter') && !event.repeat) startHolding(event);
+          }}
+          onKeyUp={(event) => {
+            if (event.key === ' ' || event.key === 'Enter') stopHolding(event);
+          }}
+          onClick={(event) => event.preventDefault()}
+          disabled={!canUseVoice}
+          aria-label="Hold button and speak the answer"
           className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full border text-xs font-black tracking-widest transition ${
             state === 'matched'
               ? 'border-neon-green bg-neon-green/15 text-neon-green shadow-neon'
