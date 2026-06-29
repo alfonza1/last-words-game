@@ -93,22 +93,22 @@ export function Closet({
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4 pb-32">
-      <div className="flex flex-wrap items-start gap-3">
+      <div className="flex flex-wrap items-start gap-2 sm:gap-3">
         <button
           onClick={requestBack}
-          className="rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
+          className="order-2 flex-1 rounded-lg border border-white/15 bg-black/50 px-3 py-2 text-center text-sm font-bold text-white/70 hover:border-neon-green hover:text-neon-green sm:order-none sm:flex-none sm:py-1.5 sm:text-left sm:font-normal"
         >
           ← Back
         </button>
-        <div className="min-w-[210px] flex-1">
-          <h1 className="text-2xl font-black tracking-widest text-neon-cyan">{username}’s Closet</h1>
+        <div className="order-1 min-w-0 basis-full sm:order-none sm:min-w-[210px] sm:basis-auto sm:flex-1">
+          <h1 className="truncate text-xl font-black tracking-widest text-neon-cyan sm:text-2xl">{username}’s Closet</h1>
           <p className="text-[8px] uppercase tracking-[0.2em] text-white/35 sm:text-[10px] sm:tracking-[0.28em]">
             Build your last known look
           </p>
         </div>
         <button
           onClick={requestStore}
-          className="group ml-auto flex min-h-11 flex-none items-center gap-2 rounded-xl border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-5 py-2.5 text-left shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)]"
+          className="group order-3 flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-4 py-2 text-center shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)] sm:order-none sm:ml-auto sm:flex-none sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-left"
         >
           <span className="h-2 w-2 rounded-full bg-neon-pink shadow-[0_0_12px_rgba(255,43,214,0.9)] transition group-hover:bg-neon-cyan group-hover:shadow-[0_0_14px_rgba(0,240,255,0.9)]" />
           <span className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Open Shop</span>
@@ -243,7 +243,7 @@ export function Closet({
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neon-cyan/25 bg-ink-900/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(0,0,0,0.38)] backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/45 px-3 py-2">
+          <div className="hidden overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/45 px-3 py-2 sm:block">
             <div className="text-[9px] font-black uppercase tracking-[0.24em] text-white/45">Survivor Look</div>
             <div
               className={`mt-0.5 text-xs font-black uppercase tracking-widest ${

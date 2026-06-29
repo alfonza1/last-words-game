@@ -98,12 +98,12 @@ export function MainMenu({
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-10 pt-2 sm:gap-5 sm:px-6 sm:pt-6 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-24 pt-2 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
         <h1 className="text-3xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
         </h1>
-        <p className="mt-1 text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:text-sm sm:tracking-[0.35em]">
+        <p className="mt-1 hidden text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:block sm:text-sm sm:tracking-[0.35em]">
           TYPE OR BE DEVOURED
         </p>
       </div>
@@ -133,21 +133,22 @@ export function MainMenu({
 
           <div>
             <SectionLabel>Play style</SectionLabel>
-            <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-white/10 bg-ink-800/60 p-1 sm:gap-2">
+            <div
+              className={`grid gap-1.5 rounded-lg border border-white/10 bg-ink-800/60 p-1 sm:grid-cols-2 sm:gap-2 ${
+                mobileSpeechExperience ? 'grid-cols-3' : 'grid-cols-2'
+              }`}
+            >
               {styles.map((s) => (
                 <button
                   key={s}
                   onClick={() => selectStyle(s)}
                   aria-pressed={activeStyle === s}
-                  className={`min-h-10 rounded-md px-2 py-1.5 text-left text-xs font-bold transition-all sm:min-h-11 sm:px-3 sm:py-2 sm:text-sm ${
+                  className={`min-h-10 rounded-md px-1.5 py-1.5 text-center text-[11px] font-bold transition-all sm:min-h-11 sm:px-3 sm:py-2 sm:text-left sm:text-sm ${
                     activeStyle === s ? STYLE_META[s].active : 'text-white/55 hover:text-white/90'
                   }`}
                 >
-                  <span className="block text-[8px] font-black uppercase tracking-widest text-white/35">{STYLE_META[s].short}</span>
-                  <span>
-                    {STYLE_META[s].label}
-                    <span className="hidden sm:inline"> Defense</span>
-                  </span>
+                  <span className="hidden text-[8px] font-black uppercase tracking-widest text-white/35 sm:block">{STYLE_META[s].short}</span>
+                  <span>{STYLE_META[s].label} Defense</span>
                 </button>
               ))}
             </div>
@@ -181,10 +182,10 @@ export function MainMenu({
         <button
           onClick={() => onNav('closet')}
           aria-label="Open closet to customize survivor"
-          className="group relative order-1 min-h-[126px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
+          className="group relative order-1 min-h-[158px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
-          <div className="absolute left-3 right-28 top-3 z-10 sm:right-3">
+          <div className="absolute left-3 right-36 top-3 z-10 sm:right-3">
             <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-neon-cyan/70">Survivor</div>
             <div className="max-w-[min(100%,14rem)] truncate text-xl font-black tracking-wide text-neon-green drop-shadow-[0_0_12px_rgba(57,255,20,0.55)] sm:max-w-[220px]">
               {username}
@@ -193,9 +194,9 @@ export function MainMenu({
           <CharacterAvatar
             character={character}
             armed={false}
-            className="absolute bottom-[-18px] right-1 h-[150px] w-[119px] transition group-hover:scale-[1.025] sm:inset-x-0 sm:bottom-9 sm:mx-auto sm:h-[270px] sm:w-[214px] lg:h-[310px] lg:w-[245px]"
+            className="absolute bottom-[-18px] right-1 h-[186px] w-[147px] transition group-hover:scale-[1.025] sm:inset-x-0 sm:bottom-9 sm:mx-auto sm:h-[270px] sm:w-[214px] lg:h-[310px] lg:w-[245px]"
           />
-          <div className="absolute bottom-3 left-3 right-28 flex justify-start border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest sm:inset-x-4 sm:justify-end">
+          <div className="absolute bottom-3 left-3 right-36 flex justify-start border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest sm:inset-x-4 sm:justify-end">
             <span className="font-bold text-neon-green">Customize</span>
           </div>
         </button>
