@@ -92,7 +92,7 @@ export function Closet({
   };
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4 pb-32">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4 pb-32 sm:pb-4">
       <div className="flex flex-wrap items-start gap-2 sm:gap-3">
         <button
           onClick={requestBack}
@@ -123,6 +123,34 @@ export function Closet({
           <div className="absolute bottom-6 h-16 w-52 rounded-full bg-neon-cyan/10 blur-2xl" />
           <CharacterAvatar character={draft} armed={false} className="relative h-[275px] w-[220px] max-w-full" />
         </div>
+
+          {/* Desktop: Survivor Look status + equip in the left column (yesterday's layout). */}
+          <div className="relative hidden overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/55 p-2.5 sm:block">
+            <div className="absolute inset-y-0 left-0 w-1 bg-neon-cyan shadow-[0_0_14px_rgba(0,240,255,0.8)]" />
+            <div className="flex items-center justify-between gap-3 pl-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">Survivor Look</span>
+              <span
+                className={`rounded border px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
+                  hasUnsavedChanges
+                    ? 'border-neon-amber/50 bg-neon-amber/10 text-neon-amber'
+                    : 'border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan'
+                }`}
+              >
+                {hasUnsavedChanges ? 'Unsaved' : 'Equipped'}
+              </span>
+            </div>
+            <button
+              onClick={save}
+              disabled={!dirty || saved || saving}
+              className={`mt-2 w-full rounded-lg border px-4 py-1.5 text-xs font-black tracking-wider ${
+                hasUnsavedChanges
+                  ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-neon'
+                  : 'border-neon-cyan/25 bg-neon-cyan/5 text-neon-cyan/60'
+              }`}
+            >
+              {saving ? 'EQUIPPING…' : 'EQUIP LOOK'}
+            </button>
+          </div>
 
       </section>
 
@@ -241,24 +269,9 @@ export function Closet({
         </section>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neon-cyan/25 bg-ink-900/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(0,0,0,0.38)] backdrop-blur-md">
+      {/* Mobile-only equip bar. Desktop uses the Survivor Look card in the left column (above). */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neon-cyan/25 bg-ink-900/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(0,0,0,0.38)] backdrop-blur-md sm:hidden">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="hidden overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/45 px-3 py-2 sm:block">
-            <div className="text-[9px] font-black uppercase tracking-[0.24em] text-white/45">Survivor Look</div>
-            <div
-              className={`mt-0.5 text-xs font-black uppercase tracking-widest ${
-                saving
-                  ? 'text-neon-amber'
-                  : hasUnsavedChanges
-                    ? 'text-neon-amber'
-                    : saved
-                      ? 'text-neon-green'
-                      : 'text-neon-cyan'
-              }`}
-            >
-              {saving ? 'Equipping' : hasUnsavedChanges ? 'Unsaved changes' : saved ? 'Look equipped' : 'Equipped'}
-            </div>
-          </div>
           <button
             onClick={save}
             disabled={!dirty || saved || saving}
