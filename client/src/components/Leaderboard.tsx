@@ -43,7 +43,7 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
         ← Back
       </button>
 
-      <div className="mt-6 text-center">
+      <div className="mt-14 text-center sm:mt-6">
         <h1 className="text-4xl font-black tracking-widest text-neon-green drop-shadow-[0_0_20px_rgba(57,255,20,0.55)]">
           LEADERBOARD
         </h1>
