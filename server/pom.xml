@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.5</version>
+    <version>4.1.0</version>
     <relativePath/>
   </parent>
 
@@ -48,7 +48,7 @@
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>nimbus-jose-jwt</artifactId>
-      <version>9.40</version>
+      <version>10.9.1</version>
     </dependency>
 
     <!-- Monitoring: Sentry (errors + alerts). Inert until SENTRY_DSN is set.
@@ -57,12 +57,12 @@
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
-      <version>7.14.0</version>
+      <version>8.46.0</version>
     </dependency>
     <dependency>
       <groupId>io.sentry</groupId>
       <artifactId>sentry-logback</artifactId>
-      <version>7.14.0</version>
+      <version>8.46.0</version>
     </dependency>
 
     <dependency>
