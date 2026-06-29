@@ -20,35 +20,34 @@ interface Props {
   mobileSpeechExperience?: boolean;
 }
 
-/** A play style for the menu: plain typing, or one of the puzzle styles. */
 type Style = 'typing' | PuzzleStyle;
 const STYLE_ORDER: Style[] = ['typing', 'math', 'trivia', 'riddles'];
 
-const STYLE_META: Record<Style, { label: string; icon: string; active: string; blurb: string; tagWord: string }> = {
+const STYLE_META: Record<Style, { label: string; short: string; active: string; blurb: string; tagWord: string }> = {
   typing: {
     label: 'Typing',
-    icon: '⌨',
+    short: 'TYPE',
     active: 'bg-neon-green/15 text-neon-green shadow-neon',
     blurb: 'Each completed word fires one shot. High WPM earns extra points and coins.',
     tagWord: 'WORD',
   },
   riddles: {
     label: 'Riddle',
-    icon: '🧩',
+    short: 'CLUE',
     active: 'bg-neon-pink/15 text-neon-pink shadow-neon',
     blurb: 'Solve short riddles to fire a multi-kill volley.',
     tagWord: 'RIDDLE',
   },
   math: {
     label: 'Math',
-    icon: '➗',
+    short: 'MATH',
     active: 'bg-neon-cyan/15 text-neon-cyan shadow-neon',
     blurb: 'Solve math problems to fire a multi-kill volley.',
     tagWord: 'PROBLEM',
   },
   trivia: {
     label: 'Trivia',
-    icon: '❓',
+    short: 'QUIZ',
     active: 'bg-neon-amber/15 text-neon-amber shadow-neon',
     blurb: 'Answer trivia questions to fire a multi-kill volley.',
     tagWord: 'QUESTION',
@@ -59,23 +58,23 @@ const DIFFS: Difficulty[] = ['easy', 'normal', 'nightmare'];
 const DIFF_BLURB: Record<Style, Record<Difficulty, string>> = {
   typing: {
     easy: 'Short words with a relaxed horde.',
-    normal: 'Words and numbers against the full outbreak. Earn 1.25× coins and score.',
-    nightmare: 'Exact-case words, numbers, and symbols. Earn 2× coins and score.',
+    normal: 'Words and numbers against the full outbreak. Earn 1.25x coins and score.',
+    nightmare: 'Exact-case words, numbers, and symbols. Earn 2x coins and score.',
   },
   riddles: {
     easy: 'Straightforward clues with extra time to solve.',
-    normal: 'Sharper clues and a faster approaching horde. Earn 1.25× coins and score.',
-    nightmare: 'The hardest clues under maximum pressure. Earn 2× coins and score.',
+    normal: 'Sharper clues and a faster approaching horde. Earn 1.25x coins and score.',
+    nightmare: 'The hardest clues under maximum pressure. Earn 2x coins and score.',
   },
   math: {
     easy: 'Quick addition and subtraction, relaxed horde.',
-    normal: 'Multiplication and bigger sums against the outbreak. Earn 1.25× coins and score.',
-    nightmare: 'Multi-step problems under max pressure. Earn 2× coins and score.',
+    normal: 'Multiplication and bigger sums against the outbreak. Earn 1.25x coins and score.',
+    nightmare: 'Multi-step problems under max pressure. Earn 2x coins and score.',
   },
   trivia: {
     easy: 'Everyday questions with time to think.',
-    normal: 'Trickier questions and a faster approaching horde. Earn 1.25× coins and score.',
-    nightmare: 'Tough questions under maximum pressure. Earn 2× coins and score.',
+    normal: 'Trickier questions and a faster approaching horde. Earn 1.25x coins and score.',
+    nightmare: 'Tough questions under maximum pressure. Earn 2x coins and score.',
   },
 };
 
@@ -97,27 +96,29 @@ export function MainMenu({
   const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
+
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-4 overflow-y-auto px-4 pb-10 pt-14 sm:gap-5 sm:px-6 sm:pt-16 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-10 pt-2 sm:gap-5 sm:px-6 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
-        <h1 className="text-4xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
+        <h1 className="text-3xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
         </h1>
-        <p className="mt-2 text-xs tracking-[0.3em] text-neon-cyan sm:text-sm sm:tracking-[0.35em]">TYPE OR BE DEVOURED</p>
+        <p className="mt-1 text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:text-sm sm:tracking-[0.35em]">
+          TYPE OR BE DEVOURED
+        </p>
       </div>
 
-      <div className="grid w-full gap-4 lg:grid-cols-[1.2fr_0.85fr_0.8fr] lg:gap-5">
-        <div className="order-2 space-y-3 sm:space-y-4 lg:order-none">
-          {/* Difficulty */}
+      <div className="grid w-full gap-2 sm:gap-4 lg:grid-cols-[1.2fr_0.85fr_0.8fr] lg:gap-5">
+        <div className="order-2 space-y-2 sm:space-y-4 lg:order-none">
           <div>
-            <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Difficulty</div>
+            <SectionLabel>Difficulty</SectionLabel>
             <div className="flex gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1">
               {DIFFS.map((d) => (
                 <button
                   key={d}
                   onClick={() => onDifficulty(d)}
                   aria-pressed={difficulty === d}
-                  className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
+                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-bold transition-all sm:px-3 sm:py-2 sm:text-sm ${
                     difficulty === d ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
@@ -125,67 +126,65 @@ export function MainMenu({
                 </button>
               ))}
             </div>
-            {/* Reserve 2 lines so switching difficulty never shifts the buttons. */}
-            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">
+            <p className="mt-1.5 hidden min-h-[2.25rem] text-xs leading-snug text-white/40 sm:block">
               {DIFF_BLURB[activeStyle][difficulty]}
             </p>
           </div>
 
-          {/* Play style: type words, or solve a puzzle for a volley */}
           <div>
-            <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Play style</div>
-            <div className="grid grid-cols-1 gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1 sm:grid-cols-2">
+            <SectionLabel>Play style</SectionLabel>
+            <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-white/10 bg-ink-800/60 p-1 sm:gap-2">
               {styles.map((s) => (
                 <button
                   key={s}
                   onClick={() => selectStyle(s)}
                   aria-pressed={activeStyle === s}
-                  className={`min-h-11 rounded-md px-3 py-2 text-sm font-bold transition-all ${
-                    activeStyle === s ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
+                  className={`min-h-10 rounded-md px-2 py-1.5 text-left text-xs font-bold transition-all sm:min-h-11 sm:px-3 sm:py-2 sm:text-sm ${
+                    activeStyle === s ? STYLE_META[s].active : 'text-white/55 hover:text-white/90'
                   }`}
                 >
-                  {STYLE_META[s].icon} {STYLE_META[s].label} Defense
+                  <span className="block text-[8px] font-black uppercase tracking-widest text-white/35">{STYLE_META[s].short}</span>
+                  <span>
+                    {STYLE_META[s].label}
+                    <span className="hidden sm:inline"> Defense</span>
+                  </span>
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">{STYLE_META[activeStyle].blurb}</p>
+            <p className="mt-1.5 hidden min-h-[2.25rem] text-xs leading-snug text-white/40 sm:block">{STYLE_META[activeStyle].blurb}</p>
           </div>
 
-          {/* Start actions stay next to play style on phones. */}
-          <div className="space-y-2">
-            <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Start run</div>
-            <button className="menu-btn text-base" onClick={() => onStart('survival')}>
-              <span className="mr-3 inline-block w-6 text-center">▶</span>Zombie Survival
-            </button>
-            <button className="menu-btn text-base" onClick={() => onStart('bossrush')}>
-              <span className="mr-3 inline-block w-6 text-center">💀</span>Boss Rush
-            </button>
+          <div>
+            <SectionLabel>Deploy</SectionLabel>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
+              <DeployButton tone="green" title="Start Survival" detail="Endless waves" onClick={() => onStart('survival')} />
+              <DeployButton tone="pink" title="Start Boss Rush" detail="Boss gauntlet" onClick={() => onStart('bossrush')} />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3" aria-label="Menu navigation">
-              <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
-                <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
-              </button>
-              <button className="menu-btn text-base" onClick={() => onNav('leaderboard')}>
-                <span className="mr-2 inline-block w-5 text-center">🏆</span>Leaderboard
-              </button>
-              <button className="menu-btn text-base" onClick={() => onNav('howto')}>
-                <span className="mr-2 inline-block w-5 text-center">❓</span>How to Play
-              </button>
-              <button className="menu-btn text-base" onClick={() => onNav('settings')}>
-                <span className="mr-2 inline-block w-5 text-center">🔧</span>Settings
-              </button>
+          <div className="grid grid-cols-2 gap-2 sm:gap-3" aria-label="Menu navigation">
+            <button className="menu-btn text-sm sm:text-base" onClick={() => onNav('upgrades')}>
+              Store
+            </button>
+            <button className="menu-btn text-sm sm:text-base" onClick={() => onNav('leaderboard')}>
+              Leaderboard
+            </button>
+            <button className="menu-btn text-sm sm:text-base" onClick={() => onNav('howto')}>
+              How to Play
+            </button>
+            <button className="menu-btn text-sm sm:text-base" onClick={() => onNav('settings')}>
+              Settings
+            </button>
           </div>
         </div>
 
-        {/* Equipped survivor */}
         <button
           onClick={() => onNav('closet')}
           aria-label="Open closet to customize survivor"
-          className="group relative order-1 min-h-[260px] overflow-hidden rounded-2xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] lg:order-none lg:min-h-[360px]"
+          className="group relative order-1 min-h-[126px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
-          <div className="absolute left-3 right-3 top-3 z-10 sm:right-auto">
+          <div className="absolute left-3 right-28 top-3 z-10 sm:right-3">
             <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-neon-cyan/70">Survivor</div>
             <div className="max-w-[min(100%,14rem)] truncate text-xl font-black tracking-wide text-neon-green drop-shadow-[0_0_12px_rgba(57,255,20,0.55)] sm:max-w-[220px]">
               {username}
@@ -194,22 +193,43 @@ export function MainMenu({
           <CharacterAvatar
             character={character}
             armed={false}
-            className="absolute inset-x-0 bottom-9 mx-auto h-[230px] w-[182px] transition group-hover:scale-[1.025] sm:h-[270px] sm:w-[214px] lg:h-[310px] lg:w-[245px]"
+            className="absolute bottom-[-18px] right-1 h-[150px] w-[119px] transition group-hover:scale-[1.025] sm:inset-x-0 sm:bottom-9 sm:mx-auto sm:h-[270px] sm:w-[214px] lg:h-[310px] lg:w-[245px]"
           />
-          <div className="absolute inset-x-4 bottom-3 flex justify-end border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest">
-            <span className="font-bold text-neon-green">Customize →</span>
+          <div className="absolute bottom-3 left-3 right-28 flex justify-start border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest sm:inset-x-4 sm:justify-end">
+            <span className="font-bold text-neon-green">Customize</span>
           </div>
         </button>
 
-        {/* Records */}
         <div className="order-3 lg:order-none">
           <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} />
         </div>
       </div>
 
-      <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT · OUTLAST THE DEAD</p>
+      <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT | OUTLAST THE DEAD</p>
       <AdBanner />
     </div>
+  );
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return <div className="mb-1 text-[10px] uppercase tracking-widest text-white/40 sm:mb-1.5 sm:text-[11px]">{children}</div>;
+}
+
+function DeployButton({ title, detail, tone, onClick }: { title: string; detail: string; tone: 'green' | 'pink'; onClick: () => void }) {
+  const toneClass =
+    tone === 'green'
+      ? 'border-neon-green/50 bg-neon-green/10 hover:border-neon-green hover:bg-neon-green/15 hover:shadow-neon focus:ring-neon-green/60'
+      : 'border-neon-pink/50 bg-neon-pink/10 hover:border-neon-pink hover:bg-neon-pink/15 hover:shadow-[0_0_14px_rgba(255,43,214,0.45)] focus:ring-neon-pink/60';
+  const titleClass = tone === 'green' ? 'text-neon-green' : 'text-neon-pink';
+
+  return (
+    <button
+      className={`rounded-lg border px-3 py-2 text-left transition focus:outline-none focus:ring-2 sm:px-6 sm:py-3 ${toneClass}`}
+      onClick={onClick}
+    >
+      <span className={`block text-sm font-black uppercase tracking-wide sm:text-base ${titleClass}`}>{title}</span>
+      <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-widest text-white/40 sm:text-xs">{detail}</span>
+    </button>
   );
 }
 
@@ -223,7 +243,7 @@ function Records({
   riddleMode: boolean;
 }) {
   const selected = riddleMode ? riddleStats : stats;
-  const bestMode = STYLE_META[(riddleStats.bestMode as Style) || 'riddles']?.label ?? '—';
+  const bestMode = STYLE_META[(riddleStats.bestMode as Style) || 'riddles']?.label ?? '-';
   return (
     <div className="rounded-xl border border-neon-pink/25 bg-ink-800/70 p-4">
       <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-neon-pink">
@@ -232,11 +252,7 @@ function Records({
       <dl className="space-y-1.5 text-sm">
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
         <Row k="Longest Survival" v={formatTime(selected.longestSurvivalMs)} />
-        {riddleMode ? (
-          <Row k="Best Mode" v={riddleStats.bestMode ? bestMode : '—'} />
-        ) : (
-          <Row k="Highest WPM" v={selected.highestWpm} />
-        )}
+        {riddleMode ? <Row k="Best Mode" v={riddleStats.bestMode ? bestMode : '-'} /> : <Row k="Highest WPM" v={selected.highestWpm} />}
         <Row k="Total Kills" v={selected.totalKills} />
         <Row k="Bosses Defeated" v={selected.bossesDefeated} />
         <Row k="Longest Streak" v={selected.longestStreak} />
