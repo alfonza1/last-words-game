@@ -660,7 +660,12 @@ export default function App() {
           />
         );
       case 'howto':
-        return <HowToPlay onBack={() => setScreen('menu')} />;
+        return (
+          <HowToPlay
+            onBack={() => setScreen('menu')}
+            mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+          />
+        );
       case 'settings':
         return (
           <SettingsPanel

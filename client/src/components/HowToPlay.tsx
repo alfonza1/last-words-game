@@ -2,6 +2,8 @@ import { useState, type ReactNode } from 'react';
 
 interface Props {
   onBack: () => void;
+  /** Mobile speech experience has no typing — controls/consumables use taps & voice. */
+  mobileSpeechExperience?: boolean;
 }
 
 type GuideSection = 'defense' | 'rules' | 'zombies' | 'powerups';
@@ -76,9 +78,12 @@ function InfoList({ items, accent }: { items: [string, string][]; accent: string
   );
 }
 
-export function HowToPlay({ onBack }: Props) {
+export function HowToPlay({ onBack, mobileSpeechExperience = false }: Props) {
   const [mobileSection, setMobileSection] = useState<GuideSection>('defense');
   const visible = (section: GuideSection) => (mobileSection === section ? 'block' : 'hidden');
+  // On the mobile speech experience there's no typing mode, so drop it from the
+  // list of defenses you can pick.
+  const defense = mobileSpeechExperience ? DEFENSE.filter(([title]) => title !== 'Typing Defense') : DEFENSE;
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-hidden p-4">
@@ -122,7 +127,7 @@ export function HowToPlay({ onBack }: Props) {
           color="#39ff14"
           className={`${visible('defense')} xl:block`}
         >
-          <InfoList items={DEFENSE} accent="#39ff14" />
+          <InfoList items={defense} accent="#39ff14" />
         </Card>
 
         <Card
@@ -145,22 +150,38 @@ export function HowToPlay({ onBack }: Props) {
           color="#00f0ff"
           className={`${visible('rules')} xl:block`}
         >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-green">Typing Defense</h3>
-              <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
-                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> — fire at the nearest zombie.</span></li>
-                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — pause (the horde freezes).</span></li>
-              </ul>
+          {mobileSpeechExperience ? (
+            <div className="space-y-4">
+              <div>
+                <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-cyan">Voice & Touch</h3>
+                <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
+                  <li><span className="font-bold text-neon-cyan">Hold</span><span className="text-white/60"> the answer button and say your answer; release to fire a volley.</span></li>
+                  <li><span className="font-bold text-neon-cyan">Tap</span><span className="text-white/60"> a powerup to spend a charge.</span></li>
+                  <li><span className="text-neon-green">⏸</span><span className="text-white/60"> — opens the menu, but the horde keeps advancing.</span></li>
+                </ul>
+              </div>
+              <p className="text-[11px] leading-snug text-white/45">
+                No microphone? A text box appears so you can tap in your answer instead.
+              </p>
             </div>
-            <div>
-              <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-pink">Riddle · Math · Trivia</h3>
-              <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
-                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> or </span><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">ENTER</kbd><span className="text-white/60"> — submit your answer (fires a volley).</span></li>
-                <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — opens the menu, but the horde keeps advancing.</span></li>
-              </ul>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-green">Typing Defense</h3>
+                <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
+                  <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> — fire at the nearest zombie.</span></li>
+                  <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — pause (the horde freezes).</span></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="mb-2 text-xs font-black uppercase tracking-widest text-neon-pink">Riddle · Math · Trivia</h3>
+                <ul className="space-y-2 text-[13px] leading-snug sm:text-sm">
+                  <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">SPACE</kbd><span className="text-white/60"> or </span><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">ENTER</kbd><span className="text-white/60"> — submit your answer (fires a volley).</span></li>
+                  <li><kbd className="rounded bg-black/60 px-1.5 py-0.5 text-neon-green">Esc</kbd><span className="text-white/60"> / </span><span className="text-neon-green">⏸</span><span className="text-white/60"> — opens the menu, but the horde keeps advancing.</span></li>
+                </ul>
+              </div>
             </div>
-          </div>
+          )}
         </Card>
 
         <Card
@@ -184,12 +205,16 @@ export function HowToPlay({ onBack }: Props) {
             <div>
               <h3 className="mb-1 text-xs font-black uppercase tracking-widest text-neon-amber">Consumables</h3>
               <p className="mb-2 text-[11px] leading-snug text-white/45">
-                Bought in the Store. In any mode, type the command to spend one charge.
+                {mobileSpeechExperience
+                  ? 'Bought in the Store. Tap a powerup during a run to spend one charge.'
+                  : 'Bought in the Store. In any mode, type the command to spend one charge.'}
               </p>
               <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
                 {CONSUMABLES.map(([cmd, description]) => (
                   <div key={cmd} className="text-[13px] leading-snug sm:text-sm">
-                    <span className="font-bold text-neon-green">type “{cmd}”</span>
+                    <span className="font-bold text-neon-green">
+                      {mobileSpeechExperience ? cmd.charAt(0).toUpperCase() + cmd.slice(1) : `type “${cmd}”`}
+                    </span>
                     <span className="text-white/30"> — </span>
                     <span className="text-white/60">{description}</span>
                   </div>

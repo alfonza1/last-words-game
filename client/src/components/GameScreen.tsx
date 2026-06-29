@@ -347,7 +347,13 @@ export function GameScreen({
       {/* Input + powerups, at the bottom. */}
       {acceptingInput && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <PowerupBar consumables={s.powerups.consumables} />
+          <PowerupBar
+            consumables={s.powerups.consumables}
+            pressable={mobileSpeechExperience}
+            onActivate={(key) => {
+              if (engine.activatePowerup(key)) setTick((t) => t + 1);
+            }}
+          />
           {mobileSpeechSolver ? (
             <SpeechAnswerPanel
               state={speech.state}
@@ -682,8 +688,51 @@ function EventTicker({ events }: { events: GameState['events'] }) {
   );
 }
 
-/** Bottom strip showing owned consumable powerups + the word to type. */
-function PowerupBar({ consumables }: { consumables: { grenade: number; freeze: number; medkit: number } }) {
+/**
+ * Bottom strip showing owned consumable powerups. On desktop typing players see
+ * the command word to type; on mobile (no typing) each powerup is a tappable
+ * button that spends a charge directly.
+ */
+function PowerupBar({
+  consumables,
+  pressable = false,
+  onActivate,
+}: {
+  consumables: { grenade: number; freeze: number; medkit: number };
+  pressable?: boolean;
+  onActivate?: (key: string) => void;
+}) {
+  if (pressable) {
+    return (
+      <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2">
+        {POWERUP_DEFS.map((def) => {
+          const count = (consumables as unknown as Record<string, number>)[def.key] ?? 0;
+          const owned = count > 0;
+          return (
+            <button
+              key={def.key}
+              type="button"
+              disabled={!owned}
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={() => owned && onActivate?.(def.key)}
+              title={def.description}
+              aria-label={`Use ${def.name}, ${count} left`}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-bold transition active:scale-95 ${
+                owned
+                  ? 'border-neon-cyan bg-neon-cyan/10 text-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.35)] hover:bg-neon-cyan/20'
+                  : 'border-white/10 bg-black/40 text-white/30'
+              }`}
+            >
+              <span className="text-base">{def.icon}</span>
+              <span>{def.name}</span>
+              <span className={owned ? 'text-white/70' : 'text-white/25'}>×{count}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="flex max-w-full flex-wrap items-center justify-center gap-2 text-xs">
       <span className="uppercase tracking-widest text-white/35">Powerups</span>

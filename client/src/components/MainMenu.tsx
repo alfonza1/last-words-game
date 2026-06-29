@@ -24,28 +24,32 @@ interface Props {
 type Style = 'typing' | PuzzleStyle;
 const STYLE_ORDER: Style[] = ['typing', 'math', 'trivia', 'riddles'];
 
-const STYLE_META: Record<Style, { label: string; short: string; blurb: string; tagWord: string }> = {
+const STYLE_META: Record<Style, { label: string; short: string; emoji: string; blurb: string; tagWord: string }> = {
   typing: {
     label: 'Typing',
     short: 'TYPE',
+    emoji: '⌨',
     blurb: 'Each completed word fires one shot. High WPM earns extra points and coins.',
     tagWord: 'WORD',
   },
   riddles: {
     label: 'Riddle',
     short: 'CLUE',
+    emoji: '🧩',
     blurb: 'Solve short riddles to fire a multi-kill volley.',
     tagWord: 'RIDDLE',
   },
   math: {
     label: 'Math',
     short: 'MATH',
+    emoji: '➗',
     blurb: 'Solve math problems to fire a multi-kill volley.',
     tagWord: 'PROBLEM',
   },
   trivia: {
     label: 'Trivia',
     short: 'QUIZ',
+    emoji: '🧠',
     blurb: 'Answer trivia questions to fire a multi-kill volley.',
     tagWord: 'QUESTION',
   },
@@ -94,7 +98,7 @@ export function MainMenu({
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
   const [mobileRecordsOpen, setMobileRecordsOpen] = useState(false);
-  const recordsTitle = activeStyle !== 'typing' ? 'Solver Records' : 'Typing Records';
+  const recordsTitle = 'Survivor Records';
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-16 pt-2 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
@@ -125,7 +129,7 @@ export function MainMenu({
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 hidden min-h-[2.25rem] text-xs leading-snug text-white/40 sm:block">
+            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">
               {DIFF_BLURB[activeStyle][difficulty]}
             </p>
           </div>
@@ -147,11 +151,14 @@ export function MainMenu({
                   }`}
                 >
                   <span className="hidden text-[8px] font-black uppercase tracking-widest text-white/35 sm:block">{STYLE_META[s].short}</span>
-                  <span>{STYLE_META[s].label} Defense</span>
+                  <span>
+                    <span className="mr-1">{STYLE_META[s].emoji}</span>
+                    {STYLE_META[s].label} Defense
+                  </span>
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 hidden min-h-[2.25rem] text-xs leading-snug text-white/40 sm:block">{STYLE_META[activeStyle].blurb}</p>
+            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">{STYLE_META[activeStyle].blurb}</p>
           </div>
 
           <div>
@@ -164,23 +171,23 @@ export function MainMenu({
 
           <button
             onClick={() => setMobileRecordsOpen(true)}
-            className="flex w-full items-center justify-between rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-black uppercase tracking-wider text-neon-green transition hover:border-neon-green hover:bg-ink-600 sm:hidden"
+            className="flex w-full items-center justify-between rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-black uppercase tracking-wider text-neon-green transition hover:border-neon-green hover:bg-ink-600 sm:hidden"
           >
             <span>{recordsTitle}</span>
             <span className="text-white/45">View</span>
           </button>
 
           <div className="grid grid-cols-2 gap-2 sm:gap-3" aria-label="Menu navigation">
-            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('upgrades')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('upgrades')}>
               Store
             </button>
-            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('leaderboard')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('leaderboard')}>
               Leaderboard
             </button>
-            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('howto')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('howto')}>
               How to Play
             </button>
-            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2 text-left text-xs font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('settings')}>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60 sm:px-6 sm:py-3 sm:text-base" onClick={() => onNav('settings')}>
               Settings
             </button>
           </div>
@@ -279,7 +286,7 @@ function Records({
   return (
     <div className={`rounded-xl border border-neon-pink/25 bg-ink-800/70 ${compact ? 'p-3' : 'p-4'}`}>
       <h3 className={`${compact ? 'mb-2 text-xs' : 'mb-3 text-sm'} font-bold uppercase tracking-widest text-neon-pink`}>
-        {riddleMode ? 'Solver' : 'Typing'} Records
+        Survivor Records
       </h3>
       <dl className={`${compact ? 'space-y-1 text-xs' : 'space-y-1.5 text-sm'}`}>
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
