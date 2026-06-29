@@ -126,7 +126,7 @@ export function MainMenu({
   const recordsTitle = 'Career Stats';
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-24 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-6 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
         <h1 className="text-2xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
@@ -189,7 +189,7 @@ export function MainMenu({
             <p className="mt-1 min-h-0 text-[11px] leading-snug text-white/40 sm:mt-1.5 sm:min-h-[2.25rem] sm:text-xs">{STYLE_META[activeStyle].blurb}</p>
           </div>
 
-          {/* Desktop deploy (in flow). On mobile these live in a fixed bottom bar. */}
+          {/* Desktop deploy (in flow). On mobile these render below, above Career Stats. */}
           <div className="hidden sm:block">
             <SectionLabel>Deploy</SectionLabel>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
@@ -197,6 +197,27 @@ export function MainMenu({
               <DeployButton tone="pink" title="Start Boss Rush" detail="Boss gauntlet" onClick={() => onStart('bossrush')} />
             </div>
           </div>
+
+          {/* Mobile deploy — in flow, above Career Stats, no "Deploy" label. */}
+          <div className="grid grid-cols-2 gap-2 sm:hidden">
+            <button
+              onClick={() => onStart('survival')}
+              className="rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2.5 text-center transition active:scale-95"
+            >
+              <span className="block text-sm font-black uppercase tracking-wide text-neon-green">▶ Start Survival</span>
+              <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Endless waves</span>
+            </button>
+            <button
+              onClick={() => onStart('bossrush')}
+              className="rounded-lg border border-[#a855f7]/60 bg-[#a855f7]/10 px-3 py-2.5 text-center transition active:scale-95"
+            >
+              <span className="block text-sm font-black uppercase tracking-wide" style={{ color: '#a855f7' }}>▶ Start Boss Rush</span>
+              <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Boss gauntlet</span>
+            </button>
+          </div>
+
+          {/* Divider keeps Deploy visually separate from the menu buttons below. */}
+          <div className="h-px bg-white/10 sm:hidden" />
 
           <button
             onClick={() => setMobileRecordsOpen(true)}
@@ -252,26 +273,6 @@ export function MainMenu({
       <p className="hidden text-xs tracking-[0.25em] text-white/25 sm:block">SURVIVE THE NIGHT | OUTLAST THE DEAD</p>
       <div className="hidden w-full sm:block">
         <AdBanner />
-      </div>
-
-      {/* Mobile deploy — fixed at the bottom, no "Deploy" label, always reachable. */}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-white/10 bg-ink-900/95 px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2.5 backdrop-blur sm:hidden">
-        <button
-          onClick={() => onStart('survival')}
-          className="flex-1 rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2.5 text-center transition active:scale-95"
-        >
-          <span className="block text-sm font-black uppercase tracking-wide text-neon-green">▶ Start Survival</span>
-          <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Endless waves</span>
-        </button>
-        <button
-          onClick={() => onStart('bossrush')}
-          className="flex-1 rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2.5 text-center transition active:scale-95"
-        >
-          <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">
-            <span style={{ color: '#a855f7' }}>▶</span> Start Boss Rush
-          </span>
-          <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Boss gauntlet</span>
-        </button>
       </div>
 
       {mobileRecordsOpen && (
