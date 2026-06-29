@@ -56,26 +56,51 @@ const STYLE_META: Record<Style, { label: string; short: string; emoji: string; b
 };
 
 const DIFFS: Difficulty[] = ['easy', 'normal', 'nightmare'];
-const DIFF_BLURB: Record<Style, Record<Difficulty, string>> = {
+// `short` keeps each blurb to one line on mobile; `long` is the fuller desktop copy.
+const DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long: string }>> = {
   typing: {
-    easy: 'Short words with a relaxed horde.',
-    normal: 'Words + numbers. Earn 1.25x coins and score.',
-    nightmare: 'Exact case + symbols. Earn 2x coins and score.',
+    easy: { short: 'Short words with a relaxed horde.', long: 'Short words with a relaxed horde.' },
+    normal: {
+      short: 'Words + numbers. Earn 1.25x coins and score.',
+      long: 'Words and numbers against the full outbreak. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Exact case + symbols. Earn 2x coins and score.',
+      long: 'Exact-case words, numbers, and symbols. Earn 2x coins and score.',
+    },
   },
   riddles: {
-    easy: 'Straightforward clues with extra time to solve.',
-    normal: 'Sharper clues. Earn 1.25x coins and score.',
-    nightmare: 'Hardest clues. Earn 2x coins and score.',
+    easy: { short: 'Straightforward clues with extra time to solve.', long: 'Straightforward clues with extra time to solve.' },
+    normal: {
+      short: 'Sharper clues. Earn 1.25x coins and score.',
+      long: 'Sharper clues and a faster approaching horde. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Hardest clues. Earn 2x coins and score.',
+      long: 'The hardest clues under maximum pressure. Earn 2x coins and score.',
+    },
   },
   math: {
-    easy: 'Quick addition and subtraction, relaxed horde.',
-    normal: 'Bigger sums. Earn 1.25x coins and score.',
-    nightmare: 'Multi-step problems. Earn 2x coins and score.',
+    easy: { short: 'Quick addition and subtraction, relaxed horde.', long: 'Quick addition and subtraction, relaxed horde.' },
+    normal: {
+      short: 'Bigger sums. Earn 1.25x coins and score.',
+      long: 'Multiplication and bigger sums against the outbreak. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Multi-step problems. Earn 2x coins and score.',
+      long: 'Multi-step problems under max pressure. Earn 2x coins and score.',
+    },
   },
   trivia: {
-    easy: 'Everyday questions with time to think.',
-    normal: 'Trickier questions. Earn 1.25x coins and score.',
-    nightmare: 'Tough questions. Earn 2x coins and score.',
+    easy: { short: 'Everyday questions with time to think.', long: 'Everyday questions with time to think.' },
+    normal: {
+      short: 'Trickier questions. Earn 1.25x coins and score.',
+      long: 'Trickier questions and a faster approaching horde. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Tough questions. Earn 2x coins and score.',
+      long: 'Tough questions under maximum pressure. Earn 2x coins and score.',
+    },
   },
 };
 
@@ -98,7 +123,7 @@ export function MainMenu({
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
   const [mobileRecordsOpen, setMobileRecordsOpen] = useState(false);
-  const recordsTitle = 'Your Career Stats';
+  const recordsTitle = 'Career Stats';
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-24 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
@@ -129,8 +154,11 @@ export function MainMenu({
                 </button>
               ))}
             </div>
-            <p className="mt-1 min-h-0 text-[11px] leading-snug text-white/40 sm:mt-1.5 sm:min-h-[2.25rem] sm:text-xs">
-              {DIFF_BLURB[activeStyle][difficulty]}
+            <p className="mt-1 text-[11px] leading-snug text-white/40 sm:hidden">
+              {DIFF_BLURB[activeStyle][difficulty].short}
+            </p>
+            <p className="mt-1.5 hidden min-h-[2.25rem] text-xs leading-snug text-white/40 sm:block">
+              {DIFF_BLURB[activeStyle][difficulty].long}
             </p>
           </div>
 
@@ -307,7 +335,7 @@ function Records({
   return (
     <div className={`rounded-xl border border-neon-pink/25 bg-ink-800/70 ${compact ? 'p-3' : 'p-4'}`}>
       <h3 className={`${compact ? 'mb-2 text-xs' : 'mb-3 text-sm'} font-bold uppercase tracking-widest text-neon-pink`}>
-        Your Career Stats
+        Career Stats
       </h3>
       <dl className={`${compact ? 'space-y-1 text-xs' : 'space-y-1.5 text-sm'}`}>
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
