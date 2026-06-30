@@ -1,4 +1,4 @@
-# Dead Keys Cost-Efficiency Audit
+# Last Words Cost-Efficiency Audit
 
 **Reviewed:** June 25, 2026
 
@@ -8,7 +8,7 @@
 
 ## Executive summary
 
-Dead Keys is already inexpensive at its current scale:
+Last Words is already inexpensive at its current scale:
 
 - Cloudflare Pages serves the client as static files.
 - The client does not poll the API while a player sits idle.

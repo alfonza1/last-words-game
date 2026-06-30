@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧟 Dead Keys
+# 🧟 Last Words
 
 ### An arcade typing-survival game with a production-grade, scale-to-zero cloud backend.
 
