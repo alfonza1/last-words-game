@@ -213,14 +213,14 @@ export function MainMenu({
           <div className="grid grid-cols-2 gap-2 sm:hidden">
             <button
               onClick={() => onStart('survival')}
-              className="rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2.5 text-center transition active:scale-95"
+              className="rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2 text-center transition active:scale-95"
             >
               <span className="block text-sm font-black uppercase tracking-wide text-neon-green">▶ Start Survival</span>
               <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Endless waves</span>
             </button>
             <button
               onClick={() => onStart('bossrush')}
-              className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2.5 text-center transition active:scale-95"
+              className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2 text-center transition active:scale-95"
             >
               <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">▶ Start Boss Rush</span>
               <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Boss gauntlet</span>
@@ -257,14 +257,14 @@ export function MainMenu({
           {/* Mobile wallet + account — in flow at the bottom with a divider, so
               there's clear, device-independent space from the nav buttons above.
               Coins on the left, sign-in/account on the right. */}
-          <div className="mt-2 flex items-center gap-2 border-t border-white/10 pt-3 sm:hidden">
+          <div className="mt-1.5 flex items-center gap-2 border-t border-white/10 pt-2 sm:hidden">
             <button
               onClick={onOpenCoins}
-              className="flex-1 truncate rounded-full border border-neon-amber/50 bg-black/60 px-3 py-2 text-center text-xs font-black uppercase tracking-wider text-neon-amber transition active:scale-95"
+              className="flex-1 truncate rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1.5 text-center text-xs font-black uppercase tracking-wider text-neon-amber transition active:scale-95"
             >
               🪙 {coins.toLocaleString()} Coins
             </button>
-            <div className="flex flex-1 items-center justify-center gap-2 truncate rounded-full border border-white/10 bg-black/60 px-3 py-2 text-xs">
+            <div className="flex flex-1 items-center justify-center gap-2 truncate rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs">
               {signedIn && <span className="min-w-0 truncate text-white/60">{username}</span>}
               <button
                 onClick={signedIn ? onSignOut : onSignIn}
