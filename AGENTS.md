@@ -25,3 +25,30 @@ requested changes in this repository.
   broken code unless the user explicitly requests a checkpoint commit.
 - Do not commit directly to `main`; create or use a feature branch.
 - Do not push commits or open a pull request unless the user explicitly asks.
+
+## Think about edge cases and trade-offs
+
+Don't just build the happy path. Surface the implications a change creates, even when
+the user didn't ask — then proceed with a sensible default rather than blocking.
+
+- Call out second-order effects: balance/fairness (e.g. a mobile-only speed change
+  giving solver runs an edge on a shared leaderboard), security, performance, cost,
+  data migration, and backwards compatibility.
+- Expose the tuning knobs: when behavior hinges on a constant or threshold, name it,
+  keep it in one place, and tell the user how to adjust it.
+- Consider the boundaries: empty/zero/overflow inputs, first/last item, offline and
+  signed-out states, mobile vs desktop, and concurrent or repeated actions.
+- State the trade-off and your assumption so the user can course-correct.
+
+## Follow Clean Code best practices
+
+Write code in the spirit of Robert C. "Uncle Bob" Martin's *Clean Code*.
+
+- Intention-revealing names; no magic numbers — name the constant.
+- Small functions that do one thing at a single level of abstraction.
+- Prefer self-explanatory code over comments; when you do comment, explain the *why*,
+  not the *what*.
+- DRY — extract real duplication, but don't over-abstract before a second use exists.
+- Keep side effects obvious and localized; functions should hold no surprises.
+- Leave each file cleaner than you found it (the Boy Scout Rule), matching the
+  surrounding style.
