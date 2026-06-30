@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import type { Difficulty, GameMode } from '../types';
-import { MAPS, isMapOwned, type MapTheme } from '../data/maps';
+import type { MapTheme } from '../data/maps';
+import { isMapOwnedForFamilyMode, selectableMapsForFamilyMode } from '../theme/meteorMania';
 
 interface Props {
   mode: GameMode;
   difficulty: Difficulty;
   selectedMapId: string;
   ownedMaps: string[];
+  familyFriendlyMode?: boolean;
   onSelect: (id: string) => void;
   onBuyMap: (id: string) => void;
   onDeploy: () => void;
@@ -18,25 +20,25 @@ const MODE_LABEL: Record<GameMode, string> = {
   bossrush: 'Boss Rush',
 };
 
+const METEOR_MODE_LABEL: Record<GameMode, string> = {
+  survival: 'Planet Shield',
+  bossrush: 'Comet Storm',
+};
+
 export function MapSelect({
   mode,
   difficulty,
   selectedMapId,
   ownedMaps,
+  familyFriendlyMode = false,
   onSelect,
   onBuyMap,
   onDeploy,
   onBack,
 }: Props) {
   const [pendingMap, setPendingMap] = useState<MapTheme | null>(null);
-  // Mode/difficulty-exclusive maps only appear where they're playable.
-  const playable = MAPS.filter(
-    (m) => (!m.nightmareOnly || difficulty === 'nightmare') && (!m.bossRushOnly || mode === 'bossrush'),
-  );
-  // Surface the exclusive map(s) right after the starter, so it shows up 2nd.
-  const exclusive = playable.filter((m) => m.nightmareOnly || m.bossRushOnly);
-  const normal = playable.filter((m) => !m.nightmareOnly && !m.bossRushOnly);
-  const maps = normal.length ? [normal[0], ...exclusive, ...normal.slice(1)] : exclusive;
+  const maps = selectableMapsForFamilyMode(familyFriendlyMode, mode, difficulty);
+  const modeLabel = familyFriendlyMode ? METEOR_MODE_LABEL[mode] : MODE_LABEL[mode];
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-5xl flex-col gap-5 overflow-y-auto px-4 pb-28 pt-16 sm:p-6">
@@ -48,13 +50,13 @@ export function MapSelect({
       </button>
 
       <div className="text-center">
-        <h1 className="text-3xl font-black tracking-wide text-neon-green sm:text-4xl">SELECT MAP</h1>
-        <p className="mt-1 text-sm tracking-widest text-neon-cyan">{MODE_LABEL[mode]}</p>
+        <h1 className="text-3xl font-black tracking-wide text-neon-green sm:text-4xl">{familyFriendlyMode ? 'SELECT PLANET' : 'SELECT MAP'}</h1>
+        <p className="mt-1 text-sm tracking-widest text-neon-cyan">{modeLabel}</p>
       </div>
 
       <div className="grid flex-1 content-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {maps.map((m) => {
-          const owned = isMapOwned(m, ownedMaps);
+          const owned = isMapOwnedForFamilyMode(m, ownedMaps);
           const selected = selectedMapId === m.id;
           const p = m.palette;
           return (
@@ -88,7 +90,7 @@ export function MapSelect({
               <div className="flex flex-1 flex-col p-3">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="text-base font-bold leading-snug text-white/90 sm:text-sm">{m.name}</h3>
-                  {selected && <span className="shrink-0 text-xs font-bold text-neon-green">✓ selected</span>}
+                  {selected && <span className="shrink-0 text-xs font-bold text-neon-green">Selected</span>}
                 </div>
                 {/* Fixed height so 1- and 2-line descriptions keep buttons aligned. */}
                 <p className="mt-1 min-h-[2.75rem] text-xs leading-snug text-white/50 sm:text-[11px]">{m.description}</p>
@@ -103,7 +105,7 @@ export function MapSelect({
                         : 'border-white/15 text-white/70 hover:border-neon-green hover:text-neon-green'
                     }`}
                   >
-                    {selected ? 'Selected' : 'Select'}
+                    {selected ? 'Selected' : familyFriendlyMode ? 'Select Planet' : 'Select'}
                   </button>
                 ) : (
                   <button
@@ -121,7 +123,7 @@ export function MapSelect({
 
       <div className="fixed inset-x-0 bottom-0 z-20 flex justify-center bg-gradient-to-t from-ink-900 via-ink-900/95 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5 sm:static sm:mt-auto sm:bg-transparent sm:p-0">
         <button className="menu-btn max-w-xs flex-1 text-center shadow-neon" onClick={onDeploy}>
-          ▶ Deploy
+          {familyFriendlyMode ? 'Launch' : 'Deploy'}
         </button>
       </div>
 
@@ -130,7 +132,7 @@ export function MapSelect({
           <div className="w-full max-w-sm rounded-xl border border-neon-green/40 bg-ink-800 p-5 text-center shadow-neon">
             <h3 className="text-lg font-black tracking-wide text-neon-green">CONFIRM PURCHASE</h3>
             <p className="mt-2 text-sm text-white/70">
-              Buy <span className="font-bold text-white">{pendingMap.name}</span> for{' '}
+              {familyFriendlyMode ? 'Unlock' : 'Buy'} <span className="font-bold text-white">{pendingMap.name}</span> for{' '}
               <span className="font-bold text-neon-amber">{pendingMap.cost.toLocaleString()} 🪙</span>?
             </p>
             <div className="mt-4 flex gap-2">

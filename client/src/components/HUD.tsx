@@ -34,8 +34,9 @@ interface HUDProps {
 export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
   const p = s.powerups;
   const showWpm = !s.riddleMode;
+  const familyFriendlyMode = s.settings.familyFriendlyMode;
   const activePowerups: Array<{ label: string; color: string }> = [];
-  if (p.shotgunArmed) activePowerups.push({ label: 'SHOTGUN', color: '#ff2bd6' });
+  if (p.shotgunArmed) activePowerups.push({ label: familyFriendlyMode ? 'POWER ZAP' : 'SHOTGUN', color: '#ff2bd6' });
   if (p.shieldCharges > 0) activePowerups.push({ label: `SHIELD x${p.shieldCharges}`, color: '#00f0ff' });
   if (p.doubleDamageMs > 0) activePowerups.push({ label: '2x DMG', color: '#ffb300' });
   if (p.slowMotionMs > 0) activePowerups.push({ label: 'SLOW-MO', color: '#9b5de5' });
@@ -47,7 +48,7 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
         {/* Health + wave */}
         <div className="w-40 max-w-[42vw] space-y-1 sm:w-64">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-neon-red">HEALTH</span>
+            <span className="font-bold text-neon-red">{familyFriendlyMode ? 'SHIELD' : 'HEALTH'}</span>
             <span className="tabular-nums text-white/70">
               {Math.ceil(s.health)} / {s.maxHealth}
             </span>
@@ -76,7 +77,7 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
           <div className="pointer-events-auto flex justify-end gap-1.5">
             <button
               onClick={onToggleMute}
-              title="Mute all (music + gunshots)"
+              title={familyFriendlyMode ? 'Mute all (music + zaps)' : 'Mute all (music + gunshots)'}
               className="rounded-md border border-white/15 bg-black/60 px-2.5 py-1 text-sm text-white/70 hover:border-neon-green hover:text-neon-green sm:py-1.5"
             >
               {muted ? '🔇' : '🔊'}
@@ -113,7 +114,7 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="animate-pulse text-center">
             <div className="text-5xl font-black tracking-[0.3em] text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.9)]">
-              BOSS
+              {familyFriendlyMode ? 'MEGA METEOR' : 'BOSS'}
             </div>
             <div className="text-sm tracking-widest text-white/70">INCOMING</div>
           </div>

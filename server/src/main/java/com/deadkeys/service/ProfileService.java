@@ -378,7 +378,7 @@ public class ProfileService {
     if (accessoryDef == null || !CharacterCatalog.ACCESSORY.equals(accessoryDef.slot())) {
       throw new BadRequestException("unknown accessory");
     }
-    if (!profile.cosmetics.contains(outfit) || !profile.cosmetics.contains(accessory)) {
+    if (!ownsCosmetic(profile, outfitDef) || !ownsCosmetic(profile, accessoryDef)) {
       throw new BadRequestException("cosmetic is not owned");
     }
 
@@ -390,6 +390,10 @@ public class ProfileService {
     profile.character.accessory = accessory;
     store.save(profile);
     log.info("character equipped uid={} outfit={} accessory={}", profile.guestId, outfit, accessory);
+  }
+
+  private static boolean ownsCosmetic(Profile profile, CharacterCatalog.Def def) {
+    return def.cost() == 0 || profile.cosmetics.contains(def.key());
   }
 
   /** Buy one charge of a consumable powerup. */

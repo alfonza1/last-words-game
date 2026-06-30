@@ -16,7 +16,15 @@ function modeLabel(e: LeaderboardEntry): string {
   return STYLE_LABEL[e.style] ?? 'Puzzle';
 }
 
-export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack: () => void; mobileSpeechExperience?: boolean }) {
+export function Leaderboard({
+  onBack,
+  mobileSpeechExperience = false,
+  familyFriendlyMode = false,
+}: {
+  onBack: () => void;
+  mobileSpeechExperience?: boolean;
+  familyFriendlyMode?: boolean;
+}) {
   const [data, setData] = useState<Leaderboards | null>(null);
   const [error, setError] = useState(false);
   // Mobile plays the speech/solver experience — there's no typing here, so the
@@ -47,9 +55,9 @@ export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack
 
       <div className="mt-14 text-center sm:mt-6">
         <h1 className="text-4xl font-black tracking-widest text-neon-green drop-shadow-[0_0_20px_rgba(57,255,20,0.55)]">
-          LEADERBOARD
+          {familyFriendlyMode ? 'MISSION BOARD' : 'LEADERBOARD'}
         </h1>
-        <p className="mt-1 text-xs uppercase tracking-[0.35em] text-neon-cyan">🌍 Top 20 in the World</p>
+        <p className="mt-1 text-xs uppercase tracking-[0.35em] text-neon-cyan">{familyFriendlyMode ? 'Top 20 Planet Protectors' : '🌍 Top 20 in the World'}</p>
       </div>
 
       {/* Board toggle: typers vs solvers (riddle / math / trivia). Mobile has no
@@ -62,7 +70,7 @@ export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack
               board === 'typers' ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
             }`}
           >
-            ⌨ Top Typers
+            {familyFriendlyMode ? 'Top Zappers' : '⌨ Top Typers'}
           </button>
           <button
             onClick={() => setBoard('solvers')}
@@ -70,12 +78,18 @@ export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack
               board === 'solvers' ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
             }`}
           >
-            🧩 Top Solvers
+            {familyFriendlyMode ? 'Top Solvers' : '🧩 Top Solvers'}
           </button>
         </div>
       )}
       <p className="-mt-2 text-center text-[11px] text-white/35">
-        {board === 'typers' ? "Elite Typists - Top Typing Defense scores." : 'Sharpest minds — Top Riddle, Math & Trivia Defense scores.'}
+        {board === 'typers'
+          ? familyFriendlyMode
+            ? 'Fastest zappers - Top Typing Defense scores.'
+            : 'Elite Typists - Top Typing Defense scores.'
+          : familyFriendlyMode
+            ? 'Sharpest pilots - Top Riddle, Math & Trivia Defense scores.'
+            : 'Sharpest minds - Top Riddle, Math & Trivia Defense scores.'}
       </p>
 
       {error && <p className="text-center text-sm text-neon-red">Couldn’t load the leaderboard right now.</p>}
@@ -84,7 +98,7 @@ export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack
       )}
       {entries !== null && entries.length === 0 && (
         <p className="mt-8 text-center text-sm text-white/50">
-          No scores yet — be the first {board === 'typers' ? 'typer' : 'solver'} on the board!
+          No scores yet - be the first {board === 'typers' ? (familyFriendlyMode ? 'zapper' : 'typer') : 'solver'} on the board!
         </p>
       )}
 
