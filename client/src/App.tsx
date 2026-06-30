@@ -150,7 +150,7 @@ export default function App() {
     if (typeof window === 'undefined') return;
     const nextHash = `#${SCREEN_ROUTES[screen]}`;
     if (window.location.hash !== nextHash) window.history.pushState(null, '', nextHash);
-    document.title = `Dead Keys - ${SCREEN_TITLES[screen]}`;
+    document.title = `Last Words - ${SCREEN_TITLES[screen]}`;
   }, [screen]);
 
   // Signed-in progress lives on the server (keyed to the Firebase uid).
@@ -709,11 +709,6 @@ export default function App() {
             onRiddleMode={(v) => persistSettings({ ...settings, riddleMode: v })}
             onPuzzleStyle={(s) => persistSettings({ ...settings, riddleMode: true, puzzleStyle: s })}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
-            coins={stats.totalCoins}
-            signedIn={signedIn}
-            onOpenCoins={() => setShowCoinPacks(true)}
-            onSignIn={() => requireSignIn()}
-            onSignOut={() => setConfirmSignOut(true)}
           />
         );
     }
@@ -783,6 +778,7 @@ export default function App() {
   // components can use the full height (they scroll); chips still show on
   // desktop and on every other screen (e.g. the store keeps its coin chip).
   const hideChipsOnMobile = screen === 'menu' || screen === 'closet';
+  const showMobileMenuChips = showAccountChip && screen === 'menu';
 
   return (
     <div className="h-full w-full">
@@ -808,6 +804,28 @@ export default function App() {
             </button>
           )}
         </div>
+      )}
+
+      {showMobileMenuChips && (
+        <>
+          {/* Coins on the left, sign-in/account on the right (swapped). */}
+          <button
+            onClick={() => setShowCoinPacks(true)}
+            className="safe-bottom-left fixed z-50 max-w-[calc(50vw-1rem)] truncate rounded-full border border-neon-amber/50 bg-black/75 px-3 py-2 text-xs font-black uppercase tracking-wider text-neon-amber shadow-[0_0_18px_rgba(255,209,102,0.18)] backdrop-blur sm:hidden"
+          >
+            🪙 {stats.totalCoins.toLocaleString()} Coins
+          </button>
+
+          <div className="safe-bottom-right fixed z-50 flex max-w-[calc(50vw-1rem)] items-center gap-2 rounded-full border border-white/10 bg-black/75 px-3 py-2 text-xs shadow-[0_0_18px_rgba(57,255,20,0.18)] backdrop-blur sm:hidden">
+            {signedIn && <span className="min-w-0 truncate text-white/60">{accountLabel}</span>}
+            <button
+              onClick={() => (signedIn ? setConfirmSignOut(true) : requireSignIn())}
+              className="shrink-0 font-black uppercase tracking-wider text-neon-green hover:text-neon-pink"
+            >
+              {signedIn ? 'Sign out' : 'Sign in'}
+            </button>
+          </div>
+        </>
       )}
 
       <div className={`h-full w-full ${showAccountChip ? (hideChipsOnMobile ? 'sm:pt-11' : 'pt-11') : ''}`}>

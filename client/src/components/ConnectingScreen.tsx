@@ -187,7 +187,7 @@ export function ConnectingScreen() {
 
       <div className="relative z-10 w-full max-w-lg text-center">
         <h1 className="text-4xl font-black tracking-tight text-neon-green drop-shadow-[0_0_18px_rgba(57,255,20,0.6)]">
-          DEAD<span className="text-neon-pink"> KEYS</span>
+          LAST<span className="text-neon-pink"> WORDS</span>
         </h1>
 
         <div className="mt-4 animate-pulse text-sm font-black tracking-[0.28em] text-neon-green">CONNECTING...</div>

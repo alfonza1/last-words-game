@@ -58,7 +58,7 @@ export function SignIn({ onBack, onSignedIn, reason }: Props) {
       <div className="w-full max-w-sm rounded-2xl border border-neon-green/30 bg-ink-800/85 p-6 shadow-neon">
         <div className="mb-5 text-center">
           <h1 className="text-4xl font-black tracking-tight text-neon-green drop-shadow-[0_0_18px_rgba(57,255,20,0.6)]">
-            DEAD<span className="text-neon-pink"> KEYS</span>
+            LAST<span className="text-neon-pink"> WORDS</span>
           </h1>
           <p className="mt-1 text-xs tracking-[0.3em] text-neon-cyan">SIGN IN</p>
           <p className="mt-2 text-xs text-white/50">
@@ -87,7 +87,7 @@ export function SignIn({ onBack, onSignedIn, reason }: Props) {
         <p className="mt-4 flex items-start gap-1.5 text-[11px] leading-snug text-white/40">
           <span aria-hidden>🔒</span>
           <span>
-            Secured by <span className="text-white/60">Google Firebase Authentication</span>. Dead Keys never sees
+            Secured by <span className="text-white/60">Google Firebase Authentication</span>. Last Words never sees
             or stores a password.
           </span>
         </p>

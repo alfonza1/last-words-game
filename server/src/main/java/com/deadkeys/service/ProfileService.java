@@ -67,8 +67,8 @@ public class ProfileService {
   }
 
   /** The current account's profile (created on first sign-in), grant applied. */
-  public Profile getOrCreate(String uid, String name) {
-    return bootstrapProfile(uid, name, null).profile();
+  public Profile getOrCreate(String uid, String name, String email) {
+    return bootstrapProfile(uid, name, email, null).profile();
   }
 
   /**
@@ -76,10 +76,17 @@ public class ProfileService {
    * is accepted only when this same request creates the server profile, so an
    * existing account can never absorb unrelated device-local guest data.
    */
-  public ProfileBootstrap bootstrapProfile(String uid, String name, GuestProgressImport guest) {
-    ProfileStore.EnsuredProfile ensured = store.ensureProfile(uid, name);
+  public ProfileBootstrap bootstrapProfile(String uid, String name, String email, GuestProgressImport guest) {
+    ProfileStore.EnsuredProfile ensured = store.ensureProfile(uid, name, email);
     Profile p = ensured.profile();
     boolean changed = normalizeProfile(p);
+    // Keep the account email in sync with the verified token claim. This also
+    // backfills profiles created before we captured it. Email is auth-controlled,
+    // so it's only ever set from the token, never by the player.
+    if (email != null && !email.isBlank() && !email.equalsIgnoreCase(p.email)) {
+      p.email = email;
+      changed = true;
+    }
     if (!p.granted) {
       maybeGrant(p);
       changed = changed || p.granted;

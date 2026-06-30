@@ -73,7 +73,8 @@ public class ApiController {
   public Object bootstrapProfile(HttpServletRequest req, @RequestBody(required = false) GuestProgressImport guest) {
     String uid = currentUid(req);
     String name = (String) req.getAttribute(FirebaseAuthFilter.NAME_ATTR);
-    ProfileService.ProfileBootstrap result = profileService.bootstrapProfile(uid, name, guest);
+    String email = (String) req.getAttribute(FirebaseAuthFilter.EMAIL_ATTR);
+    ProfileService.ProfileBootstrap result = profileService.bootstrapProfile(uid, name, email, guest);
     return json(
         "profile", result.profile(),
         "created", result.created(),
@@ -192,7 +193,8 @@ public class ApiController {
   private Profile current(HttpServletRequest req) {
     String uid = currentUid(req);
     String name = (String) req.getAttribute(FirebaseAuthFilter.NAME_ATTR);
-    return profileService.getOrCreate(uid, name);
+    String email = (String) req.getAttribute(FirebaseAuthFilter.EMAIL_ATTR);
+    return profileService.getOrCreate(uid, name, email);
   }
 
   private String currentUid(HttpServletRequest req) {

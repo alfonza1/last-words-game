@@ -1,0 +1,91 @@
+name: Guard main merge source
+
+# Free-plan substitute for branch protection. A private repo on a personal
+# account can't *enforce* rulesets, so this can't block a bad merge — instead it
+# detects one after the fact: it fails loudly (red X on the commit) and opens a
+# tracking issue. main should be fed only by release/* (or rollback/*) branches.
+# Production deploys trigger off release/** pushes, not main, so this is process
+# hygiene, not deploy safety.
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  guard-main-source:
+    name: guard-main-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Identify the source of this change to main
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # PR(s) associated with the pushed commit. Works for merge and squash
+          # merges; empty for a direct push (which is itself a violation).
+          heads="$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[].head.ref' 2>/dev/null || true)"
+          echo "Associated PR head branch(es): ${heads:-<none>}"
+
+          allowed=no
+          if [ -z "${heads:-}" ]; then
+            detail="Commit $SHA reached main with no associated pull request (a direct push)."
+          else
+            while IFS= read -r ref; do
+              [ -z "$ref" ] && continue
+              case "$ref" in
+                release/*|rollback/*) allowed=yes ;;
+              esac
+            done <<< "$heads"
+            joined="$(echo "$heads" | tr '\n' ',' | sed 's/,$//')"
+            detail="main was updated from: $joined — only release/* or rollback/* may merge into main."
+          fi
+
+          echo "allowed=$allowed" >> "$GITHUB_OUTPUT"
+          echo "detail=$detail" >> "$GITHUB_OUTPUT"
+          if [ "$allowed" = yes ]; then
+            echo "OK: main was updated from an allowed release/* or rollback/* branch."
+          fi
+
+      - name: Open a tracking issue on violation
+        if: steps.check.outputs.allowed != 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          DETAIL: ${{ steps.check.outputs.detail }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          {
+            echo "A change reached \`main\` outside the release flow."
+            echo
+            echo "- **Commit:** \`$SHA\`"
+            echo "- **Pushed by:** @$ACTOR"
+            echo "- **Detail:** $DETAIL"
+            echo "- **Run:** $RUN_URL"
+            echo
+            echo "\`main\` should be fed only by \`release/*\` (or \`rollback/*\`) branches. Production deploys trigger from \`release/**\`, so this did **not** ship to prod — but please correct the process (e.g. revert and re-land via a \`release/*\` PR)."
+            echo
+            echo "_Opened automatically by the \`guard-main-source\` workflow._"
+          } > issue-body.md
+          gh issue create --repo "$REPO" \
+            --title "🚨 main updated outside the release flow ($SHA)" \
+            --body-file issue-body.md
+
+      - name: Fail the run on violation
+        if: steps.check.outputs.allowed != 'yes'
+        env:
+          DETAIL: ${{ steps.check.outputs.detail }}
+        run: |
+          echo "::error::$DETAIL"
+          exit 1

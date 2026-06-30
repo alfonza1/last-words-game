@@ -19,13 +19,6 @@ interface Props {
   onRiddleMode: (v: boolean) => void;
   onPuzzleStyle: (s: PuzzleStyle) => void;
   mobileSpeechExperience?: boolean;
-  // Mobile-only in-flow wallet/account row (the fixed top chips are hidden on the
-  // home screen, so these live at the bottom of the menu instead).
-  coins: number;
-  signedIn: boolean;
-  onOpenCoins: () => void;
-  onSignIn: () => void;
-  onSignOut: () => void;
 }
 
 type Style = 'typing' | PuzzleStyle;
@@ -125,11 +118,6 @@ export function MainMenu({
   onRiddleMode,
   onPuzzleStyle,
   mobileSpeechExperience = false,
-  coins,
-  signedIn,
-  onOpenCoins,
-  onSignIn,
-  onSignOut,
 }: Props) {
   const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
@@ -138,10 +126,10 @@ export function MainMenu({
   const recordsTitle = 'Career Stats';
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-3 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-20 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
         <h1 className="text-2xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
-          DEAD<span className="text-neon-pink"> KEYS</span>
+          LAST<span className="text-neon-pink"> WORDS</span>
         </h1>
         <p className="mt-1 hidden text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:block sm:text-sm sm:tracking-[0.35em]">
           TYPE OR BE DEVOURED
@@ -251,23 +239,6 @@ export function MainMenu({
             </button>
             <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('settings')}>
               Settings
-            </button>
-          </div>
-
-          {/* Mobile wallet + account — in flow at the bottom, spaced from the menu
-              buttons above. Sign-in on the left, coins on the right. */}
-          <div className="mt-1 grid grid-cols-2 gap-2 border-t border-white/10 pt-3 sm:hidden">
-            <button
-              onClick={signedIn ? onSignOut : onSignIn}
-              className="truncate rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-neon-green transition active:scale-95"
-            >
-              {signedIn ? 'Sign out' : 'Sign in'}
-            </button>
-            <button
-              onClick={onOpenCoins}
-              className="truncate rounded-lg border border-neon-amber/50 bg-neon-amber/10 px-3 py-2.5 text-center text-xs font-black uppercase tracking-wide text-neon-amber transition active:scale-95"
-            >
-              🪙 {coins.toLocaleString()} Coins
             </button>
           </div>
 

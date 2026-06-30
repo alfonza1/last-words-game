@@ -26,6 +26,7 @@ import java.util.Map;
 public class FirebaseAuthFilter extends OncePerRequestFilter {
   public static final String UID_ATTR = "deadkeys.uid";
   public static final String NAME_ATTR = "deadkeys.name";
+  public static final String EMAIL_ATTR = "deadkeys.email";
 
   private final FirebaseTokenVerifier verifier;
   private final ObjectMapper mapper;
@@ -68,6 +69,7 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
 
     req.setAttribute(UID_ATTR, user.uid());
     req.setAttribute(NAME_ATTR, user.name());
+    req.setAttribute(EMAIL_ATTR, user.email());
     chain.doFilter(req, res);
   }
 }
