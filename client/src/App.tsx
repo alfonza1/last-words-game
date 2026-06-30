@@ -808,7 +808,15 @@ export default function App() {
 
       {showMobileMenuChips && (
         <>
-          <div className="safe-bottom-left fixed z-50 flex max-w-[calc(50vw-1rem)] items-center gap-2 rounded-full border border-white/10 bg-black/75 px-3 py-2 text-xs shadow-[0_0_18px_rgba(57,255,20,0.18)] backdrop-blur sm:hidden">
+          {/* Coins on the left, sign-in/account on the right (swapped). */}
+          <button
+            onClick={() => setShowCoinPacks(true)}
+            className="safe-bottom-left fixed z-50 max-w-[calc(50vw-1rem)] truncate rounded-full border border-neon-amber/50 bg-black/75 px-3 py-2 text-xs font-black uppercase tracking-wider text-neon-amber shadow-[0_0_18px_rgba(255,209,102,0.18)] backdrop-blur sm:hidden"
+          >
+            🪙 {stats.totalCoins.toLocaleString()} Coins
+          </button>
+
+          <div className="safe-bottom-right fixed z-50 flex max-w-[calc(50vw-1rem)] items-center gap-2 rounded-full border border-white/10 bg-black/75 px-3 py-2 text-xs shadow-[0_0_18px_rgba(57,255,20,0.18)] backdrop-blur sm:hidden">
             {signedIn && <span className="min-w-0 truncate text-white/60">{accountLabel}</span>}
             <button
               onClick={() => (signedIn ? setConfirmSignOut(true) : requireSignIn())}
@@ -817,13 +825,6 @@ export default function App() {
               {signedIn ? 'Sign out' : 'Sign in'}
             </button>
           </div>
-
-          <button
-            onClick={() => setShowCoinPacks(true)}
-            className="safe-bottom-right fixed z-50 max-w-[calc(50vw-1rem)] truncate rounded-full border border-neon-amber/50 bg-black/75 px-3 py-2 text-xs font-black uppercase tracking-wider text-neon-amber shadow-[0_0_18px_rgba(255,209,102,0.18)] backdrop-blur sm:hidden"
-          >
-            {stats.totalCoins.toLocaleString()} Coins
-          </button>
         </>
       )}
 
