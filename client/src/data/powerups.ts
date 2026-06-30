@@ -18,7 +18,7 @@ export const POWERUP_DEFS: PowerupDef[] = [
     word: 'grenade',
     cost: 120,
     icon: '🧨',
-    description: 'Type “grenade” to clear a cluster of nearby zombies.',
+    description: 'Clears a cluster of nearby zombies.',
   },
   {
     key: 'freeze',
@@ -26,7 +26,7 @@ export const POWERUP_DEFS: PowerupDef[] = [
     word: 'freeze',
     cost: 180,
     icon: '❄️',
-    description: 'Type “freeze” to freeze every zombie for 3 seconds.',
+    description: 'Freezes every zombie for 3 seconds.',
   },
   {
     key: 'medkit',
@@ -34,6 +34,6 @@ export const POWERUP_DEFS: PowerupDef[] = [
     word: 'medkit',
     cost: 240,
     icon: '🩹',
-    description: 'Type “medkit” to restore a chunk of health.',
+    description: 'Restores a chunk of health.',
   },
 ];

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -18,14 +19,27 @@ public class LegacyProfileDataCleaner implements ApplicationRunner {
 
   private final ProfileRepository profiles;
   private final ObjectMapper mapper;
+  /**
+   * One-time data migration — OFF by default so it never scans the whole profile
+   * table on each Cloud Run cold start (that cost grows with the user count).
+   * To run it once, set DEADKEYS_LEGACY_CLEANUP_ENABLED=true, deploy, let it run,
+   * then turn it back off. The {@code missedWords} field it strips is already
+   * ignored on read, so leaving it disabled is harmless.
+   */
+  private final boolean enabled;
 
-  public LegacyProfileDataCleaner(ProfileRepository profiles, ObjectMapper mapper) {
+  public LegacyProfileDataCleaner(
+      ProfileRepository profiles,
+      ObjectMapper mapper,
+      @Value("${deadkeys.legacyCleanup.enabled:false}") boolean enabled) {
     this.profiles = profiles;
     this.mapper = mapper;
+    this.enabled = enabled;
   }
 
   @Override
   public void run(ApplicationArguments args) {
+    if (!enabled) return;
     int cleaned = 0;
     for (ProfileEntity entity : profiles.findAll()) {
       String updated = removeWeakWords(mapper, entity.json);

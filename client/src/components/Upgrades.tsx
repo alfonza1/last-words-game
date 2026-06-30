@@ -9,6 +9,15 @@ import { CharacterAvatar } from './CharacterAvatar';
 
 type Pending = { kind: 'upgrade' | 'powerup' | 'coinpack' | 'cosmetic'; id: string; label: string; cost: string; real?: boolean };
 
+type StoreTab = 'coins' | 'gear' | 'accessories' | 'powerups' | 'upgrades';
+const STORE_TABS: { id: StoreTab; label: string; icon: string }[] = [
+  { id: 'gear', label: 'Gear', icon: '🧥' },
+  { id: 'accessories', label: 'Extras', icon: '🎒' },
+  { id: 'powerups', label: 'Power', icon: '🧨' },
+  { id: 'upgrades', label: 'Upgrades', icon: '⚡' },
+  { id: 'coins', label: 'Coins', icon: '🪙' },
+];
+
 interface Props {
   upgrades: UpgradesType;
   stats: GameStats;
@@ -62,6 +71,11 @@ export function Upgrades({
   const [pending, setPending] = useState<Pending | null>(null);
   // Try-on is a pure local preview — it never equips, owns, or persists anything.
   const [tryOn, setTryOn] = useState<CosmeticDef | null>(null);
+  // Mobile shows one section at a time (via the sticky tab bar) so the store
+  // isn't an endless scroll; desktop (sm+) always shows everything.
+  const [tab, setTab] = useState<StoreTab>('gear');
+  // Each section is its own flex column; on mobile only the active tab shows.
+  const sectionClass = (id: StoreTab) => `${tab === id ? 'flex' : 'hidden'} flex-col gap-4 sm:flex`;
   const confirmPurchase = () => {
     if (!pending) return;
     const p = pending;
@@ -138,7 +152,7 @@ export function Upgrades({
   };
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-4xl flex-col gap-4 overflow-y-auto p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-4xl flex-col gap-4 overflow-y-auto p-4 sm:p-6">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <button
           onClick={onBack}
@@ -147,21 +161,45 @@ export function Upgrades({
           ← Back
         </button>
         <h1 className="text-center text-2xl font-black tracking-wide text-neon-green sm:text-3xl">STORE</h1>
-        <div className="justify-self-end rounded-lg border border-neon-amber/40 bg-black/50 px-2 py-2 text-xs font-bold text-neon-amber sm:px-4 sm:text-base">
-          🪙 {coins.toLocaleString()} <span className="hidden sm:inline">coins</span>
-        </div>
+        {/* Coin balance shows in the fixed top-left wallet chip (App), matching the home page. */}
+        <div aria-hidden />
       </div>
       {!signedIn && (
         <button
           onClick={onRequireSignIn}
           className="rounded-lg border border-neon-pink/50 bg-neon-pink/10 px-4 py-2 text-left text-sm text-neon-pink hover:bg-neon-pink/20"
         >
-          👻 You're playing as a guest — purchases save on this device only and may not stick.{' '}
-          <span className="font-bold underline">Sign in</span> to save your progress across devices.
+          👻{' '}
+          <span className="sm:hidden">
+            Guest mode — <span className="font-bold underline">sign in</span> to save purchases.
+          </span>
+          <span className="hidden sm:inline">
+            You're playing as a guest — purchases save on this device only and may not stick.{' '}
+            <span className="font-bold underline">Sign in</span> to save your progress across devices.
+          </span>
         </button>
       )}
 
+      {/* Mobile-only section tabs — keeps the store to one screen at a time
+          instead of a long scroll. Desktop (sm+) shows every section. */}
+      <div className="sticky top-0 z-10 -mx-4 flex gap-1 border-b border-white/10 bg-ink-900/95 px-4 py-2 backdrop-blur sm:hidden">
+        {STORE_TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            aria-pressed={tab === t.id}
+            className={`flex-1 rounded-md px-0.5 py-1.5 text-[10px] font-bold transition-all ${
+              tab === t.id ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
+            }`}
+          >
+            <span className="block text-sm leading-none">{t.icon}</span>
+            <span className="mt-0.5 block truncate">{t.label}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Coin packs stay at the top so currency purchases are easy to find. */}
+      <section className={sectionClass('coins')}>
       <h2 className="text-sm font-bold uppercase tracking-widest text-neon-amber">Coin Packs</h2>
       <p className="-mt-2 text-xs text-white/40">Top up instantly. Secure checkout via Stripe.</p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -191,20 +229,25 @@ export function Upgrades({
           </div>
         ))}
       </div>
+      </section>
 
-      <p className="mt-1 text-xs text-white/55">Cosmetics give no competitive advantage.</p>
+      <section className={sectionClass('gear')}>
+      <p className="text-xs text-white/55">Cosmetics give no competitive advantage.</p>
       <h2 className="text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
-
       <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Outfits</h3>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('outfit').map(gearCard)}</div>
+      </section>
 
-      <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Accessories</h3>
+      <section className={sectionClass('accessories')}>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-neon-pink">Accessories</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('accessory').map(gearCard)}</div>
+      </section>
 
       {/* Consumable powerups */}
-      <h2 className="mt-1 text-sm font-bold uppercase tracking-widest text-neon-cyan">Powerups</h2>
+      <section className={sectionClass('powerups')}>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-neon-cyan">Powerups</h2>
       <p className="-mt-2 text-xs text-white/40">
-        Bought charges are permanent until used. In a run, type the word to activate.
+        Bought charges are permanent until used. Spend them during a run — tap on mobile, or type the word on desktop.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         {POWERUP_DEFS.map((def) => {
@@ -236,9 +279,11 @@ export function Upgrades({
           );
         })}
       </div>
+      </section>
 
       {/* Temporary upgrades */}
-      <h2 className="mt-2 text-sm font-bold uppercase tracking-widest text-neon-cyan">Upgrades</h2>
+      <section className={sectionClass('upgrades')}>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-neon-cyan">Upgrades</h2>
       <div className="-mt-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-white/50">
           Spend coins from runs. Every purchase adds {UPGRADE_LIFESPAN} games to your active upgrade timer.
@@ -295,6 +340,7 @@ export function Upgrades({
           );
         })}
       </div>
+      </section>
 
       <AdBanner className="mt-2" />
 
@@ -322,12 +368,17 @@ export function Upgrades({
               </button>
               {!owned.has(tryOn.key) && (
                 <button
+                  disabled={coins < tryOn.cost}
                   onClick={() => {
                     const it = tryOn;
                     setTryOn(null);
                     setPending({ kind: 'cosmetic', id: it.key, label: it.name, cost: `${it.cost} 🪙` });
                   }}
-                  className="flex-1 rounded-lg border border-neon-green bg-neon-green/10 px-4 py-2 text-sm font-bold text-neon-green hover:bg-neon-green/20"
+                  className={`flex-1 rounded-lg border px-4 py-2 text-sm font-bold ${
+                    coins < tryOn.cost
+                      ? 'cursor-not-allowed border-white/15 text-white/45'
+                      : 'border-neon-green bg-neon-green/10 text-neon-green hover:bg-neon-green/20'
+                  }`}
                 >
                   Buy {tryOn.cost.toLocaleString()} 🪙
                 </button>

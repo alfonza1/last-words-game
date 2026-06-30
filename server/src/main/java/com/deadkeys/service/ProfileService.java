@@ -99,6 +99,7 @@ public class ProfileService {
 
     mergeImportedStats(profile.stats, guest.stats());
     mergeImportedStats(profile.riddleStats, guest.riddleStats());
+    profile.riddleStats.highestWpm = 0;
 
     if (guest.upgrades() != null) {
       for (UpgradeCatalog.Def def : UpgradeCatalog.DEFS) {
@@ -173,10 +174,11 @@ public class ProfileService {
   }
 
   private static RunResult clamp(RunResult r) {
+    int wpm = r.riddle() ? 0 : clampInt(r.wpm(), MAX_WPM);
     return new RunResult(
         clampInt(r.score(), MAX_SCORE),
         clampInt(r.wave(), MAX_WAVE),
-        clampInt(r.wpm(), MAX_WPM),
+        wpm,
         Math.max(0, Math.min(100, r.accuracy())),
         Math.max(0, Math.min(MAX_SURVIVAL_MS, r.survivalMs())),
         clampInt(r.kills(), MAX_KILLS),
@@ -431,6 +433,10 @@ public class ProfileService {
     }
     if (profile.riddleStats == null) {
       profile.riddleStats = new Stats();
+      changed = true;
+    }
+    if (profile.riddleStats.highestWpm != 0) {
+      profile.riddleStats.highestWpm = 0;
       changed = true;
     }
     if (profile.stats.bestMode == null) {

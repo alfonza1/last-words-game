@@ -40,6 +40,7 @@ import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from './data/
 import { audio } from './lib/audio';
 import { useAuth } from './lib/auth';
 import { useToast } from './lib/toast';
+import { useMobileExperience } from './hooks/useMobileExperience';
 import { calculateWpmBonus, type WpmBonus } from './game/wpmBonus';
 import { MainMenu } from './components/MainMenu';
 import { CoinPackModal } from './components/CoinPackModal';
@@ -64,6 +65,44 @@ const Closet = lazy(() => import('./components/Closet').then((m) => ({ default: 
 const REWARD_COINS = 50; // bonus for an optional rewarded ad (server is authoritative)
 const EMPTY_WPM_BONUS: WpmBonus = { tiers: 0, coins: 0, score: 0 };
 
+const SCREEN_ROUTES: Record<Screen, string> = {
+  menu: '/menu',
+  mapselect: '/maps',
+  game: '/game',
+  gameover: '/game-over',
+  upgrades: '/store',
+  closet: '/closet',
+  howto: '/how-to-play',
+  settings: '/settings',
+  signin: '/sign-in',
+  leaderboard: '/leaderboard',
+};
+
+const ROUTE_SCREENS = Object.entries(SCREEN_ROUTES).reduce(
+  (acc, [screen, route]) => ({ ...acc, [route]: screen as Screen }),
+  {} as Record<string, Screen>,
+);
+
+const SCREEN_TITLES: Record<Screen, string> = {
+  menu: 'Menu',
+  mapselect: 'Select Map',
+  game: 'Run',
+  gameover: 'Game Over',
+  upgrades: 'Store',
+  closet: 'Closet',
+  howto: 'How to Play',
+  settings: 'Settings',
+  signin: 'Sign In',
+  leaderboard: 'Leaderboard',
+};
+
+function screenFromHash(): Screen | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window.location.hash.replace(/^#/, '');
+  if (!raw) return null;
+  return ROUTE_SCREENS[raw] ?? null;
+}
+
 function difficultyForMode(mode: GameMode, difficulty: Difficulty): Difficulty {
   return mode === 'bossrush' ? 'normal' : difficulty;
 }
@@ -75,7 +114,7 @@ export default function App() {
     (e: unknown) => toast.error((e as Error)?.message || 'Something went wrong. Please try again.'),
     [toast],
   );
-  const [screen, setScreen] = useState<Screen>('menu');
+  const [screen, setScreen] = useState<Screen>(() => screenFromHash() ?? 'menu');
   const [storeReturn, setStoreReturn] = useState<'menu' | 'closet'>('menu');
   const [username, setUsername] = useState<string>('');
   const [signInReason, setSignInReason] = useState<string | undefined>(undefined);
@@ -83,10 +122,36 @@ export default function App() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [showCoinPacks, setShowCoinPacks] = useState(false);
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
+  const mobileExperience = useMobileExperience();
 
   // Always-current screen, so requireSignIn can return you where you came from.
   const screenRef = useRef(screen);
   screenRef.current = screen;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncFromHash = () => {
+      const routed = screenFromHash();
+      if (routed) setScreen(routed);
+    };
+
+    if (!screenFromHash()) {
+      window.history.replaceState(null, '', `#${SCREEN_ROUTES.menu}`);
+    }
+    window.addEventListener('hashchange', syncFromHash);
+    window.addEventListener('popstate', syncFromHash);
+    return () => {
+      window.removeEventListener('hashchange', syncFromHash);
+      window.removeEventListener('popstate', syncFromHash);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const nextHash = `#${SCREEN_ROUTES[screen]}`;
+    if (window.location.hash !== nextHash) window.history.pushState(null, '', nextHash);
+    document.title = `Dead Keys - ${SCREEN_TITLES[screen]}`;
+  }, [screen]);
 
   // Signed-in progress lives on the server (keyed to the Firebase uid).
   // Guests are fully local — no server calls — and only keep lifetime stats.
@@ -229,24 +294,25 @@ export default function App() {
   // Save a finished run: server for accounts, localStorage for guests.
   const saveRun = useCallback(
     (r: RunResult, onResult?: (high: boolean) => void) => {
+      const run = r.riddle ? { ...r, wpm: 0 } : r;
       const records = r.riddle ? riddleStats : stats;
       const runDifficulty = difficultyForMode(mode, settings.difficulty);
-      const high = r.score > records.bestScore && r.score > 0;
+      const high = run.score > records.bestScore && run.score > 0;
       if (user) {
         const payload: RunPayload = {
-          score: r.score,
-          wave: r.wave,
-          wpm: r.wpm,
-          accuracy: r.accuracy,
-          survivalMs: r.survivalMs,
-          kills: r.kills,
-          bossesDefeated: r.bossesDefeated,
-          streak: r.streak,
-          coins: r.coins,
+          score: run.score,
+          wave: run.wave,
+          wpm: run.wpm,
+          accuracy: run.accuracy,
+          survivalMs: run.survivalMs,
+          kills: run.kills,
+          bossesDefeated: run.bossesDefeated,
+          streak: run.streak,
+          coins: run.coins,
           mode,
           difficulty: runDifficulty,
-          riddle: r.riddle,
-          style: r.style,
+          riddle: run.riddle,
+          style: run.style,
         };
         apiSubmitRun(payload)
           .then(({ profile, isHighScore }) => {
@@ -259,15 +325,15 @@ export default function App() {
             onResult?.(high);
           });
       } else {
-        if (r.riddle) {
-          const mergedRiddle = mergeRunIntoStats(riddleStats, r);
-          const wallet = { ...stats, totalCoins: stats.totalCoins + r.coins };
+        if (run.riddle) {
+          const mergedRiddle = mergeRunIntoStats(riddleStats, run);
+          const wallet = { ...stats, totalCoins: stats.totalCoins + run.coins };
           setRiddleStats(mergedRiddle);
           setStats(wallet);
           saveRiddleStats(mergedRiddle);
           saveStats(wallet);
         } else {
-          const merged = mergeRunIntoStats(stats, r);
+          const merged = mergeRunIntoStats(stats, run);
           setStats(merged);
           saveStats(merged);
         }
@@ -506,9 +572,14 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [screen, mode, startGame]);
 
+  useEffect(() => {
+    if (!loading && screen === 'gameover' && !result) setScreen('menu');
+  }, [loading, result, screen]);
+
   const content = useMemo(() => {
     switch (screen) {
-      case 'game':
+      case 'game': {
+        const gameRiddleMode = mobileExperience.mobileSpeechExperience ? true : settings.riddleMode;
         return (
           <GameScreen
             key={gameKey}
@@ -519,7 +590,7 @@ export default function App() {
             upgradesActive={upgradeGames > 0}
             settings={settings}
             character={character}
-            riddleMode={settings.riddleMode}
+            riddleMode={gameRiddleMode}
             puzzleStyle={settings.puzzleStyle}
             onGameOver={handleGameOver}
             onUsePowerup={onUsePowerup}
@@ -528,8 +599,10 @@ export default function App() {
             onMusicToggle={(on) => persistSettings({ ...settings, music: on })}
             onMusicVolume={(v) => persistSettings({ ...settings, musicVolume: v })}
             onSfxVolume={(v) => persistSettings({ ...settings, sfxVolume: v })}
+            mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
           />
         );
+      }
       case 'mapselect':
         return (
           <MapSelect
@@ -587,7 +660,12 @@ export default function App() {
           />
         );
       case 'howto':
-        return <HowToPlay onBack={() => setScreen('menu')} />;
+        return (
+          <HowToPlay
+            onBack={() => setScreen('menu')}
+            mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+          />
+        );
       case 'settings':
         return (
           <SettingsPanel
@@ -608,7 +686,12 @@ export default function App() {
           />
         );
       case 'leaderboard':
-        return <Leaderboard onBack={() => setScreen('menu')} />;
+        return (
+          <Leaderboard
+            onBack={() => setScreen('menu')}
+            mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+          />
+        );
       case 'menu':
       default:
         return (
@@ -618,13 +701,14 @@ export default function App() {
             difficulty={settings.difficulty}
             character={character}
             username={username || 'Survivor'}
-            riddleMode={settings.riddleMode}
+            riddleMode={mobileExperience.mobileSpeechExperience ? true : settings.riddleMode}
             puzzleStyle={settings.puzzleStyle}
             onStart={chooseMode}
             onNav={(scr) => (scr === 'upgrades' ? openStore('menu') : setScreen(scr))}
             onDifficulty={setDifficulty}
             onRiddleMode={(v) => persistSettings({ ...settings, riddleMode: v })}
             onPuzzleStyle={(s) => persistSettings({ ...settings, riddleMode: true, puzzleStyle: s })}
+            mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
           />
         );
     }
@@ -663,6 +747,7 @@ export default function App() {
     saveUsername,
     persistSettings,
     startGame,
+    mobileExperience.mobileSpeechExperience,
     chooseMode,
     setDifficulty,
     setMap,
@@ -688,22 +773,26 @@ export default function App() {
 
   const accountLabel = signedIn ? username || user?.email || 'Player' : username || 'Survivor';
   const showAccountChip = screen !== 'game' && screen !== 'signin';
-  const showWalletChip = showAccountChip && screen !== 'upgrades';
+  const showWalletChip = showAccountChip;
+  // On the mobile home and closet screens the fixed chips are hidden so those
+  // components can use the full height (they scroll); chips still show on
+  // desktop and on every other screen (e.g. the store keeps its coin chip).
+  const hideChipsOnMobile = screen === 'menu' || screen === 'closet';
 
   return (
     <div className="h-full w-full">
       {showWalletChip && (
         <button
           onClick={() => setShowCoinPacks(true)}
-          className="absolute left-3 top-3 z-40 rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1 text-xs font-black tracking-wider text-neon-amber transition hover:bg-neon-amber/15"
+          className={`${hideChipsOnMobile ? 'hidden sm:block' : ''} safe-top-left fixed z-40 rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1 text-xs font-black tracking-wider text-neon-amber transition hover:bg-neon-amber/15`}
         >
           🪙 {stats.totalCoins.toLocaleString()} COINS
         </button>
       )}
 
       {showAccountChip && (
-        <div className="absolute right-3 top-3 z-40 flex items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs">
-          <span className="max-w-[140px] truncate text-white/60">{accountLabel}</span>
+        <div className={`${hideChipsOnMobile ? 'hidden sm:flex' : 'flex'} safe-top-right fixed z-40 items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs`}>
+          <span className="max-w-[120px] truncate text-white/60 sm:max-w-[140px]">{accountLabel}</span>
           {signedIn ? (
             <button onClick={() => setConfirmSignOut(true)} className="font-bold text-neon-green hover:text-neon-pink">
               Sign out
@@ -716,7 +805,7 @@ export default function App() {
         </div>
       )}
 
-      <div className={`h-full w-full ${showAccountChip ? 'pt-11' : ''}`}>
+      <div className={`h-full w-full ${showAccountChip ? (hideChipsOnMobile ? 'sm:pt-11' : 'pt-11') : ''}`}>
         <Suspense fallback={<ScreenLoader />}>{content}</Suspense>
       </div>
 

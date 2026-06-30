@@ -18,6 +18,16 @@ body {
   color: #d7ffe0;
   font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
 }
 
 /* Subtle scanline overlay for the post-apocalyptic CRT feel */
@@ -45,6 +55,24 @@ body {
 
   .stat-chip {
     @apply rounded-md border border-white/10 bg-ink-800/80 px-3 py-1.5 text-center;
+  }
+}
+
+.safe-top-left {
+  left: max(0.75rem, env(safe-area-inset-left));
+  top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.safe-top-right {
+  right: max(0.75rem, env(safe-area-inset-right));
+  top: max(0.75rem, env(safe-area-inset-top));
+}
+
+@media (max-width: 640px) {
+  .menu-btn {
+    min-height: 3rem;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
   }
 }
 

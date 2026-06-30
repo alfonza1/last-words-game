@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { CharacterLoadout, Difficulty, GameMode, GameStats, PuzzleStyle } from '../types';
 import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
@@ -17,64 +18,89 @@ interface Props {
   onDifficulty: (d: Difficulty) => void;
   onRiddleMode: (v: boolean) => void;
   onPuzzleStyle: (s: PuzzleStyle) => void;
+  mobileSpeechExperience?: boolean;
 }
 
-/** A play style for the menu: plain typing, or one of the puzzle styles. */
 type Style = 'typing' | PuzzleStyle;
 const STYLE_ORDER: Style[] = ['typing', 'math', 'trivia', 'riddles'];
 
-const STYLE_META: Record<Style, { label: string; icon: string; active: string; blurb: string; tagWord: string }> = {
+const STYLE_META: Record<Style, { label: string; short: string; emoji: string; blurb: string; tagWord: string }> = {
   typing: {
     label: 'Typing',
-    icon: '⌨',
-    active: 'bg-neon-green/15 text-neon-green shadow-neon',
+    short: 'TYPE',
+    emoji: '⌨',
     blurb: 'Each completed word fires one shot. High WPM earns extra points and coins.',
     tagWord: 'WORD',
   },
   riddles: {
     label: 'Riddle',
-    icon: '🧩',
-    active: 'bg-neon-pink/15 text-neon-pink shadow-neon',
+    short: 'CLUE',
+    emoji: '🧩',
     blurb: 'Solve short riddles to fire a multi-kill volley.',
     tagWord: 'RIDDLE',
   },
   math: {
     label: 'Math',
-    icon: '➗',
-    active: 'bg-neon-cyan/15 text-neon-cyan shadow-neon',
+    short: 'MATH',
+    emoji: '➗',
     blurb: 'Solve math problems to fire a multi-kill volley.',
     tagWord: 'PROBLEM',
   },
   trivia: {
     label: 'Trivia',
-    icon: '❓',
-    active: 'bg-neon-amber/15 text-neon-amber shadow-neon',
+    short: 'QUIZ',
+    emoji: '🧠',
     blurb: 'Answer trivia questions to fire a multi-kill volley.',
     tagWord: 'QUESTION',
   },
 };
 
 const DIFFS: Difficulty[] = ['easy', 'normal', 'nightmare'];
-const DIFF_BLURB: Record<Style, Record<Difficulty, string>> = {
+// `short` keeps each blurb to one line on mobile; `long` is the fuller desktop copy.
+const DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long: string }>> = {
   typing: {
-    easy: 'Short words with a relaxed horde.',
-    normal: 'Words and numbers against the full outbreak. Earn 1.25× coins and score.',
-    nightmare: 'Exact-case words, numbers, and symbols. Earn 2× coins and score.',
+    easy: { short: 'Short words with a relaxed horde.', long: 'Short words with a relaxed horde.' },
+    normal: {
+      short: 'Words + numbers. Earn 1.25x coins and score.',
+      long: 'Words and numbers against the full outbreak. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Exact case + symbols. Earn 2x coins and score.',
+      long: 'Exact-case words, numbers, and symbols. Earn 2x coins and score.',
+    },
   },
   riddles: {
-    easy: 'Straightforward clues with extra time to solve.',
-    normal: 'Sharper clues and a faster approaching horde. Earn 1.25× coins and score.',
-    nightmare: 'The hardest clues under maximum pressure. Earn 2× coins and score.',
+    easy: { short: 'Straightforward clues with extra time to solve.', long: 'Straightforward clues with extra time to solve.' },
+    normal: {
+      short: 'Sharper clues. Earn 1.25x coins and score.',
+      long: 'Sharper clues and a faster approaching horde. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Hardest clues. Earn 2x coins and score.',
+      long: 'The hardest clues under maximum pressure. Earn 2x coins and score.',
+    },
   },
   math: {
-    easy: 'Quick addition and subtraction, relaxed horde.',
-    normal: 'Multiplication and bigger sums against the outbreak. Earn 1.25× coins and score.',
-    nightmare: 'Multi-step problems under max pressure. Earn 2× coins and score.',
+    easy: { short: 'Quick addition and subtraction, relaxed horde.', long: 'Quick addition and subtraction, relaxed horde.' },
+    normal: {
+      short: 'Bigger sums. Earn 1.25x coins and score.',
+      long: 'Multiplication and bigger sums against the outbreak. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Multi-step problems. Earn 2x coins and score.',
+      long: 'Multi-step problems under max pressure. Earn 2x coins and score.',
+    },
   },
   trivia: {
-    easy: 'Everyday questions with time to think.',
-    normal: 'Trickier questions and a faster approaching horde. Earn 1.25× coins and score.',
-    nightmare: 'Tough questions under maximum pressure. Earn 2× coins and score.',
+    easy: { short: 'Everyday questions with time to think.', long: 'Everyday questions with time to think.' },
+    normal: {
+      short: 'Trickier questions. Earn 1.25x coins and score.',
+      long: 'Trickier questions and a faster approaching horde. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Tough questions. Earn 2x coins and score.',
+      long: 'Tough questions under maximum pressure. Earn 2x coins and score.',
+    },
   },
 };
 
@@ -91,29 +117,36 @@ export function MainMenu({
   onDifficulty,
   onRiddleMode,
   onPuzzleStyle,
+  mobileSpeechExperience = false,
 }: Props) {
-  const activeStyle: Style = riddleMode ? puzzleStyle : 'typing';
+  const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
+  const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
+  const [mobileRecordsOpen, setMobileRecordsOpen] = useState(false);
+  const recordsTitle = 'Career Stats';
+
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-6 overflow-y-auto px-6 pb-10 pt-16 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-6 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
-        <h1 className="text-5xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-7xl">
+        <h1 className="text-2xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
         </h1>
-        <p className="mt-2 text-sm tracking-[0.35em] text-neon-cyan">TYPE OR BE DEVOURED</p>
+        <p className="mt-1 hidden text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:block sm:text-sm sm:tracking-[0.35em]">
+          TYPE OR BE DEVOURED
+        </p>
       </div>
 
-      <div className="grid w-full gap-5 lg:grid-cols-[1.2fr_0.85fr_0.8fr]">
-        <div className="space-y-4">
-          {/* Difficulty */}
+      <div className="grid w-full gap-2 sm:gap-4 lg:grid-cols-[1.2fr_0.85fr_0.8fr] lg:gap-5">
+        <div className="order-2 space-y-2 sm:space-y-4 lg:order-none">
           <div>
-            <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Difficulty</div>
+            <SectionLabel>Difficulty</SectionLabel>
             <div className="flex gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1">
               {DIFFS.map((d) => (
                 <button
                   key={d}
                   onClick={() => onDifficulty(d)}
-                  className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
+                  aria-pressed={difficulty === d}
+                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-bold transition-all sm:px-3 sm:py-2 sm:text-sm ${
                     difficulty === d ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
@@ -121,85 +154,185 @@ export function MainMenu({
                 </button>
               ))}
             </div>
-            {/* Reserve 2 lines so switching difficulty never shifts the buttons. */}
-            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">
-              {DIFF_BLURB[activeStyle][difficulty]}
+            <p className="mt-1 text-[11px] leading-snug text-white/40 sm:hidden">
+              {DIFF_BLURB[activeStyle][difficulty].short}
+            </p>
+            <p className="mt-1.5 hidden min-h-[2.25rem] text-xs leading-snug text-white/40 sm:block">
+              {DIFF_BLURB[activeStyle][difficulty].long}
             </p>
           </div>
 
-          {/* Play style: type words, or solve a puzzle for a volley */}
           <div>
-            <div className="mb-1.5 text-[11px] uppercase tracking-widest text-white/40">Play style</div>
-            <div className="grid grid-cols-2 gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1">
-              {STYLE_ORDER.map((s) => (
+            <SectionLabel>Play style</SectionLabel>
+            <div
+              className={`grid gap-1.5 rounded-lg border border-white/10 bg-ink-800/60 p-1 sm:grid-cols-2 sm:gap-2 ${
+                mobileSpeechExperience ? 'grid-cols-3' : 'grid-cols-2'
+              }`}
+            >
+              {styles.map((s) => (
                 <button
                   key={s}
                   onClick={() => selectStyle(s)}
-                  className={`rounded-md px-3 py-2 text-sm font-bold transition-all ${
+                  aria-pressed={activeStyle === s}
+                  className={`min-h-10 rounded-md px-1.5 py-1.5 text-center text-[11px] font-bold transition-all sm:min-h-11 sm:px-3 sm:py-2 sm:text-left sm:text-sm ${
                     activeStyle === s ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
-                  {STYLE_META[s].icon} {STYLE_META[s].label} Defense
+                  <span>
+                    <span className="mr-1">{STYLE_META[s].emoji}</span>
+                    {STYLE_META[s].label} Defense
+                  </span>
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 min-h-[2.25rem] text-xs leading-snug text-white/40">{STYLE_META[activeStyle].blurb}</p>
+            <p className="mt-1 min-h-0 text-[11px] leading-snug text-white/40 sm:mt-1.5 sm:min-h-[2.25rem] sm:text-xs">{STYLE_META[activeStyle].blurb}</p>
           </div>
 
-          {/* Modes + nav */}
-          <div className="space-y-3">
-            <button className="menu-btn text-base" onClick={() => onStart('survival')}>
-              <span className="mr-3 inline-block w-6 text-center">▶</span>Zombie Survival
-            </button>
-            <button className="menu-btn text-base" onClick={() => onStart('bossrush')}>
-              <span className="mr-3 inline-block w-6 text-center">💀</span>Boss Rush
-            </button>
-            <div className="grid grid-cols-2 gap-3">
-              <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
-                <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
-              </button>
-              <button className="menu-btn text-base" onClick={() => onNav('leaderboard')}>
-                <span className="mr-2 inline-block w-5 text-center">🏆</span>Leaderboard
-              </button>
-              <button className="menu-btn text-base" onClick={() => onNav('howto')}>
-                <span className="mr-2 inline-block w-5 text-center">❓</span>How to Play
-              </button>
-              <button className="menu-btn text-base" onClick={() => onNav('settings')}>
-                <span className="mr-2 inline-block w-5 text-center">🔧</span>Settings
-              </button>
+          {/* Desktop deploy (in flow). On mobile these render below, above Career Stats. */}
+          <div className="hidden sm:block">
+            <SectionLabel>Deploy</SectionLabel>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
+              <DeployButton tone="green" title="Start Survival" detail="Endless waves" onClick={() => onStart('survival')} />
+              <DeployButton tone="pink" title="Start Boss Rush" detail="Boss gauntlet" onClick={() => onStart('bossrush')} />
             </div>
+          </div>
+
+          {/* Mobile deploy — in flow, above Career Stats, no "Deploy" label. */}
+          <div className="grid grid-cols-2 gap-2 sm:hidden">
+            <button
+              onClick={() => onStart('survival')}
+              className="rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2.5 text-center transition active:scale-95"
+            >
+              <span className="block text-sm font-black uppercase tracking-wide text-neon-green">▶ Start Survival</span>
+              <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Endless waves</span>
+            </button>
+            <button
+              onClick={() => onStart('bossrush')}
+              className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2.5 text-center transition active:scale-95"
+            >
+              <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">▶ Start Boss Rush</span>
+              <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Boss gauntlet</span>
+            </button>
+          </div>
+
+          {/* Divider keeps Deploy visually separate from the menu buttons below. */}
+          <div className="h-px bg-white/10 sm:hidden" />
+
+          <button
+            onClick={() => setMobileRecordsOpen(true)}
+            className="flex w-full items-center justify-between rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-black uppercase tracking-wider text-neon-green transition hover:border-neon-green hover:bg-ink-600 sm:hidden"
+          >
+            <span>{recordsTitle}</span>
+            <span className="text-white/45">View</span>
+          </button>
+
+          {/* Mobile nav (kept): large tappable buttons. */}
+          <div className="grid grid-cols-2 gap-2 sm:hidden" aria-label="Menu navigation">
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('upgrades')}>
+              Store
+            </button>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('leaderboard')}>
+              Leaderboard
+            </button>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('howto')}>
+              How to Play
+            </button>
+            <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('settings')}>
+              Settings
+            </button>
+          </div>
+
+          {/* Desktop nav (reverted to prior menu-btn + emojis). */}
+          <div className="hidden grid-cols-2 gap-3 sm:grid" aria-label="Menu navigation">
+            <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
+              <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
+            </button>
+            <button className="menu-btn text-base" onClick={() => onNav('leaderboard')}>
+              <span className="mr-2 inline-block w-5 text-center">🏆</span>Leaderboard
+            </button>
+            <button className="menu-btn text-base" onClick={() => onNav('howto')}>
+              <span className="mr-2 inline-block w-5 text-center">❓</span>How to Play
+            </button>
+            <button className="menu-btn text-base" onClick={() => onNav('settings')}>
+              <span className="mr-2 inline-block w-5 text-center">🔧</span>Settings
+            </button>
           </div>
         </div>
 
-        {/* Equipped survivor */}
         <button
           onClick={() => onNav('closet')}
-          className="group relative min-h-[360px] overflow-hidden rounded-2xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon"
+          aria-label="Open closet to customize survivor"
+          className="group relative order-1 min-h-[218px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
-          <div className="absolute left-3 top-3 z-10">
+          <div className="absolute left-3 right-44 top-3 z-10 sm:right-3">
             <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-neon-cyan/70">Survivor</div>
-            <div className="max-w-[220px] truncate text-xl font-black tracking-wide text-neon-green drop-shadow-[0_0_12px_rgba(57,255,20,0.55)]">
+            <div className="max-w-[min(100%,14rem)] truncate text-xl font-black tracking-wide text-neon-green drop-shadow-[0_0_12px_rgba(57,255,20,0.55)] sm:max-w-[220px]">
               {username}
             </div>
           </div>
           <CharacterAvatar
             character={character}
             armed={false}
-            className="absolute inset-x-0 bottom-9 mx-auto h-[310px] w-[245px] transition group-hover:scale-[1.025]"
+            className="absolute bottom-[-22px] right-0 h-[252px] w-[199px] transition group-hover:scale-[1.025] sm:inset-x-0 sm:bottom-9 sm:mx-auto sm:h-[270px] sm:w-[214px] lg:h-[310px] lg:w-[245px]"
           />
-          <div className="absolute inset-x-4 bottom-3 flex justify-end border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest">
-            <span className="font-bold text-neon-green">Customize →</span>
+          <div className="absolute bottom-3 left-3 right-44 flex justify-start border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest sm:inset-x-4 sm:justify-end">
+            <span className="font-bold text-neon-green">Customize</span>
           </div>
         </button>
 
-        {/* Records */}
-        <Records stats={stats} riddleStats={riddleStats} riddleMode={riddleMode} />
+        <div className="order-3 hidden sm:block lg:order-none">
+          <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} />
+        </div>
       </div>
 
-      <p className="text-xs tracking-[0.25em] text-white/25">SURVIVE THE NIGHT · OUTLAST THE DEAD</p>
-      <AdBanner />
+      <p className="hidden text-xs tracking-[0.25em] text-white/25 sm:block">SURVIVE THE NIGHT | OUTLAST THE DEAD</p>
+      <div className="hidden w-full sm:block">
+        <AdBanner />
+      </div>
+
+      {mobileRecordsOpen && (
+        <div className="fixed inset-0 z-[60] flex items-end bg-black/70 p-3 sm:hidden" onClick={() => setMobileRecordsOpen(false)}>
+          <div
+            className="w-full rounded-2xl border border-neon-pink/35 bg-ink-900 p-3 shadow-[0_0_28px_rgba(255,43,214,0.2)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">{recordsTitle}</div>
+              <button
+                onClick={() => setMobileRecordsOpen(false)}
+                className="rounded-md border border-white/15 bg-black/45 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/60"
+              >
+                Close
+              </button>
+            </div>
+            <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} compact />
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return <div className="mb-1 text-[10px] uppercase tracking-widest text-white/40 sm:mb-1.5 sm:text-[11px]">{children}</div>;
+}
+
+function DeployButton({ title, detail, tone, onClick }: { title: string; detail: string; tone: 'green' | 'pink'; onClick: () => void }) {
+  const toneClass =
+    tone === 'green'
+      ? 'border-neon-green/50 bg-neon-green/10 hover:border-neon-green hover:bg-neon-green/15 hover:shadow-neon focus:ring-neon-green/60'
+      : 'border-neon-pink/50 bg-neon-pink/10 hover:border-neon-pink hover:bg-neon-pink/15 hover:shadow-[0_0_14px_rgba(255,43,214,0.45)] focus:ring-neon-pink/60';
+  const titleClass = tone === 'green' ? 'text-neon-green' : 'text-neon-pink';
+
+  return (
+    <button
+      className={`rounded-lg border px-3 py-1.5 text-left transition focus:outline-none focus:ring-2 sm:px-6 sm:py-3 ${toneClass}`}
+      onClick={onClick}
+    >
+      <span className={`block text-sm font-black uppercase tracking-wide sm:text-base ${titleClass}`}>{title}</span>
+      <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-widest text-white/40 sm:text-xs">{detail}</span>
+    </button>
   );
 }
 
@@ -207,26 +340,24 @@ function Records({
   stats,
   riddleStats,
   riddleMode,
+  compact = false,
 }: {
   stats: GameStats;
   riddleStats: GameStats;
   riddleMode: boolean;
+  compact?: boolean;
 }) {
   const selected = riddleMode ? riddleStats : stats;
-  const bestMode = STYLE_META[(riddleStats.bestMode as Style) || 'riddles']?.label ?? '—';
+  const bestMode = STYLE_META[(riddleStats.bestMode as Style) || 'riddles']?.label ?? '-';
   return (
-    <div className="rounded-xl border border-neon-pink/25 bg-ink-800/70 p-4">
-      <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-neon-pink">
-        {riddleMode ? 'Solver' : 'Typing'} Records
+    <div className={`rounded-xl border border-neon-pink/25 bg-ink-800/70 ${compact ? 'p-3' : 'p-4'}`}>
+      <h3 className={`${compact ? 'mb-2 text-xs' : 'mb-3 text-sm'} font-bold uppercase tracking-widest text-neon-pink`}>
+        Career Stats
       </h3>
-      <dl className="space-y-1.5 text-sm">
+      <dl className={`${compact ? 'space-y-1 text-xs' : 'space-y-1.5 text-sm'}`}>
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
         <Row k="Longest Survival" v={formatTime(selected.longestSurvivalMs)} />
-        {riddleMode ? (
-          <Row k="Best Mode" v={riddleStats.bestMode ? bestMode : '—'} />
-        ) : (
-          <Row k="Highest WPM" v={selected.highestWpm} />
-        )}
+        {riddleMode ? <Row k="Best Mode" v={riddleStats.bestMode ? bestMode : '-'} /> : <Row k="Highest WPM" v={selected.highestWpm} />}
         <Row k="Total Kills" v={selected.totalKills} />
         <Row k="Bosses Defeated" v={selected.bossesDefeated} />
         <Row k="Longest Streak" v={selected.longestStreak} />

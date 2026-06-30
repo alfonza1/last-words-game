@@ -15,9 +15,9 @@ function Bar({ value, max, color }: { value: number; max: number; color: string 
 
 function Stat({ label, value, accent }: { label: string; value: string | number; accent?: string }) {
   return (
-    <div className="stat-chip">
-      <div className="text-[10px] uppercase tracking-widest text-white/40">{label}</div>
-      <div className="text-lg font-bold" style={{ color: accent ?? '#e8ffe8' }}>
+    <div className="min-w-0 flex-1 rounded-md border border-white/10 bg-ink-800/85 px-1.5 py-0.5 text-center sm:min-w-[5rem] sm:flex-none sm:px-3 sm:py-1.5">
+      <div className="text-[7px] uppercase tracking-wider text-white/40 sm:text-[10px] sm:tracking-widest">{label}</div>
+      <div className="text-xs font-bold leading-tight sm:text-lg" style={{ color: accent ?? '#e8ffe8' }}>
         {value}
       </div>
     </div>
@@ -33,6 +33,7 @@ interface HUDProps {
 
 export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
   const p = s.powerups;
+  const showWpm = !s.riddleMode;
   const activePowerups: Array<{ label: string; color: string }> = [];
   if (p.shotgunArmed) activePowerups.push({ label: 'SHOTGUN', color: '#ff2bd6' });
   if (p.shieldCharges > 0) activePowerups.push({ label: `SHIELD x${p.shieldCharges}`, color: '#00f0ff' });
@@ -41,10 +42,10 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
   if (p.freezeMs > 0) activePowerups.push({ label: 'FROZEN', color: '#00f0ff' });
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-3">
-      <div className="flex items-start justify-between gap-3">
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-2 sm:p-3">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
         {/* Health + wave */}
-        <div className="w-64 max-w-[40vw] space-y-1">
+        <div className="w-40 max-w-[42vw] space-y-1 sm:w-64">
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-neon-red">HEALTH</span>
             <span className="tabular-nums text-white/70">
@@ -63,29 +64,29 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
           </div>
         </div>
 
-        {/* Controls (left of the score) + core stats */}
-        <div className="flex items-start gap-2">
-          <div className="pointer-events-auto flex gap-1.5">
+        {/* Core stats + controls. On mobile the chips stay on a single row. */}
+        <div className="flex max-w-[58vw] flex-col items-end gap-1.5 sm:max-w-none">
+          <div className={`flex w-full gap-1 sm:grid sm:gap-1.5 ${showWpm ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
+            <Stat label="Score" value={s.score.toLocaleString()} accent="#ffb300" />
+            {showWpm && <Stat label="WPM" value={s.wpm} accent="#00f0ff" />}
+            <Stat label="Acc" value={`${s.accuracy}%`} accent="#39ff14" />
+            <Stat label="Streak" value={s.streak} accent="#ff2bd6" />
+            <Stat label="Coins" value={s.coins} accent="#ffd166" />
+          </div>
+          <div className="pointer-events-auto flex justify-end gap-1.5">
             <button
               onClick={onToggleMute}
               title="Mute all (music + gunshots)"
-              className="rounded-md border border-white/15 bg-black/60 px-2.5 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
+              className="rounded-md border border-white/15 bg-black/60 px-2.5 py-1 text-sm text-white/70 hover:border-neon-green hover:text-neon-green sm:py-1.5"
             >
               {muted ? '🔇' : '🔊'}
             </button>
             <button
               onClick={onPause}
-              className="rounded-md border border-neon-green/40 bg-black/60 px-2.5 py-1.5 text-sm font-bold text-neon-green hover:bg-ink-600"
+              className="rounded-md border border-neon-green/40 bg-black/60 px-2.5 py-1 text-sm font-bold text-neon-green hover:bg-ink-600 sm:py-1.5"
             >
               ⏸
             </button>
-          </div>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-            <Stat label="Score" value={s.score.toLocaleString()} accent="#ffb300" />
-            <Stat label="WPM" value={s.wpm} accent="#00f0ff" />
-            <Stat label="Acc" value={`${s.accuracy}%`} accent="#39ff14" />
-            <Stat label="Streak" value={s.streak} accent="#ff2bd6" />
-            <Stat label="Coins" value={s.coins} accent="#ffd166" />
           </div>
         </div>
       </div>

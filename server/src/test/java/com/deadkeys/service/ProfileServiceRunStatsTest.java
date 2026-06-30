@@ -34,6 +34,7 @@ class ProfileServiceRunStatsTest {
     assertEquals(20, profile.riddleStats.coinsEarned);
     assertEquals(20, profile.riddleStats.totalCoins);
     assertEquals(1, profile.riddleStats.gamesPlayed);
+    assertEquals(0, profile.riddleStats.highestWpm);
   }
 
   @Test

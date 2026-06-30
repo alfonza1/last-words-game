@@ -16,10 +16,12 @@ function modeLabel(e: LeaderboardEntry): string {
   return STYLE_LABEL[e.style] ?? 'Puzzle';
 }
 
-export function Leaderboard({ onBack }: { onBack: () => void }) {
+export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack: () => void; mobileSpeechExperience?: boolean }) {
   const [data, setData] = useState<Leaderboards | null>(null);
   const [error, setError] = useState(false);
-  const [board, setBoard] = useState<Board>('typers');
+  // Mobile plays the speech/solver experience — there's no typing here, so the
+  // typers board is irrelevant. Start on (and lock to) solvers.
+  const [board, setBoard] = useState<Board>(mobileSpeechExperience ? 'solvers' : 'typers');
 
   useEffect(() => {
     let cancelled = false;
@@ -43,32 +45,35 @@ export function Leaderboard({ onBack }: { onBack: () => void }) {
         ← Back
       </button>
 
-      <div className="mt-6 text-center">
+      <div className="mt-14 text-center sm:mt-6">
         <h1 className="text-4xl font-black tracking-widest text-neon-green drop-shadow-[0_0_20px_rgba(57,255,20,0.55)]">
           LEADERBOARD
         </h1>
         <p className="mt-1 text-xs uppercase tracking-[0.35em] text-neon-cyan">🌍 Top 20 in the World</p>
       </div>
 
-      {/* Board toggle: typers vs solvers (riddle / math / trivia) */}
-      <div className="mx-auto flex w-full max-w-sm gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1">
-        <button
-          onClick={() => setBoard('typers')}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
-            board === 'typers' ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
-          }`}
-        >
-          ⌨ Top Typers
-        </button>
-        <button
-          onClick={() => setBoard('solvers')}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
-            board === 'solvers' ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
-          }`}
-        >
-          🧩 Top Solvers
-        </button>
-      </div>
+      {/* Board toggle: typers vs solvers (riddle / math / trivia). Mobile has no
+          typing experience, so the toggle is hidden and only solvers is shown. */}
+      {!mobileSpeechExperience && (
+        <div className="mx-auto flex w-full max-w-sm gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1">
+          <button
+            onClick={() => setBoard('typers')}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
+              board === 'typers' ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
+            }`}
+          >
+            ⌨ Top Typers
+          </button>
+          <button
+            onClick={() => setBoard('solvers')}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-bold transition-all ${
+              board === 'solvers' ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
+            }`}
+          >
+            🧩 Top Solvers
+          </button>
+        </div>
+      )}
       <p className="-mt-2 text-center text-[11px] text-white/35">
         {board === 'typers' ? "Elite Typists - Top Typing Defense scores." : 'Sharpest minds — Top Riddle, Math & Trivia Defense scores.'}
       </p>

@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   DEFAULT_STATS,
+  loadRiddleStats,
   loadStats,
+  saveRiddleStats,
   saveStats,
   loadUpgrades,
   saveUpgrades,
@@ -10,8 +12,6 @@ import {
   addHighScore,
   loadHighScores,
   mergeRunIntoStats,
-  loadDailyBest,
-  saveDailyBest,
   DEFAULT_UPGRADES,
   generateGuestName,
   loadGuest,
@@ -60,6 +60,11 @@ describe('save/load round trips', () => {
     const s = { ...DEFAULT_STATS, bestScore: 1234 };
     saveStats(s, store);
     expect(loadStats(store).bestScore).toBe(1234);
+  });
+  it('does not keep WPM records for solver stats', () => {
+    saveRiddleStats({ ...DEFAULT_STATS, highestWpm: 90 }, store);
+    expect(loadRiddleStats(store).highestWpm).toBe(0);
+    expect(JSON.parse(store.getItem(STORAGE_KEYS.riddleStats)!).highestWpm).toBe(0);
   });
   it('merges new default fields into older saves', () => {
     store.setItem('ztr.settings', JSON.stringify({ difficulty: 'nightmare' }));
@@ -145,13 +150,13 @@ describe('mergeRunIntoStats', () => {
       bossesDefeated: 1,
       streak: 20,
       coins: 40,
-      style: 'trivia',
+      style: 'typing',
     });
     expect(merged.bestScore).toBe(500);
     expect(merged.totalKills).toBe(12);
     expect(merged.totalCoins).toBe(40);
     expect(merged.gamesPlayed).toBe(1);
-    expect(merged.bestMode).toBe('trivia');
+    expect(merged.bestMode).toBe('typing');
 
     const again = mergeRunIntoStats(merged, {
       score: 200,
@@ -165,10 +170,10 @@ describe('mergeRunIntoStats', () => {
       style: 'riddles',
     });
     expect(again.bestScore).toBe(500); // keeps the higher
-    expect(again.highestWpm).toBe(70); // new record
+    expect(again.highestWpm).toBe(60); // solver modes do not track WPM
     expect(again.totalKills).toBe(15);
     expect(again.gamesPlayed).toBe(2);
-    expect(again.bestMode).toBe('trivia');
+    expect(again.bestMode).toBe('typing');
   });
 });
 
@@ -185,15 +190,5 @@ describe('legacy weak-word cleanup', () => {
     expect(loaded.bestScore).toBe(100);
     expect(loaded).not.toHaveProperty('missedWords');
     expect(JSON.parse(store.getItem(STORAGE_KEYS.stats)!)).not.toHaveProperty('missedWords');
-  });
-});
-
-describe('daily best', () => {
-  it('stores and updates the best for a date', () => {
-    expect(loadDailyBest('2026-06-21', store)).toBe(0);
-    expect(saveDailyBest('2026-06-21', 300, store)).toBe(300);
-    expect(saveDailyBest('2026-06-21', 100, store)).toBe(300); // keeps higher
-    expect(loadDailyBest('2026-06-21', store)).toBe(300);
-    expect(loadDailyBest('2026-06-22', store)).toBe(0); // different day
   });
 });

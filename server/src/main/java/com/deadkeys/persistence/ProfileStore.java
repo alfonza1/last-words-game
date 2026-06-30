@@ -58,7 +58,11 @@ public class ProfileStore {
   public EnsuredProfile ensureProfile(String id, String name) {
     Profile existing = findProfile(id);
     if (existing != null) return new EnsuredProfile(existing, false);
-    String handle = (name != null && !name.trim().isEmpty()) ? name.trim() : randomHandle();
+    String trimmed = name == null ? "" : name.trim();
+    // Usernames are capped at 20 characters everywhere; clamp the initial handle
+    // (which can come from a Firebase display name) so it can never exceed that.
+    if (trimmed.length() > 20) trimmed = trimmed.substring(0, 20).trim();
+    String handle = !trimmed.isEmpty() ? trimmed : randomHandle();
     Profile p = new Profile(id, handle);
     save(p);
     return new EnsuredProfile(p, true);

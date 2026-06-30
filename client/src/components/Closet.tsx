@@ -20,6 +20,14 @@ interface Props {
   onBack: () => void;
 }
 
+type ClosetTab = 'body' | 'face' | 'outfit' | 'extras';
+const CLOSET_TABS: { id: ClosetTab; label: string; icon: string }[] = [
+  { id: 'body', label: 'Body', icon: '🧍' },
+  { id: 'face', label: 'Face', icon: '🙂' },
+  { id: 'outfit', label: 'Outfit', icon: '🧥' },
+  { id: 'extras', label: 'Extras', icon: '🎒' },
+];
+
 export function Closet({
   character,
   ownedCosmetics,
@@ -42,6 +50,10 @@ export function Closet({
   const owned = useMemo(() => new Set(ownedCosmetics), [ownedCosmetics]);
   const ownedOutfits = useMemo(() => cosmeticsFor('outfit').filter((item) => owned.has(item.key)), [owned]);
   const ownedAccessories = useMemo(() => cosmeticsFor('accessory').filter((item) => owned.has(item.key)), [owned]);
+  // Mobile shows one customization category at a time (like the shop) to cut
+  // scrolling; desktop (sm+) shows every group.
+  const [tab, setTab] = useState<ClosetTab>('body');
+  const groupClass = (id: ClosetTab) => `${tab === id ? 'block' : 'hidden'} space-y-3 sm:block`;
 
   const updateDraft = (change: Partial<CharacterLoadout>) => {
     setDraft((prev) => ({ ...prev, ...change }));
@@ -92,23 +104,23 @@ export function Closet({
   };
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4">
-      <div className="flex flex-wrap items-start gap-3">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col gap-3 overflow-y-auto p-4 pb-24 sm:pb-4">
+      <div className="flex flex-wrap items-start gap-2 sm:gap-3">
         <button
           onClick={requestBack}
-          className="rounded-md border border-white/15 bg-black/50 px-3 py-1.5 text-sm text-white/70 hover:border-neon-green hover:text-neon-green"
+          className="order-2 flex min-h-11 flex-1 basis-0 items-center justify-center rounded-lg border border-white/15 bg-black/50 px-3 py-2 text-center text-sm font-bold text-white/70 hover:border-neon-green hover:text-neon-green sm:order-none sm:flex-none sm:basis-auto sm:py-1.5 sm:text-left sm:font-normal"
         >
           ← Back
         </button>
-        <div className="min-w-[210px] flex-1">
-          <h1 className="text-2xl font-black tracking-widest text-neon-cyan">{username}’s Closet</h1>
+        <div className="order-1 min-w-0 basis-full sm:order-none sm:min-w-[210px] sm:basis-auto sm:flex-1">
+          <h1 className="truncate text-xl font-black tracking-widest text-neon-cyan sm:text-2xl">{username}’s Closet</h1>
           <p className="text-[8px] uppercase tracking-[0.2em] text-white/35 sm:text-[10px] sm:tracking-[0.28em]">
             Build your last known look
           </p>
         </div>
         <button
           onClick={requestStore}
-          className="group ml-auto flex min-h-11 flex-none items-center gap-2 rounded-xl border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-5 py-2.5 text-left shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)]"
+          className="group order-3 flex min-h-11 flex-1 basis-0 items-center justify-center gap-2 rounded-lg border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-3 py-2 text-center shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)] sm:order-none sm:ml-auto sm:flex-none sm:basis-auto sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-left"
         >
           <span className="h-2 w-2 rounded-full bg-neon-pink shadow-[0_0_12px_rgba(255,43,214,0.9)] transition group-hover:bg-neon-cyan group-hover:shadow-[0_0_14px_rgba(0,240,255,0.9)]" />
           <span className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Open Shop</span>
@@ -116,7 +128,7 @@ export function Closet({
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[300px_1fr] lg:gap-4">
-        <section className="relative flex min-h-[430px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-3">
+        <section className="relative flex min-h-[340px] flex-col overflow-hidden rounded-2xl border border-neon-cyan/25 bg-ink-800/85 p-3 sm:min-h-[430px]">
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-cyan/10 to-transparent" />
 
           <div className="relative flex flex-1 items-center justify-center">
@@ -124,35 +136,55 @@ export function Closet({
           <CharacterAvatar character={draft} armed={false} className="relative h-[275px] w-[220px] max-w-full" />
         </div>
 
-        <div className="relative overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/55 p-2.5">
-          <div className="absolute inset-y-0 left-0 w-1 bg-neon-cyan shadow-[0_0_14px_rgba(0,240,255,0.8)]" />
-          <div className="flex items-center justify-between gap-3 pl-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">Survivor Look</span>
-            <span
-              className={`rounded border px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
+          {/* Desktop: Survivor Look status + equip in the left column (yesterday's layout). */}
+          <div className="relative hidden overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/55 p-2.5 sm:block">
+            <div className="absolute inset-y-0 left-0 w-1 bg-neon-cyan shadow-[0_0_14px_rgba(0,240,255,0.8)]" />
+            <div className="flex items-center justify-between gap-3 pl-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">Survivor Look</span>
+              <span
+                className={`rounded border px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
+                  hasUnsavedChanges
+                    ? 'border-neon-amber/50 bg-neon-amber/10 text-neon-amber'
+                    : 'border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan'
+                }`}
+              >
+                {hasUnsavedChanges ? 'Unsaved' : 'Equipped'}
+              </span>
+            </div>
+            <button
+              onClick={save}
+              disabled={!dirty || saved || saving}
+              className={`mt-2 w-full rounded-lg border px-4 py-1.5 text-xs font-black tracking-wider ${
                 hasUnsavedChanges
-                  ? 'border-neon-amber/50 bg-neon-amber/10 text-neon-amber'
-                  : 'border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan'
+                  ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-neon'
+                  : 'border-neon-cyan/25 bg-neon-cyan/5 text-neon-cyan/60'
               }`}
             >
-              {hasUnsavedChanges ? 'Unsaved' : 'Equipped'}
-            </span>
+              {saving ? 'EQUIPPING…' : 'EQUIP LOOK'}
+            </button>
           </div>
-          <button
-            onClick={save}
-            disabled={!dirty || saved || saving}
-            className={`mt-2 w-full rounded-lg border px-4 py-1.5 text-xs font-black tracking-wider ${
-              hasUnsavedChanges
-                ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-neon'
-                : 'border-neon-cyan/25 bg-neon-cyan/5 text-neon-cyan/60'
-            }`}
-          >
-            {saving ? 'EQUIPPING…' : 'EQUIP LOOK'}
-          </button>
-        </div>
+
       </section>
 
         <section className="space-y-3">
+        {/* Mobile category tabs — one section at a time, shop-style. */}
+        <div className="sticky top-0 z-10 flex gap-1 rounded-lg border border-white/10 bg-ink-900/95 p-1 backdrop-blur sm:hidden">
+          {CLOSET_TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              aria-pressed={tab === t.id}
+              className={`flex-1 rounded-md px-1 py-1.5 text-[10px] font-bold transition-all ${
+                tab === t.id ? 'bg-neon-cyan/15 text-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.25)]' : 'text-white/55'
+              }`}
+            >
+              <span className="block text-sm leading-none">{t.icon}</span>
+              <span className="mt-0.5 block truncate">{t.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className={groupClass('body')}>
         <Picker title="Skin tone">
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {SKIN_TONES.map((tone) => (
@@ -206,7 +238,9 @@ export function Closet({
             </div>
           </Picker>
         </div>
+        </div>
 
+        <div className={groupClass('face')}>
         <Picker title="Face Expression">
           <p className="-mt-1 mb-2 text-[9px] uppercase tracking-[0.18em] text-white/35">
             Choose the look you give the dead.
@@ -251,20 +285,43 @@ export function Closet({
             })}
           </div>
         </Picker>
+        </div>
 
+        <div className={groupClass('outfit')}>
         <CosmeticPicker
           title="Outfits"
           items={ownedOutfits}
           selected={draft.outfit}
           onChoose={(key) => chooseCosmetic(key, 'outfit')}
         />
+        </div>
+
+        <div className={groupClass('extras')}>
         <CosmeticPicker
           title="Accessories"
           items={ownedAccessories}
           selected={draft.accessory}
           onChoose={(key) => chooseCosmetic(key, 'accessory')}
         />
+        </div>
         </section>
+      </div>
+
+      {/* Mobile-only equip bar (smaller). Desktop uses the Survivor Look card in the left column (above). */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neon-cyan/25 bg-ink-900/95 px-4 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(0,0,0,0.38)] backdrop-blur-md sm:hidden">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            onClick={save}
+            disabled={!dirty || saved || saving}
+            className={`w-full rounded-xl border px-5 py-2 text-xs font-black uppercase tracking-wider sm:max-w-xs sm:py-3 sm:text-sm ${
+              hasUnsavedChanges
+                ? 'border-neon-green bg-neon-green/10 text-neon-green shadow-neon'
+                : 'border-neon-cyan/25 bg-neon-cyan/5 text-neon-cyan/60'
+            } disabled:cursor-default disabled:opacity-75`}
+          >
+            {saving ? 'EQUIPPING...' : hasUnsavedChanges ? 'EQUIP LOOK' : 'LOOK EQUIPPED'}
+          </button>
+        </div>
       </div>
 
       {pendingExit && (

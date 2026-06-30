@@ -34,12 +34,25 @@ const STYLES: Record<ToastKind, string> = {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(1);
+  const activeToastKeys = useRef(new Set<string>());
+  const toastKeysById = useRef(new Map<number, string>());
 
-  const remove = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
+  const remove = useCallback((id: number) => {
+    const key = toastKeysById.current.get(id);
+    if (key) {
+      activeToastKeys.current.delete(key);
+      toastKeysById.current.delete(id);
+    }
+    setToasts((t) => t.filter((x) => x.id !== id));
+  }, []);
 
   const show = useCallback(
     (message: string, kind: ToastKind = 'info') => {
+      const key = JSON.stringify([kind, message]);
+      if (activeToastKeys.current.has(key)) return;
       const id = nextId.current++;
+      activeToastKeys.current.add(key);
+      toastKeysById.current.set(id, key);
       setToasts((t) => [...t, { id, message, kind }]);
       window.setTimeout(() => remove(id), 5000);
     },

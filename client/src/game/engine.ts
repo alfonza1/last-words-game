@@ -23,6 +23,7 @@ import {
 import {
   getDifficultyConfig,
   isBossWave,
+  MOBILE_SPEED_MULT,
   waveSpawnInterval,
   waveSpeed,
   waveZombieCount,
@@ -72,6 +73,8 @@ export interface EngineOptions {
   riddleMode?: boolean;
   /** Which puzzle to solve when riddleMode is on (default 'riddles'). */
   puzzleStyle?: PuzzleStyle;
+  /** Mobile session: smaller screen + voice input, so zombies move a bit slower. */
+  mobile?: boolean;
 }
 
 const DOUBLE_DAMAGE_MS = 5000;
@@ -112,6 +115,7 @@ export class GameEngine {
   // so we can show prompts and accept synonyms while reusing the typing pipeline.
   private riddleQueue: Puzzle[] = [];
   private puzzleStyle: PuzzleStyle = 'riddles';
+  private mobile = false;
   private solvedPuzzlePrompts = new Set<string>();
   private finitePuzzleGoal: number | null = null;
   private queuedSolverShots: SolverShot[] = [];
@@ -121,6 +125,7 @@ export class GameEngine {
   constructor(opts: EngineOptions) {
     this.rng = mulberry32(opts.seed ?? hashSeed(`${Date.now()}-${Math.random()}`));
     this.puzzleStyle = opts.puzzleStyle ?? 'riddles';
+    this.mobile = !!opts.mobile;
     const difficulty = opts.mode === 'bossrush' ? 'normal' : opts.difficulty;
     const cfg = getDifficultyConfig(difficulty);
     const maxHealth = cfg.startHealth + maxHealthBonus(opts.upgrades);
@@ -291,6 +296,12 @@ export class GameEngine {
     else if (this.state.status === 'paused') this.resume();
   }
 
+  forfeit() {
+    if (this.state.status === 'gameover') return;
+    this.state.health = 0;
+    this.state.status = 'gameover';
+  }
+
   get matchOptions(): MatchOptions {
     // Strictness is dictated by difficulty: harder modes require exact
     // capitalization & punctuation, no matter the player's preference.
@@ -324,6 +335,19 @@ export class GameEngine {
     if (c.freeze > 0) cmds.push('freeze');
     if (c.medkit > 0) cmds.push('medkit');
     return cmds;
+  }
+
+  /**
+   * Activate a consumable powerup from a UI button (mobile, where typing the
+   * command word isn't practical). Returns true if a charge was spent.
+   */
+  activatePowerup(key: string): boolean {
+    const s = this.state;
+    if (s.status !== 'playing' || (s.wave > 0 && s.betweenWaves > 0)) return false;
+    const owned = (s.powerups.consumables as unknown as Record<string, number>)[key] ?? 0;
+    if (owned <= 0) return false;
+    this.runCommand(key);
+    return true;
   }
 
   /**
@@ -516,6 +540,8 @@ export class GameEngine {
     }
     // Puzzle Mode slows zombies — kills come in bursts after each solve.
     if (s.riddleMode) speed *= puzzleSpeedMult(this.puzzleStyle);
+    // Mobile sessions (smaller screen + slower voice input) ease zombie speed.
+    if (this.mobile) speed *= MOBILE_SPEED_MULT;
 
     const spawnY = s.height * SPAWN_FRAC; // appear just below the word panel
     const bossWave = s.mode === 'bossrush' || isBossWave(s.wave);
@@ -930,6 +956,12 @@ export class GameEngine {
   private recomputeMetrics() {
     const s = this.state;
     s.accuracy = calcAccuracy(s.correctWords, s.mistakes);
+    if (s.riddleMode) {
+      s.wpm = 0;
+      s.maxWpm = 0;
+      this.recentWords = [];
+      return;
+    }
     // Live WPM over a rolling window so it responds to current typing speed.
     const windowMs = 6000;
     const cutoff = this.typingElapsedMs - windowMs;
