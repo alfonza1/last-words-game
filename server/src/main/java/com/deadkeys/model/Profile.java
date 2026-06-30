@@ -11,6 +11,9 @@ public class Profile {
   /** Account id (Firebase uid). Field name kept for client compatibility. */
   public String guestId;
   public String name;
+  /** The account's verified email from the auth provider (null if not captured
+   *  yet). Set from the signed-in token, never edited by the player. */
+  public String email;
   /** Typing-mode records plus the shared coin wallet. */
   public Stats stats = new Stats();
   /** Records earned specifically while playing Riddle Mode. */

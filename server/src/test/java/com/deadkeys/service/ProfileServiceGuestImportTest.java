@@ -69,14 +69,15 @@ class ProfileServiceGuestImportTest {
         List.of("outfit-field", "accessory-none", "outfit-hoodie", "unknown"),
         character);
 
-    when(store.ensureProfile("uid-1", "account-name"))
+    when(store.ensureProfile("uid-1", "account-name", "player@example.com"))
         .thenReturn(new ProfileStore.EnsuredProfile(profile, true))
         .thenReturn(new ProfileStore.EnsuredProfile(profile, false));
 
-    ProfileService.ProfileBootstrap first = service.bootstrapProfile("uid-1", "account-name", guest);
+    ProfileService.ProfileBootstrap first = service.bootstrapProfile("uid-1", "account-name", "player@example.com", guest);
     assertTrue(first.created());
     assertTrue(first.imported());
     assertEquals("account-name", profile.name);
+    assertEquals("player@example.com", profile.email);
     assertEquals(1_200, profile.stats.bestScore);
     assertEquals("typing", profile.stats.bestMode);
     assertEquals(275, profile.stats.totalCoins);
@@ -98,7 +99,7 @@ class ProfileServiceGuestImportTest {
     assertEquals("accessory-none", profile.character.accessory);
     assertTrue(profile.guestProgressImported);
 
-    ProfileService.ProfileBootstrap second = service.bootstrapProfile("uid-1", "account-name", guest);
+    ProfileService.ProfileBootstrap second = service.bootstrapProfile("uid-1", "account-name", "player@example.com", guest);
     assertFalse(second.created());
     assertFalse(second.imported());
     assertEquals(275, profile.stats.totalCoins);
@@ -114,16 +115,36 @@ class ProfileServiceGuestImportTest {
     GuestProgressImport guest = new GuestProgressImport(
         stats, null, null, 0, null, List.of("city"), null, null);
 
-    when(store.ensureProfile("uid-1", "account-name"))
+    // No verified email on this sign-in: the existing account is loaded untouched.
+    when(store.ensureProfile("uid-1", "account-name", null))
         .thenReturn(new ProfileStore.EnsuredProfile(profile, false));
 
-    ProfileService.ProfileBootstrap result = service.bootstrapProfile("uid-1", "account-name", guest);
+    ProfileService.ProfileBootstrap result = service.bootstrapProfile("uid-1", "account-name", null, guest);
 
     assertFalse(result.created());
     assertFalse(result.imported());
     assertEquals(500, profile.stats.totalCoins);
     assertFalse(profile.maps.contains("city"));
     verify(store, never()).save(profile);
+  }
+
+  @Test
+  void backfillsEmailForExistingAccountWithoutImportingProgress() {
+    // An account created before we stored emails (or whose email changed) gets the
+    // verified email written on next sign-in — a single save, and no guest import.
+    profile.stats.totalCoins = 500;
+
+    when(store.ensureProfile("uid-1", "account-name", "player@example.com"))
+        .thenReturn(new ProfileStore.EnsuredProfile(profile, false));
+
+    ProfileService.ProfileBootstrap result =
+        service.bootstrapProfile("uid-1", "account-name", "player@example.com", null);
+
+    assertFalse(result.created());
+    assertFalse(result.imported());
+    assertEquals("player@example.com", profile.email);
+    assertEquals(500, profile.stats.totalCoins);
+    verify(store, times(1)).save(profile);
   }
 
   @Test
@@ -148,10 +169,10 @@ class ProfileServiceGuestImportTest {
         List.of("not-a-cosmetic"),
         null);
 
-    when(store.ensureProfile("uid-1", "account-name"))
+    when(store.ensureProfile("uid-1", "account-name", "player@example.com"))
         .thenReturn(new ProfileStore.EnsuredProfile(profile, true));
 
-    assertTrue(service.bootstrapProfile("uid-1", "account-name", guest).imported());
+    assertTrue(service.bootstrapProfile("uid-1", "account-name", "player@example.com", guest).imported());
     assertEquals(5_000_000, profile.stats.bestScore);
     assertEquals(35_000_000, profile.stats.totalCoins);
     assertEquals(100, profile.stats.bestAccuracy);
