@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { captureException } from '../lib/monitoring';
 
 interface Props {
   children: ReactNode;
@@ -9,7 +10,7 @@ interface State {
 
 /**
  * Catches render crashes so a bug shows a recoverable screen instead of a black
- * page. Logs the error (picked up by monitoring) for diagnosis.
+ * page while still reporting the crash for diagnosis.
  */
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
@@ -19,7 +20,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('[dk] render crash', error, info.componentStack);
+    captureException(error, {
+      area: 'react-render',
+      componentStack: info.componentStack,
+    });
   }
 
   render() {
