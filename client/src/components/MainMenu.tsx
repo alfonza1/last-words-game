@@ -19,6 +19,13 @@ interface Props {
   onRiddleMode: (v: boolean) => void;
   onPuzzleStyle: (s: PuzzleStyle) => void;
   mobileSpeechExperience?: boolean;
+  // Mobile-only in-flow wallet/account row (the fixed top chips are hidden on the
+  // home screen, so these live at the bottom of the menu instead).
+  coins: number;
+  signedIn: boolean;
+  onOpenCoins: () => void;
+  onSignIn: () => void;
+  onSignOut: () => void;
 }
 
 type Style = 'typing' | PuzzleStyle;
@@ -118,6 +125,11 @@ export function MainMenu({
   onRiddleMode,
   onPuzzleStyle,
   mobileSpeechExperience = false,
+  coins,
+  signedIn,
+  onOpenCoins,
+  onSignIn,
+  onSignOut,
 }: Props) {
   const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
@@ -126,7 +138,7 @@ export function MainMenu({
   const recordsTitle = 'Career Stats';
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-6 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-3 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
         <h1 className="text-2xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
           DEAD<span className="text-neon-pink"> KEYS</span>
@@ -242,6 +254,23 @@ export function MainMenu({
             </button>
           </div>
 
+          {/* Mobile wallet + account — in flow at the bottom, spaced from the menu
+              buttons above. Sign-in on the left, coins on the right. */}
+          <div className="mt-1 grid grid-cols-2 gap-2 border-t border-white/10 pt-3 sm:hidden">
+            <button
+              onClick={signedIn ? onSignOut : onSignIn}
+              className="truncate rounded-lg border border-neon-green/35 bg-ink-700/70 px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-neon-green transition active:scale-95"
+            >
+              {signedIn ? 'Sign out' : 'Sign in'}
+            </button>
+            <button
+              onClick={onOpenCoins}
+              className="truncate rounded-lg border border-neon-amber/50 bg-neon-amber/10 px-3 py-2.5 text-center text-xs font-black uppercase tracking-wide text-neon-amber transition active:scale-95"
+            >
+              🪙 {coins.toLocaleString()} Coins
+            </button>
+          </div>
+
           {/* Desktop nav (reverted to prior menu-btn + emojis). */}
           <div className="hidden grid-cols-2 gap-3 sm:grid" aria-label="Menu navigation">
             <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
@@ -262,7 +291,7 @@ export function MainMenu({
         <button
           onClick={() => onNav('closet')}
           aria-label="Open closet to customize survivor"
-          className="group relative order-1 min-h-[218px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
+          className="group relative order-1 min-h-[185px] overflow-hidden rounded-xl border border-neon-green/25 bg-ink-800/75 text-left transition hover:border-neon-green/70 hover:shadow-neon sm:min-h-[320px] sm:rounded-2xl lg:order-none lg:min-h-[360px]"
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
           <div className="absolute left-3 right-44 top-3 z-10 sm:right-3">

@@ -709,6 +709,11 @@ export default function App() {
             onRiddleMode={(v) => persistSettings({ ...settings, riddleMode: v })}
             onPuzzleStyle={(s) => persistSettings({ ...settings, riddleMode: true, puzzleStyle: s })}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+            coins={stats.totalCoins}
+            signedIn={signedIn}
+            onOpenCoins={() => setShowCoinPacks(true)}
+            onSignIn={() => requireSignIn()}
+            onSignOut={() => setConfirmSignOut(true)}
           />
         );
     }
