@@ -15,13 +15,13 @@ export function ServerDown({ onPlayOffline }: Props) {
     <div className="crt relative flex h-full w-full items-center justify-center p-6">
       <div className="w-full max-w-md rounded-2xl border border-neon-amber/40 bg-ink-800/85 p-6 text-center shadow-neon">
         <h1 className="text-4xl font-black tracking-tight text-neon-green drop-shadow-[0_0_18px_rgba(57,255,20,0.6)]">
-          DEAD<span className="text-neon-pink"> KEYS</span>
+          LAST<span className="text-neon-pink"> WORDS</span>
         </h1>
 
         <p className="mt-3 text-xs tracking-[0.3em] text-neon-amber">CONNECTION LOST</p>
 
         <p className="mt-4 text-sm leading-relaxed text-white/80">
-          We can’t reach Dead Keys right now. This is a problem on our end, not yours.
+          We can’t reach Last Words right now. This is a problem on our end, not yours.
         </p>
 
         <p className="mt-3 text-sm leading-relaxed text-white/60">

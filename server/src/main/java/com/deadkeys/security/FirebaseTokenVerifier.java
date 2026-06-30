@@ -30,7 +30,7 @@ public class FirebaseTokenVerifier {
   private final String projectId;
   private final ConfigurableJWTProcessor<SecurityContext> processor;
 
-  public record FirebaseUser(String uid, String name) {}
+  public record FirebaseUser(String uid, String name, String email) {}
 
   public FirebaseTokenVerifier(@Value("${firebase.projectId}") String projectId) throws Exception {
     this.projectId = projectId;
@@ -57,9 +57,29 @@ public class FirebaseTokenVerifier {
       String uid = claims.getSubject();
       if (uid == null || uid.isBlank()) return null;
       Object name = claims.getClaim("name");
-      return new FirebaseUser(uid, name instanceof String s ? s : null);
+      return new FirebaseUser(uid, name instanceof String s ? s : null, verifiedEmail(claims));
     } catch (Exception e) {
       return null; // any failure = not authenticated
     }
+  }
+
+  /**
+   * The account's email, but only when Firebase reports it verified. Normalized
+   * to lower-case so it works as a stable match key (e.g. relinking an account
+   * after an auth-provider change, or opt-in emails). Returns null when absent or
+   * unverified — and a malformed email claim never fails token verification.
+   */
+  private static String verifiedEmail(JWTClaimsSet claims) {
+    try {
+      Object verified = claims.getClaim("email_verified");
+      Object email = claims.getClaim("email");
+      if (Boolean.TRUE.equals(verified) && email instanceof String s) {
+        String normalized = s.trim().toLowerCase();
+        return normalized.isEmpty() ? null : normalized;
+      }
+    } catch (Exception ignored) {
+      // Email is optional; never let a bad claim block authentication.
+    }
+    return null;
   }
 }

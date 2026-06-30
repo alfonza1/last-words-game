@@ -34,7 +34,7 @@ export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack
   }, []);
 
   const entries = data ? data[board] ?? null : null; // tolerate an older API response
-  const cols = 'grid-cols-[2.75rem_1fr_5rem_4rem]';
+  const cols = 'grid-cols-[2.75rem_1fr_5rem_3rem_4rem]';
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-2xl flex-col gap-4 overflow-y-auto p-6">
@@ -96,11 +96,13 @@ export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack
             {board === 'typers' ? (
               <>
                 <span className="text-right">Score</span>
+                <span className="text-right">Wave</span>
                 <span className="text-right">WPM</span>
               </>
             ) : (
               <>
                 <span className="text-right">Score</span>
+                <span className="text-right">Wave</span>
                 <span className="text-right">Mode</span>
               </>
             )}
@@ -131,11 +133,13 @@ function Row({ e, rank, board, cols }: { e: LeaderboardEntry; rank: number; boar
       {board === 'typers' ? (
         <>
           <span className="text-right font-black text-neon-amber">{e.score.toLocaleString()}</span>
+          <span className="text-right text-white/70">{e.wave}</span>
           <span className="text-right text-neon-cyan">{e.wpm}</span>
         </>
       ) : (
         <>
           <span className="text-right font-black text-neon-amber">{e.score.toLocaleString()}</span>
+          <span className="text-right text-white/70">{e.wave}</span>
           <span className="text-right text-xs font-bold uppercase tracking-wide text-neon-cyan">{modeLabel(e)}</span>
         </>
       )}
