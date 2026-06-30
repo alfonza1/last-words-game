@@ -9,6 +9,7 @@ export interface CosmeticDef {
   description: string;
   cost: number;
   rarity: 'standard' | 'rare' | 'epic' | 'legendary' | 'exclusive-mythic';
+  familyFriendly?: boolean;
   /** Item's color follows the equipped outfit's glow (e.g. crown, glasses). */
   outfitReactive?: boolean;
 }
@@ -25,6 +26,7 @@ export interface ExpressionDef {
   label: string;
   icon: string;
   description: string;
+  familyFriendly?: boolean;
   /** Expression accents follow the equipped outfit's glow color. */
   outfitReactive?: boolean;
 }
@@ -38,7 +40,7 @@ export const DEFAULT_CHARACTER: CharacterLoadout = {
   accessory: 'accessory-none',
 };
 
-export const DEFAULT_COSMETICS = ['outfit-field', 'accessory-none'];
+export const DEFAULT_COSMETICS = ['outfit-field', 'outfit-orbit-cadet', 'accessory-none'];
 
 export const SKIN_TONES = [
   { key: 'porcelain', label: 'Porcelain', color: '#f3c8ad' },
@@ -103,6 +105,27 @@ export const EXPRESSIONS: ExpressionDef[] = [
     icon: '◉‿◌',
     description: 'One eye changed. You insist it is fine.',
     outfitReactive: true,
+  },
+  {
+    key: 'star-ready',
+    label: 'Star Ready',
+    icon: '*_*',
+    description: 'Locked in on the sky.',
+    familyFriendly: true,
+  },
+  {
+    key: 'mission-calm',
+    label: 'Mission Calm',
+    icon: '-_-',
+    description: 'Quiet confidence under a meteor storm.',
+    familyFriendly: true,
+  },
+  {
+    key: 'zero-g-grin',
+    label: 'Zero-G Grin',
+    icon: '^_^',
+    description: 'A bright look for a close save.',
+    familyFriendly: true,
   },
 ];
 
@@ -172,12 +195,96 @@ export const COSMETICS: CosmeticDef[] = [
     rarity: 'exclusive-mythic',
   },
   {
+    key: 'outfit-orbit-cadet',
+    slot: 'outfit',
+    name: 'Orbit Cadet',
+    description: 'A clean starter flight suit with a bright planet-shield badge.',
+    cost: 0,
+    rarity: 'standard',
+    familyFriendly: true,
+  },
+  {
+    key: 'outfit-stellar-ranger',
+    slot: 'outfit',
+    name: 'Stellar Ranger',
+    description: 'Deep-space patrol armor with teal shield lines and gold rank tabs.',
+    cost: 900,
+    rarity: 'rare',
+    familyFriendly: true,
+  },
+  {
+    key: 'outfit-comet-rider',
+    slot: 'outfit',
+    name: 'Comet Rider',
+    description: 'A fast red-orange launch suit built for dodging fire trails.',
+    cost: 1800,
+    rarity: 'epic',
+    familyFriendly: true,
+  },
+  {
+    key: 'outfit-nebula-guardian',
+    slot: 'outfit',
+    name: 'Nebula Guardian',
+    description: 'Prismatic armor with a glowing chest reactor and starfield trim.',
+    cost: 3600,
+    rarity: 'legendary',
+    familyFriendly: true,
+  },
+  {
+    key: 'outfit-starforged-titan',
+    slot: 'outfit',
+    name: 'Starforged Titan',
+    description: 'A towering mythic suit forged from orbiting starlight plates.',
+    cost: 66666,
+    rarity: 'exclusive-mythic',
+    familyFriendly: true,
+  },
+  {
+    key: 'outfit-cosmic-phoenix',
+    slot: 'outfit',
+    name: 'Cosmic Phoenix',
+    description: 'A radiant mythic suit with solar wings and a rebirth core.',
+    cost: 66666,
+    rarity: 'exclusive-mythic',
+    familyFriendly: true,
+  },
+  {
     key: 'accessory-none',
     slot: 'accessory',
     name: 'No Accessory',
     description: 'Keep the silhouette clean.',
     cost: 0,
     rarity: 'standard',
+  },
+  {
+    key: 'accessory-star-visor',
+    slot: 'accessory',
+    name: 'Star Visor',
+    description: 'A sharp holographic visor tuned to meteor trajectories.',
+    cost: 900,
+    rarity: 'rare',
+    familyFriendly: true,
+    outfitReactive: true,
+  },
+  {
+    key: 'accessory-orbit-drone',
+    slot: 'accessory',
+    name: 'Orbit Drone',
+    description: 'A tiny defense drone that circles your suit like a friendly moon.',
+    cost: 33333,
+    rarity: 'exclusive-mythic',
+    familyFriendly: true,
+    outfitReactive: true,
+  },
+  {
+    key: 'accessory-saturn-crown',
+    slot: 'accessory',
+    name: 'Saturn Crown',
+    description: 'A mythic ring-crown that spins with soft planetary light.',
+    cost: 33333,
+    rarity: 'exclusive-mythic',
+    familyFriendly: true,
+    outfitReactive: true,
   },
   {
     key: 'accessory-headphones',
@@ -235,6 +342,12 @@ export const OUTFIT_PALETTES: Record<string, OutfitPalette> = {
   'outfit-inferno': { primary: '#260806', secondary: '#080101', trim: '#ff3b12', glow: '#ff3b12' },
   'outfit-godmode-revenant': { primary: '#07070d', secondary: '#111827', trim: '#f8d66d', glow: '#00f0ff' },
   'outfit-neon-plague-saint': { primary: '#07100b', secondary: '#18251b', trim: '#9dff4f', glow: '#39ff14' },
+  'outfit-orbit-cadet': { primary: '#1d6f8f', secondary: '#e8fbff', trim: '#ffcf5a', glow: '#4df4d0' },
+  'outfit-stellar-ranger': { primary: '#0e3f4f', secondary: '#071820', trim: '#4df4d0', glow: '#4df4d0' },
+  'outfit-comet-rider': { primary: '#7c2142', secondary: '#1b0b18', trim: '#ffb347', glow: '#ff7a45' },
+  'outfit-nebula-guardian': { primary: '#251451', secondary: '#081428', trim: '#9cf6ff', glow: '#ff7ad9' },
+  'outfit-starforged-titan': { primary: '#07111f', secondary: '#172554', trim: '#f8d66d', glow: '#7cf6ff' },
+  'outfit-cosmic-phoenix': { primary: '#36102b', secondary: '#0f1022', trim: '#ffcf5a', glow: '#ff7ad9' },
 };
 
 export function cosmeticByKey(key: string): CosmeticDef | undefined {

@@ -33,10 +33,15 @@ import {
   type Profile,
   type RunPayload,
 } from './lib/api';
-import { getMap, MAPS } from './data/maps';
+import { MAPS } from './data/maps';
 import { DEFAULT_CHARACTER, DEFAULT_COSMETICS, cosmeticByKey, normalizeCharacter } from './data/cosmetics';
 import { POWERUP_DEFS } from './data/powerups';
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from './data/upgrades';
+import {
+  mapIdForFamilyMode,
+  normalizeCharacterForFamilyMode,
+  normalizeSettingsForFamilyMode,
+} from './theme/meteorMania';
 import { audio } from './lib/audio';
 import { useAuth } from './lib/auth';
 import { useToast } from './lib/toast';
@@ -174,6 +179,11 @@ export default function App() {
 
   // Upgrades only apply while they have games left (signed-in only).
   const activeUpgrades = upgradeGames > 0 ? upgrades : DEFAULT_UPGRADES;
+  const familyFriendlyMode = settings.familyFriendlyMode;
+  const displayCharacter = useMemo(
+    () => normalizeCharacterForFamilyMode(character, familyFriendlyMode),
+    [character, familyFriendlyMode],
+  );
 
   const applyProfile = useCallback((p: Profile) => {
     setStats(p.stats);
@@ -265,18 +275,17 @@ export default function App() {
   }, []);
 
   const persistSettings = useCallback((s: Settings) => {
-    setSettings(s);
-    saveSettings(s);
+    const nextSettings = normalizeSettingsForFamilyMode(s);
+    setSettings(nextSettings);
+    saveSettings(nextSettings);
   }, []);
 
   const chooseMode = useCallback(
     (m: GameMode) => {
       // Drop a mode/difficulty-exclusive map that isn't valid for this mode.
-      const sel = getMap(settings.map);
       const effectiveDifficulty = difficultyForMode(m, settings.difficulty);
-      const invalid =
-        (sel.nightmareOnly && effectiveDifficulty !== 'nightmare') || (sel.bossRushOnly && m !== 'bossrush');
-      if (invalid) persistSettings({ ...settings, map: 'graveyard' });
+      const map = mapIdForFamilyMode(settings.map, settings.familyFriendlyMode, m, effectiveDifficulty);
+      if (map !== settings.map) persistSettings({ ...settings, map });
       setMode(m);
       setScreen('mapselect');
     },
@@ -492,7 +501,7 @@ export default function App() {
       if (!user) {
         setCharacter(look);
         persistGuest({ character: look });
-        toast.success('Survivor look equipped!');
+        toast.success(familyFriendlyMode ? 'Flight suit equipped!' : 'Survivor look equipped!');
         return;
       }
       const previous = character;
@@ -504,14 +513,14 @@ export default function App() {
           throw new Error('Face expression could not be saved. Please try again.');
         }
         applyProfile(profile);
-        toast.success('Survivor look equipped!');
+        toast.success(familyFriendlyMode ? 'Flight suit equipped!' : 'Survivor look equipped!');
       } catch (error) {
         setCharacter(previous);
         fail(error);
         throw error;
       }
     },
-    [user, character, persistGuest, applyProfile, toast, fail],
+    [user, character, familyFriendlyMode, persistGuest, applyProfile, toast, fail],
   );
 
   // Optional rewarded ad → bonus coins. Server-authoritative for accounts;
@@ -554,13 +563,21 @@ export default function App() {
 
   const setDifficulty = useCallback(
     (d: Difficulty) => {
-      // A nightmare-only map can't be used off Nightmare — fall back to graveyard.
-      const map = d !== 'nightmare' && getMap(settings.map).nightmareOnly ? 'graveyard' : settings.map;
+      // Drop a mode/difficulty-exclusive map that is not valid for this run.
+      const effectiveDifficulty = difficultyForMode(mode, d);
+      const map = mapIdForFamilyMode(settings.map, settings.familyFriendlyMode, mode, effectiveDifficulty);
       persistSettings({ ...settings, difficulty: d, map });
     },
-    [settings, persistSettings],
+    [mode, settings, persistSettings],
   );
-  const setMap = useCallback((id: string) => persistSettings({ ...settings, map: id }), [settings, persistSettings]);
+  const setMap = useCallback(
+    (id: string) =>
+      persistSettings({
+        ...settings,
+        map: mapIdForFamilyMode(id, settings.familyFriendlyMode, mode, difficultyForMode(mode, settings.difficulty)),
+      }),
+    [mode, settings, persistSettings],
+  );
 
   // Enter to restart from the game-over screen.
   useEffect(() => {
@@ -589,7 +606,7 @@ export default function App() {
             powerups={powerups}
             upgradesActive={upgradeGames > 0}
             settings={settings}
-            character={character}
+            character={displayCharacter}
             riddleMode={gameRiddleMode}
             puzzleStyle={settings.puzzleStyle}
             onGameOver={handleGameOver}
@@ -610,6 +627,7 @@ export default function App() {
             difficulty={difficultyForMode(mode, settings.difficulty)}
             selectedMapId={settings.map}
             ownedMaps={maps}
+            familyFriendlyMode={familyFriendlyMode}
             onSelect={setMap}
             onBuyMap={buyMap}
             onDeploy={() => startGame(mode)}
@@ -627,6 +645,7 @@ export default function App() {
             onWatchAd={claimReward}
             onRestart={() => startGame(mode)}
             onMenu={() => setScreen('menu')}
+            familyFriendlyMode={familyFriendlyMode}
           />
         ) : null;
       case 'upgrades':
@@ -637,8 +656,9 @@ export default function App() {
             gamesLeft={upgradeGames}
             powerups={powerups}
             ownedCosmetics={cosmetics}
-            character={character}
+            character={displayCharacter}
             signedIn={signedIn}
+            familyFriendlyMode={familyFriendlyMode}
             onBuy={buyUpgrade}
             onBuyPowerup={buyPowerup}
             onBuyCosmetic={buyCosmetic}
@@ -650,10 +670,11 @@ export default function App() {
       case 'closet':
         return (
           <Closet
-            character={character}
+            character={displayCharacter}
             ownedCosmetics={cosmetics}
             signedIn={signedIn}
-            username={username || 'Survivor'}
+            username={username || (familyFriendlyMode ? 'Pilot' : 'Survivor')}
+            familyFriendlyMode={familyFriendlyMode}
             onEquip={equipCharacter}
             onOpenStore={() => openStore('closet')}
             onBack={() => setScreen('menu')}
@@ -664,6 +685,7 @@ export default function App() {
           <HowToPlay
             onBack={() => setScreen('menu')}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+            familyFriendlyMode={familyFriendlyMode}
           />
         );
       case 'settings':
@@ -690,6 +712,7 @@ export default function App() {
           <Leaderboard
             onBack={() => setScreen('menu')}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+            familyFriendlyMode={familyFriendlyMode}
           />
         );
       case 'menu':
@@ -699,8 +722,8 @@ export default function App() {
             stats={stats}
             riddleStats={riddleStats}
             difficulty={settings.difficulty}
-            character={character}
-            username={username || 'Survivor'}
+            character={displayCharacter}
+            username={username || (familyFriendlyMode ? 'Pilot' : 'Survivor')}
             riddleMode={mobileExperience.mobileSpeechExperience ? true : settings.riddleMode}
             puzzleStyle={settings.puzzleStyle}
             onStart={chooseMode}
@@ -709,11 +732,7 @@ export default function App() {
             onRiddleMode={(v) => persistSettings({ ...settings, riddleMode: v })}
             onPuzzleStyle={(s) => persistSettings({ ...settings, riddleMode: true, puzzleStyle: s })}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
-            coins={stats.totalCoins}
-            signedIn={signedIn}
-            onOpenCoins={() => setShowCoinPacks(true)}
-            onSignIn={() => requireSignIn()}
-            onSignOut={() => setConfirmSignOut(true)}
+            familyFriendlyMode={familyFriendlyMode}
           />
         );
     }
@@ -729,6 +748,8 @@ export default function App() {
     maps,
     cosmetics,
     character,
+    displayCharacter,
+    familyFriendlyMode,
     result,
     isHighScore,
     wpmBonus,
@@ -776,13 +797,15 @@ export default function App() {
     return <ServerDown onPlayOffline={() => void signOut()} />;
   }
 
-  const accountLabel = signedIn ? username || user?.email || 'Player' : username || 'Survivor';
+  const fallbackAccountLabel = familyFriendlyMode ? 'Pilot' : 'Survivor';
+  const accountLabel = signedIn ? username || user?.email || 'Player' : username || fallbackAccountLabel;
   const showAccountChip = screen !== 'game' && screen !== 'signin';
   const showWalletChip = showAccountChip;
   // On the mobile home and closet screens the fixed chips are hidden so those
   // components can use the full height (they scroll); chips still show on
   // desktop and on every other screen (e.g. the store keeps its coin chip).
   const hideChipsOnMobile = screen === 'menu' || screen === 'closet';
+  const showMobileMenuChips = showAccountChip && screen === 'menu';
 
   return (
     <div className="h-full w-full">
@@ -810,6 +833,26 @@ export default function App() {
         </div>
       )}
 
+      {showMobileMenuChips && (
+        <>
+          <button
+            onClick={() => setShowCoinPacks(true)}
+            className="safe-bottom-left fixed z-50 max-w-[calc(50vw-1.25rem)] truncate rounded-full border border-neon-amber/50 bg-black/75 px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wider text-neon-amber shadow-[0_0_18px_rgba(255,209,102,0.18)] backdrop-blur sm:hidden"
+          >
+            {stats.totalCoins.toLocaleString()} Coins
+          </button>
+
+          <div className="safe-bottom-right fixed z-50 flex max-w-[calc(50vw-1.25rem)] items-center gap-1.5 rounded-full border border-white/10 bg-black/75 px-2.5 py-1.5 text-[11px] shadow-[0_0_18px_rgba(57,255,20,0.18)] backdrop-blur sm:hidden">
+            {signedIn && <span className="min-w-0 truncate text-white/60">{accountLabel}</span>}
+            <button
+              onClick={() => (signedIn ? setConfirmSignOut(true) : requireSignIn())}
+              className="shrink-0 font-black uppercase tracking-wider text-neon-green hover:text-neon-pink"
+            >
+              {signedIn ? 'Sign out' : 'Sign in'}
+            </button>
+          </div>
+        </>
+      )}
 
       <div className={`h-full w-full ${showAccountChip ? (hideChipsOnMobile ? 'sm:pt-11' : 'pt-11') : ''}`}>
         <Suspense fallback={<ScreenLoader />}>{content}</Suspense>

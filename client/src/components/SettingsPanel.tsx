@@ -108,6 +108,8 @@ function Toggle({
 }
 
 export function SettingsPanel({ settings, signedIn, username, onChange, onSaveUsername, onBack }: Props) {
+  const sfxLabel = settings.familyFriendlyMode ? 'Zap Volume' : 'Gunshot Volume';
+
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-2xl flex-col gap-5 overflow-y-auto p-6">
       <div className="flex items-center gap-3">
@@ -120,7 +122,7 @@ export function SettingsPanel({ settings, signedIn, username, onChange, onSaveUs
         <h1 className="text-3xl font-black tracking-wide text-neon-green">SETTINGS</h1>
       </div>
       <p className="text-xs text-white/40">
-        Difficulty is chosen on the main menu; the map is chosen when you deploy.
+        Difficulty is chosen on the main menu; the map or planet is chosen when you deploy.
       </p>
 
       <section className="space-y-2">
@@ -129,8 +131,14 @@ export function SettingsPanel({ settings, signedIn, username, onChange, onSaveUs
 
       <section className="space-y-2">
         <Toggle
+          label="Family Friendly Mode"
+          desc="Meteor Mania: zap meteors, protect planets, and use space-themed gear."
+          value={settings.familyFriendlyMode}
+          onToggle={() => onChange({ ...settings, familyFriendlyMode: !settings.familyFriendlyMode })}
+        />
+        <Toggle
           label="Music"
-          desc="Procedural horror ambience."
+          desc={settings.familyFriendlyMode ? 'Procedural space ambience.' : 'Procedural horror ambience.'}
           value={settings.music}
           onToggle={() => onChange({ ...settings, music: !settings.music })}
         />
@@ -160,13 +168,13 @@ export function SettingsPanel({ settings, signedIn, username, onChange, onSaveUs
 
         <Toggle
           label="Sound Effects"
-          desc="Gunshot when you complete a word."
+          desc={settings.familyFriendlyMode ? 'Zap sound when you complete a word.' : 'Gunshot when you complete a word.'}
           value={settings.sound}
           onToggle={() => onChange({ ...settings, sound: !settings.sound })}
         />
         <div className="rounded-lg border border-white/10 bg-ink-800/70 px-4 py-3">
           <div className="mb-1 flex justify-between text-sm">
-            <span className="font-bold text-white/90">Gunshot Volume</span>
+            <span className="font-bold text-white/90">{sfxLabel}</span>
             <span className="text-white/50">{Math.round(settings.sfxVolume * 100)}%</span>
           </div>
           <input

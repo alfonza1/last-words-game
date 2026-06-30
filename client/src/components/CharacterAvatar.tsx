@@ -120,6 +120,50 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
           </g>
         </>
       )}
+      {character.outfit === 'outfit-orbit-cadet' && (
+        <>
+          <path d="M87 118 L110 145 L133 118" fill="none" stroke="#ffcf5a" strokeWidth="3" strokeLinejoin="round" />
+          <circle cx="110" cy="151" r="8" fill="#061820" stroke="#4df4d0" strokeWidth="2.5" />
+          <path d="M82 183 H138" stroke="#4df4d0" strokeWidth="3" opacity=".75" />
+        </>
+      )}
+      {character.outfit === 'outfit-stellar-ranger' && (
+        <>
+          <path d="M74 125 H146" stroke="#4df4d0" strokeWidth="4" opacity=".85" />
+          <path d="M94 111 L101 190 M126 111 L119 190" stroke="#ffcf5a" strokeWidth="2.5" />
+          <path d="M100 139 H120 L116 162 H104 Z" fill="#041820" stroke="#4df4d0" strokeWidth="2" />
+        </>
+      )}
+      {character.outfit === 'outfit-comet-rider' && (
+        <>
+          <path d="M80 122 Q110 142 140 113" fill="none" stroke="#ffb347" strokeWidth="4" strokeLinecap="round" />
+          <path d="M91 188 Q112 161 138 134" fill="none" stroke="#ff7a45" strokeWidth="4" strokeLinecap="round" />
+          <path d="M75 168 L101 159 L94 184 Z" fill="#ffb347" opacity=".55" />
+        </>
+      )}
+      {character.outfit === 'outfit-nebula-guardian' && (
+        <>
+          <path d="M88 113 L110 130 L132 113 L142 184 Q110 205 78 184 Z" fill="rgba(156,246,255,.12)" stroke="#9cf6ff" strokeWidth="2" />
+          <circle cx="110" cy="150" r="11" fill="#081428" stroke="#ff7ad9" strokeWidth="3" />
+          <path d="M96 150 H124 M110 136 V164" stroke="#9cf6ff" strokeWidth="2" />
+        </>
+      )}
+      {character.outfit === 'outfit-starforged-titan' && (
+        <>
+          <path d="M65 112 Q84 92 104 107 L98 129 Q77 133 63 124Z" fill="#172554" stroke="#f8d66d" strokeWidth="2.4" />
+          <path d="M155 112 Q136 92 116 107 L122 129 Q143 133 157 124Z" fill="#172554" stroke="#f8d66d" strokeWidth="2.4" />
+          <path d="M92 121 Q110 111 128 121 L126 183 Q110 194 94 183 Z" fill="#07111f" stroke="#f8d66d" strokeWidth="2.4" />
+          <circle cx="110" cy="141" r="7" fill="#7cf6ff" style={{ filter: 'drop-shadow(0 0 8px #7cf6ff)' }} />
+        </>
+      )}
+      {character.outfit === 'outfit-cosmic-phoenix' && (
+        <>
+          <path d="M74 136 Q44 160 57 211 Q77 182 94 167" fill="#ff7ad9" opacity=".28" stroke="#ffcf5a" strokeWidth="2" />
+          <path d="M146 136 Q176 160 163 211 Q143 182 126 167" fill="#ff7ad9" opacity=".28" stroke="#ffcf5a" strokeWidth="2" />
+          <path d="M91 119 Q110 150 129 119 M86 178 Q110 196 134 178" fill="none" stroke="#ffcf5a" strokeWidth="3" />
+          <circle cx="110" cy="151" r="8" fill="#ff7ad9" style={{ filter: 'drop-shadow(0 0 7px #ff7ad9)' }} />
+        </>
+      )}
 
       {/* Arms */}
       <path d="M77 116 Q54 136 64 174" fill="none" stroke={outfit.primary} strokeWidth="19" strokeLinecap="round" />
@@ -344,6 +388,42 @@ function Accessory({ type, glow }: { type: string; glow: string }) {
       <g fill="none" stroke={glow} strokeWidth="3" style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
         <path d="M82 37 L89 17 L101 31 L110 10 L120 31 L133 17 L139 39Z" />
         <path d="M87 43 Q110 48 135 43" />
+      </g>
+    );
+  }
+  if (type === 'accessory-star-visor') {
+    return (
+      <g style={{ filter: `drop-shadow(0 0 6px ${glow})` }}>
+        <path d="M78 61 Q110 51 142 61 L136 75 Q110 84 84 75 Z" fill="#06131f" stroke={glow} strokeWidth="2.4" />
+        <path d="M86 64 Q110 58 134 64" fill="none" stroke="#ffffff" strokeWidth="1.4" opacity=".58" />
+        <path d="M97 70 H123" stroke={glow} strokeWidth="2" strokeLinecap="round" opacity=".8" />
+      </g>
+    );
+  }
+  if (type === 'accessory-orbit-drone') {
+    return (
+      <g style={{ filter: `drop-shadow(0 0 7px ${glow})` }}>
+        <animateMotion dur="5.2s" repeatCount="indefinite" path="M -13,0 a 13,8 0 1,0 26,0 a 13,8 0 1,0 -26,0 Z" />
+        <ellipse cx="154" cy="101" rx="5" ry="2.5" fill={glow} opacity=".22" />
+        <path d="M151 99 L160 91 L176 96 L178 105 L164 109 Z" fill="#07151f" stroke={glow} strokeWidth="2" strokeLinejoin="round" />
+        <path d="M158 92 L154 82 M168 94 L176 85 M164 109 L157 119" fill="none" stroke="#ffcf5a" strokeWidth="1.6" strokeLinecap="round" />
+        <circle cx="165" cy="101" r="4.8" fill="#03131a" stroke="#ffffff" strokeWidth="1.2" opacity=".85" />
+        <circle cx="165" cy="101" r="2.1" fill={glow}>
+          <animate attributeName="opacity" values=".55;1;.55" dur="1.4s" repeatCount="indefinite" />
+        </circle>
+        <path d="M166 106 L151 124 L164 122 Z" fill={glow} opacity=".14" />
+      </g>
+    );
+  }
+  if (type === 'accessory-saturn-crown') {
+    return (
+      <g style={{ filter: `drop-shadow(0 0 7px ${glow})` }}>
+        <ellipse cx="110" cy="31" rx="35" ry="10" fill="none" stroke={glow} strokeWidth="3" strokeDasharray="18 6" opacity=".95">
+          <animate attributeName="stroke-dashoffset" from="0" to="48" dur="3s" repeatCount="indefinite" />
+        </ellipse>
+        <ellipse cx="110" cy="31" rx="20" ry="6" fill="none" stroke="#ffcf5a" strokeWidth="1.6" opacity=".78" />
+        <circle cx="110" cy="31" r="5" fill="#06131f" stroke="#ffcf5a" strokeWidth="1.8" />
+        <path d="M86 43 Q110 49 134 43" fill="none" stroke={glow} strokeWidth="2" opacity=".6" />
       </g>
     );
   }
