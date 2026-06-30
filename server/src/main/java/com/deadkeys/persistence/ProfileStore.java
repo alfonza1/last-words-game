@@ -55,7 +55,7 @@ public class ProfileStore {
 
   /** Get the profile for this account id, reporting whether this call created it. */
   @Transactional
-  public EnsuredProfile ensureProfile(String id, String name) {
+  public EnsuredProfile ensureProfile(String id, String name, String email) {
     Profile existing = findProfile(id);
     if (existing != null) return new EnsuredProfile(existing, false);
     String trimmed = name == null ? "" : name.trim();
@@ -64,13 +64,14 @@ public class ProfileStore {
     if (trimmed.length() > 20) trimmed = trimmed.substring(0, 20).trim();
     String handle = !trimmed.isEmpty() ? trimmed : randomHandle();
     Profile p = new Profile(id, handle);
+    p.email = email;
     save(p);
     return new EnsuredProfile(p, true);
   }
 
   @Transactional
   public void save(Profile p) {
-    profiles.save(new ProfileEntity(p.guestId, p.name, serialize(p)));
+    profiles.save(new ProfileEntity(p.guestId, p.name, p.email, serialize(p)));
   }
 
   /**

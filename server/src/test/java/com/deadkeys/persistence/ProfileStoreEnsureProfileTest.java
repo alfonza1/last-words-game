@@ -26,11 +26,12 @@ class ProfileStoreEnsureProfileTest {
   @Test
   void initialHandleIsCappedAtTwentyCharacters() {
     String longName = "Way Too Long Display Name From Firebase";
-    store.ensureProfile("uid-long", longName);
+    store.ensureProfile("uid-long", longName, "player@example.com");
 
     ArgumentCaptor<ProfileEntity> saved = ArgumentCaptor.forClass(ProfileEntity.class);
     verify(profiles).save(saved.capture());
     assertTrue(saved.getValue().name.length() <= 20, "username must be capped at 20 chars");
     assertEquals(longName.substring(0, 20).trim(), saved.getValue().name);
+    assertEquals("player@example.com", saved.getValue().email, "verified email is stored on creation");
   }
 }
