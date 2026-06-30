@@ -41,6 +41,15 @@ class ProfileServiceCharacterTest {
   }
 
   @Test
+  void freeMeteorStarterCanBeEquippedWithoutProfileBackfill() {
+    service.equipCharacter(profile, "warm", "buzz", "charcoal", "star-ready", "outfit-orbit-cadet", "accessory-none");
+
+    assertEquals("star-ready", profile.character.expression);
+    assertEquals("outfit-orbit-cadet", profile.character.outfit);
+    verify(store).save(profile);
+  }
+
+  @Test
   void signalHoodieMustBePurchased() {
     service.buyCosmetic(profile, "outfit-hoodie");
 
