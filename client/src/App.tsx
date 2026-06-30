@@ -150,7 +150,7 @@ export default function App() {
     if (typeof window === 'undefined') return;
     const nextHash = `#${SCREEN_ROUTES[screen]}`;
     if (window.location.hash !== nextHash) window.history.pushState(null, '', nextHash);
-    document.title = `Dead Keys - ${SCREEN_TITLES[screen]}`;
+    document.title = `Last Words - ${SCREEN_TITLES[screen]}`;
   }, [screen]);
 
   // Signed-in progress lives on the server (keyed to the Firebase uid).
