@@ -53,7 +53,10 @@ export function drawGame(
   drawBase(ctx, s, theme, time);
 
   const ordered = [...s.zombies].sort((a, b) => a.y - b.y);
-  for (const z of ordered) drawZombie(ctx, z, s, time);
+  for (const z of ordered) {
+    if (s.settings.familyFriendlyMode || theme.familyFriendly) drawMeteor(ctx, z, s, theme, time);
+    else drawZombie(ctx, z, s, time);
+  }
   drawSurvivor(ctx, s, character, time);
 
   drawGroundFog(ctx, s, theme, time);
@@ -1920,6 +1923,11 @@ function drawThemeScenery(
 ) {
   const { width: w, height: h } = s;
 
+  if (theme.familyFriendly) {
+    drawPlanetScenery(ctx, s, theme, time, hy);
+    return;
+  }
+
   if (theme.id === 'city') {
     const hzn = hy;
     const sceneScale = Math.max(0.78, Math.min(1.5, w / 960));
@@ -2815,6 +2823,145 @@ function drawGrave(ctx: CanvasRenderingContext2D, x: number, y: number, sc: numb
   ctx.fill();
 }
 
+function drawPlanetScenery(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const accent = theme.palette.accent;
+
+  const ringY = horizon * 0.82;
+  ctx.save();
+  ctx.strokeStyle = `${accent}55`;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([18, 12]);
+  ctx.lineDashOffset = -(time * 0.02) % 120;
+  ctx.beginPath();
+  ctx.ellipse(w * 0.18, ringY, w * 0.16, h * 0.025, -0.12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  if (theme.id === 'planet-crystal') {
+    for (let i = 0; i < 12; i++) {
+      const x = (i / 12) * w + rand(i + 3000) * 34;
+      const y = horizon + h * (0.08 + rand(i + 3010) * 0.22);
+      const height = h * (0.06 + rand(i + 3020) * 0.12);
+      ctx.fillStyle = i % 2 ? 'rgba(156,246,255,0.28)' : 'rgba(255,122,217,0.24)';
+      ctx.strokeStyle = `${accent}88`;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 14, y - height);
+      ctx.lineTo(x + 28, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    return;
+  }
+
+  if (theme.id === 'planet-volcanic') {
+    ctx.fillStyle = 'rgba(255,107,42,0.18)';
+    for (let i = 0; i < 8; i++) {
+      const x = (i / 8) * w + rand(i + 3100) * 70;
+      const y = horizon + h * (0.18 + rand(i + 3110) * 0.22);
+      ctx.beginPath();
+      ctx.moveTo(x - 30, y + 28);
+      ctx.lineTo(x, y - 40 - rand(i) * 30);
+      ctx.lineTo(x + 34, y + 28);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,207,90,0.45)';
+      ctx.stroke();
+    }
+    return;
+  }
+
+  if (theme.id === 'planet-nebula') {
+    for (let i = 0; i < 7; i++) {
+      const x = (i / 7) * w + rand(i + 3200) * 90;
+      const y = horizon + h * (0.09 + rand(i + 3210) * 0.18);
+      ctx.strokeStyle = i % 2 ? 'rgba(255,122,217,0.42)' : 'rgba(80,220,255,0.42)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 24 + rand(i + 3220) * 36, Math.PI * 1.08, Math.PI * 1.92);
+      ctx.stroke();
+    }
+    return;
+  }
+
+  for (let i = 0; i < 10; i++) {
+    const x = (i / 10) * w + rand(i + 3300) * 54;
+    const y = horizon + h * (0.1 + rand(i + 3310) * 0.22);
+    ctx.fillStyle = 'rgba(77,244,208,0.2)';
+    ctx.strokeStyle = `${accent}80`;
+    roundRect(ctx, x - 8, y - 46, 16, 46, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y - 52, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawPlanetBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, time: number, baseY: number) {
+  const { width: w, height: h } = s;
+  const accent = theme.palette.accent;
+  const cx = w / 2;
+  const shieldPulse = 0.45 + Math.sin(time * 0.002) * 0.12;
+
+  const floor = ctx.createLinearGradient(0, baseY, 0, h);
+  floor.addColorStop(0, `${theme.palette.ground1}`);
+  floor.addColorStop(1, '#02070b');
+  ctx.fillStyle = floor;
+  ctx.fillRect(0, baseY, w, 60);
+
+  ctx.strokeStyle = `${accent}aa`;
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = 10;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, baseY);
+  ctx.lineTo(w, baseY);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  const shield = ctx.createRadialGradient(cx, baseY + 18, 16, cx, baseY + 18, Math.min(w, h) * 0.42);
+  shield.addColorStop(0, `${accent}00`);
+  shield.addColorStop(0.58, `${accent}12`);
+  shield.addColorStop(1, `${accent}00`);
+  ctx.fillStyle = shield;
+  ctx.beginPath();
+  ctx.ellipse(cx, baseY + 18, Math.min(w * 0.36, 270), 58 + shieldPulse * 26, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(cx, baseY + 14);
+  ctx.fillStyle = '#07141b';
+  ctx.strokeStyle = `${accent}cc`;
+  ctx.lineWidth = 2;
+  roundRect(ctx, -42, -8, 84, 35, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = 16;
+  ctx.beginPath();
+  ctx.arc(0, -8, 12 + shieldPulse * 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  for (const side of [-1, 1] as const) {
+    ctx.fillStyle = '#081820';
+    ctx.strokeStyle = `${accent}99`;
+    roundRect(ctx, side * 68 - 8, -38, 16, 54, 5);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.arc(side * 68, -44, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, time: number) {
   const { width: w, height: h } = s;
   const baseY = h - 60;
@@ -2822,6 +2969,11 @@ function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, 
   // Bleeding Forest's root shrine is part of its bespoke environment pass so
   // its roots and ward stones interlock with the surrounding scenery.
   if (theme.id === 'forest') return;
+
+  if (theme.familyFriendly) {
+    drawPlanetBase(ctx, s, theme, time, baseY);
+    return;
+  }
 
   if (theme.id === 'city') {
     // The final checkpoint: concrete blast wall, shutter, hazard paint, and
@@ -3147,6 +3299,109 @@ function drawBase(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, 
 }
 
 // --- Zombies -------------------------------------------------------------
+
+function drawMeteor(ctx: CanvasRenderingContext2D, z: Zombie, s: GameState, theme: MapTheme, time: number) {
+  const sc = z.size / 30;
+  const seed = parseInt(z.id.replace(/\D/g, '') || '0', 10);
+  const spin = time * (z.frozen ? 0.0004 : 0.0025) + seed;
+  const radius = (z.isBoss ? 28 : z.type === 'tank' ? 19 : z.type === 'crawler' ? 11 : 15) * sc;
+  const core =
+    z.type === 'runner'
+      ? '#ffcf5a'
+      : z.type === 'glitch'
+        ? '#79f7ff'
+        : z.type === 'armored'
+          ? '#a8b7c7'
+          : z.type === 'screamer'
+            ? '#ff7ad9'
+            : z.type === 'tank'
+              ? '#ff7a45'
+              : z.isBoss
+                ? '#f8d66d'
+                : '#9cf6ff';
+  const shell = z.type === 'armored' || z.isBoss ? '#283247' : '#172033';
+
+  ctx.save();
+  ctx.translate(z.x, z.y);
+  ctx.rotate(spin);
+
+  const trail = ctx.createLinearGradient(-radius * 4, -radius * 1.5, radius, radius * 0.5);
+  trail.addColorStop(0, `${theme.palette.accent}00`);
+  trail.addColorStop(0.45, `${theme.palette.accent}44`);
+  trail.addColorStop(1, `${core}aa`);
+  ctx.fillStyle = trail;
+  ctx.beginPath();
+  ctx.moveTo(-radius * 4.2, -radius * 1.3);
+  ctx.quadraticCurveTo(-radius * 1.8, -radius * 0.2, -radius * 0.4, radius * 0.1);
+  ctx.quadraticCurveTo(-radius * 2.2, radius * 0.9, -radius * 4.4, radius * 1.3);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.shadowColor = core;
+  ctx.shadowBlur = z.hitFlash > 0 ? 22 : 10;
+  ctx.fillStyle = shell;
+  ctx.strokeStyle = core;
+  ctx.lineWidth = Math.max(1.5, 2 * sc);
+  ctx.beginPath();
+  const points = z.isBoss ? 12 : 8;
+  for (let i = 0; i < points; i++) {
+    const a = (i / points) * Math.PI * 2;
+    const r = radius * (0.74 + rand(seed + i * 9) * 0.42);
+    const x = Math.cos(a) * r;
+    const y = Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = core;
+  ctx.globalAlpha = 0.9;
+  for (let i = 0; i < (z.isBoss ? 5 : 3); i++) {
+    ctx.beginPath();
+    ctx.arc(
+      (rand(seed + i + 20) - 0.5) * radius,
+      (rand(seed + i + 40) - 0.5) * radius,
+      Math.max(2, radius * (0.09 + rand(seed + i + 60) * 0.08)),
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  if (z.type === 'screamer') {
+    ctx.strokeStyle = '#ff7ad9';
+    ctx.lineWidth = 2 * sc;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 1.35, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (z.frozen) {
+    ctx.strokeStyle = 'rgba(150,230,255,0.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 1.25, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (z.hitFlash > 0) {
+    ctx.globalAlpha = z.hitFlash * 0.7;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+
+  if (z.isBoss) drawBossHealth(ctx, z, s.width);
+  else drawHealthBar(ctx, z);
+}
 
 function drawZombie(ctx: CanvasRenderingContext2D, z: Zombie, s: GameState, time: number) {
   const st = ZSTYLES[z.type];

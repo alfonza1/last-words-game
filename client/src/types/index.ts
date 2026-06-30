@@ -132,6 +132,7 @@ export type PuzzleStyle = 'riddles' | 'math' | 'trivia';
 export interface Settings {
   difficulty: Difficulty;
   map: string; // selected map theme id
+  familyFriendlyMode: boolean;
   screenShake: boolean;
   music: boolean;
   musicVolume: number; // 0..1

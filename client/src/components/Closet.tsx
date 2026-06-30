@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { CharacterLoadout } from '../types';
+import { HAIR_COLORS, HAIR_STYLES, SKIN_TONES, type CosmeticDef } from '../data/cosmetics';
 import {
-  EXPRESSIONS,
-  HAIR_COLORS,
-  HAIR_STYLES,
-  SKIN_TONES,
-  cosmeticsFor,
-  normalizeCharacter,
-} from '../data/cosmetics';
+  cosmeticsForFamilyMode,
+  expressionsForFamilyMode,
+  normalizeCharacterForFamilyMode,
+  ownedCosmeticKeysForFamilyMode,
+} from '../theme/meteorMania';
 import { CharacterAvatar } from './CharacterAvatar';
 
 interface Props {
@@ -15,6 +14,7 @@ interface Props {
   ownedCosmetics: string[];
   signedIn: boolean;
   username: string;
+  familyFriendlyMode?: boolean;
   onEquip: (character: CharacterLoadout) => Promise<void>;
   onOpenStore: () => void;
   onBack: () => void;
@@ -32,24 +32,35 @@ export function Closet({
   character,
   ownedCosmetics,
   username,
+  familyFriendlyMode = false,
   onEquip,
   onOpenStore,
   onBack,
 }: Props) {
-  const [draft, setDraft] = useState(() => normalizeCharacter(character));
+  const [draft, setDraft] = useState(() => normalizeCharacterForFamilyMode(character, familyFriendlyMode));
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pendingExit, setPendingExit] = useState<'back' | 'store' | null>(null);
   useEffect(() => {
-    setDraft(normalizeCharacter(character));
+    setDraft(normalizeCharacterForFamilyMode(character, familyFriendlyMode));
     setSaved(false);
-  }, [character]);
+  }, [character, familyFriendlyMode]);
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(character);
   const hasUnsavedChanges = dirty && !saved;
-  const owned = useMemo(() => new Set(ownedCosmetics), [ownedCosmetics]);
-  const ownedOutfits = useMemo(() => cosmeticsFor('outfit').filter((item) => owned.has(item.key)), [owned]);
-  const ownedAccessories = useMemo(() => cosmeticsFor('accessory').filter((item) => owned.has(item.key)), [owned]);
+  const owned = useMemo(
+    () => new Set(ownedCosmeticKeysForFamilyMode(ownedCosmetics, familyFriendlyMode)),
+    [ownedCosmetics, familyFriendlyMode],
+  );
+  const ownedOutfits = useMemo(
+    () => cosmeticsForFamilyMode('outfit', familyFriendlyMode).filter((item) => owned.has(item.key)),
+    [owned, familyFriendlyMode],
+  );
+  const ownedAccessories = useMemo(
+    () => cosmeticsForFamilyMode('accessory', familyFriendlyMode).filter((item) => owned.has(item.key)),
+    [owned, familyFriendlyMode],
+  );
+  const expressions = useMemo(() => expressionsForFamilyMode(familyFriendlyMode), [familyFriendlyMode]);
   // Mobile shows one customization category at a time (like the shop) to cut
   // scrolling; desktop (sm+) shows every group.
   const [tab, setTab] = useState<ClosetTab>('body');
@@ -113,9 +124,9 @@ export function Closet({
           ← Back
         </button>
         <div className="order-1 min-w-0 basis-full sm:order-none sm:min-w-[210px] sm:basis-auto sm:flex-1">
-          <h1 className="truncate text-xl font-black tracking-widest text-neon-cyan sm:text-2xl">{username}’s Closet</h1>
+          <h1 className="truncate text-xl font-black tracking-widest text-neon-cyan sm:text-2xl">{username}{familyFriendlyMode ? "'s Suit Lab" : "'s Closet"}</h1>
           <p className="text-[8px] uppercase tracking-[0.2em] text-white/35 sm:text-[10px] sm:tracking-[0.28em]">
-            Build your last known look
+            {familyFriendlyMode ? 'Build your planet-saving look' : 'Build your last known look'}
           </p>
         </div>
         <button
@@ -123,7 +134,7 @@ export function Closet({
           className="group order-3 flex min-h-11 flex-1 basis-0 items-center justify-center gap-2 rounded-lg border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-3 py-2 text-center shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)] sm:order-none sm:ml-auto sm:flex-none sm:basis-auto sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-left"
         >
           <span className="h-2 w-2 rounded-full bg-neon-pink shadow-[0_0_12px_rgba(255,43,214,0.9)] transition group-hover:bg-neon-cyan group-hover:shadow-[0_0_14px_rgba(0,240,255,0.9)]" />
-          <span className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Open Shop</span>
+          <span className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">{familyFriendlyMode ? 'Open Gear Bay' : 'Open Shop'}</span>
         </button>
       </div>
 
@@ -140,7 +151,7 @@ export function Closet({
           <div className="relative hidden overflow-hidden rounded-xl border border-neon-cyan/30 bg-black/55 p-2.5 sm:block">
             <div className="absolute inset-y-0 left-0 w-1 bg-neon-cyan shadow-[0_0_14px_rgba(0,240,255,0.8)]" />
             <div className="flex items-center justify-between gap-3 pl-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">Survivor Look</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.24em] text-white/60">{familyFriendlyMode ? 'Flight Suit' : 'Survivor Look'}</span>
               <span
                 className={`rounded border px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
                   hasUnsavedChanges
@@ -243,10 +254,10 @@ export function Closet({
         <div className={groupClass('face')}>
         <Picker title="Face Expression">
           <p className="-mt-1 mb-2 text-[9px] uppercase tracking-[0.18em] text-white/35">
-            Choose the look you give the dead.
+            {familyFriendlyMode ? 'Choose the face you launch with.' : 'Choose the look you give the dead.'}
           </p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-            {EXPRESSIONS.map((expression) => {
+            {expressions.map((expression) => {
               const active = draft.expression === expression.key;
               return (
                 <button
@@ -327,7 +338,7 @@ export function Closet({
       {pendingExit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
           <div className="w-full max-w-sm rounded-xl border border-neon-amber/50 bg-ink-800 p-5 text-center shadow-[0_0_30px_rgba(255,183,0,0.15)]">
-            <h2 className="text-lg font-black tracking-wide text-neon-amber">UNSAVED SURVIVOR LOOK</h2>
+            <h2 className="text-lg font-black tracking-wide text-neon-amber">{familyFriendlyMode ? 'UNSAVED FLIGHT SUIT' : 'UNSAVED SURVIVOR LOOK'}</h2>
             <p className="mt-2 text-sm leading-relaxed text-white/70">
               Your changes have not been equipped. {pendingExit === 'store' ? 'Opening the shop' : 'Leaving now'} will discard them.
             </p>
@@ -342,7 +353,7 @@ export function Closet({
                 onClick={discardAndExit}
                 className="flex-1 rounded-lg border border-neon-amber/50 bg-neon-amber/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-neon-amber hover:bg-neon-amber/20"
               >
-                {pendingExit === 'store' ? 'Open Shop' : 'Discard Changes'}
+                {pendingExit === 'store' ? (familyFriendlyMode ? 'Open Gear Bay' : 'Open Shop') : 'Discard Changes'}
               </button>
             </div>
           </div>
@@ -368,7 +379,7 @@ function CosmeticPicker({
   onChoose,
 }: {
   title: string;
-  items: ReturnType<typeof cosmeticsFor>;
+  items: CosmeticDef[];
   selected: string;
   onChoose: (key: string) => void;
 }) {

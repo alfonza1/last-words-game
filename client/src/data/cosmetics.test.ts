@@ -88,3 +88,19 @@ describe('exclusive mythic cosmetics', () => {
     expect(cosmeticByKey('accessory-toxic-angel-halo')?.outfitReactive).toBe(true);
   });
 });
+
+describe('Meteor Mania cosmetics', () => {
+  it('adds a free starter suit and family-safe mythic sets', () => {
+    expect(cosmeticByKey('outfit-orbit-cadet')?.cost).toBe(0);
+    expect(cosmeticByKey('outfit-orbit-cadet')?.familyFriendly).toBe(true);
+    expect(cosmeticByKey('outfit-starforged-titan')?.rarity).toBe('exclusive-mythic');
+    expect(cosmeticByKey('outfit-cosmic-phoenix')?.rarity).toBe('exclusive-mythic');
+    expect(cosmeticByKey('accessory-orbit-drone')?.cost).toBe(33333);
+    expect(cosmeticByKey('accessory-saturn-crown')?.outfitReactive).toBe(true);
+  });
+
+  it('adds family-friendly expressions', () => {
+    expect(EXPRESSIONS.find((expression) => expression.key === 'star-ready')?.familyFriendly).toBe(true);
+    expect(EXPRESSIONS.find((expression) => expression.key === 'zero-g-grin')?.label).toBe('Zero-G Grin');
+  });
+});
