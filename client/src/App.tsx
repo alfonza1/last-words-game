@@ -733,6 +733,11 @@ export default function App() {
             onPuzzleStyle={(s) => persistSettings({ ...settings, riddleMode: true, puzzleStyle: s })}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
             familyFriendlyMode={familyFriendlyMode}
+            coins={stats.totalCoins}
+            signedIn={signedIn}
+            onOpenCoins={() => setShowCoinPacks(true)}
+            onSignIn={() => requireSignIn()}
+            onSignOut={() => setConfirmSignOut(true)}
           />
         );
     }

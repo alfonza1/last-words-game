@@ -20,6 +20,12 @@ interface Props {
   onPuzzleStyle: (s: PuzzleStyle) => void;
   mobileSpeechExperience?: boolean;
   familyFriendlyMode?: boolean;
+  // Mobile-only in-flow wallet/account row at the bottom of the menu.
+  coins: number;
+  signedIn: boolean;
+  onOpenCoins: () => void;
+  onSignIn: () => void;
+  onSignOut: () => void;
 }
 
 type Style = 'typing' | PuzzleStyle;
@@ -198,6 +204,11 @@ export function MainMenu({
   onPuzzleStyle,
   mobileSpeechExperience = false,
   familyFriendlyMode = false,
+  coins,
+  signedIn,
+  onOpenCoins,
+  onSignIn,
+  onSignOut,
 }: Props) {
   const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
@@ -291,14 +302,14 @@ export function MainMenu({
           <div className="grid grid-cols-2 gap-2 sm:hidden">
             <button
               onClick={() => onStart('survival')}
-              className="rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2.5 text-center transition active:scale-95"
+              className="rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2 text-center transition active:scale-95"
             >
               <span className="block text-sm font-black uppercase tracking-wide text-neon-green">{familyFriendlyMode ? 'Start Planet Shield' : 'Start Survival'}</span>
               <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">{familyFriendlyMode ? 'Endless meteors' : 'Endless waves'}</span>
             </button>
             <button
               onClick={() => onStart('bossrush')}
-              className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2.5 text-center transition active:scale-95"
+              className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2 text-center transition active:scale-95"
             >
               <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">{familyFriendlyMode ? 'Start Comet Storm' : 'Start Boss Rush'}</span>
               <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">{familyFriendlyMode ? 'Mega meteor run' : 'Boss gauntlet'}</span>
@@ -330,6 +341,27 @@ export function MainMenu({
             <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('settings')}>
               Settings
             </button>
+          </div>
+
+          {/* Mobile wallet + account — in flow at the bottom with a divider, so
+              there's clear, device-independent space from the nav buttons above.
+              Coins on the left, sign-in/account on the right. */}
+          <div className="mt-1.5 flex items-center gap-2 border-t border-white/10 pt-2 sm:hidden">
+            <button
+              onClick={onOpenCoins}
+              className="flex-1 truncate rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1.5 text-center text-xs font-black uppercase tracking-wider text-neon-amber transition active:scale-95"
+            >
+              🪙 {coins.toLocaleString()} Coins
+            </button>
+            <div className="flex flex-1 items-center justify-center gap-2 truncate rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs">
+              {signedIn && <span className="min-w-0 truncate text-white/60">{username}</span>}
+              <button
+                onClick={signedIn ? onSignOut : onSignIn}
+                className="shrink-0 font-black uppercase tracking-wider text-neon-green active:scale-95"
+              >
+                {signedIn ? 'Sign out' : 'Sign in'}
+              </button>
+            </div>
           </div>
 
           {/* Desktop nav (reverted to prior menu-btn + emojis). */}
