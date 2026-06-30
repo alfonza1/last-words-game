@@ -19,6 +19,13 @@ interface Props {
   onRiddleMode: (v: boolean) => void;
   onPuzzleStyle: (s: PuzzleStyle) => void;
   mobileSpeechExperience?: boolean;
+  // Mobile-only in-flow wallet/account row at the bottom of the menu (the fixed
+  // top chips are hidden on the home screen).
+  coins: number;
+  signedIn: boolean;
+  onOpenCoins: () => void;
+  onSignIn: () => void;
+  onSignOut: () => void;
 }
 
 type Style = 'typing' | PuzzleStyle;
@@ -118,6 +125,11 @@ export function MainMenu({
   onRiddleMode,
   onPuzzleStyle,
   mobileSpeechExperience = false,
+  coins,
+  signedIn,
+  onOpenCoins,
+  onSignIn,
+  onSignOut,
 }: Props) {
   const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
@@ -126,7 +138,7 @@ export function MainMenu({
   const recordsTitle = 'Career Stats';
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-28 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-4 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
         <h1 className="text-2xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
           LAST<span className="text-neon-pink"> WORDS</span>
@@ -240,6 +252,27 @@ export function MainMenu({
             <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('settings')}>
               Settings
             </button>
+          </div>
+
+          {/* Mobile wallet + account — in flow at the bottom with a divider, so
+              there's clear, device-independent space from the nav buttons above.
+              Coins on the left, sign-in/account on the right. */}
+          <div className="mt-2 flex items-center gap-2 border-t border-white/10 pt-3 sm:hidden">
+            <button
+              onClick={onOpenCoins}
+              className="flex-1 truncate rounded-full border border-neon-amber/50 bg-black/60 px-3 py-2 text-center text-xs font-black uppercase tracking-wider text-neon-amber transition active:scale-95"
+            >
+              🪙 {coins.toLocaleString()} Coins
+            </button>
+            <div className="flex flex-1 items-center justify-center gap-2 truncate rounded-full border border-white/10 bg-black/60 px-3 py-2 text-xs">
+              {signedIn && <span className="min-w-0 truncate text-white/60">{username}</span>}
+              <button
+                onClick={signedIn ? onSignOut : onSignIn}
+                className="shrink-0 font-black uppercase tracking-wider text-neon-green active:scale-95"
+              >
+                {signedIn ? 'Sign out' : 'Sign in'}
+              </button>
+            </div>
           </div>
 
           {/* Desktop nav (reverted to prior menu-btn + emojis). */}
