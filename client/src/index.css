@@ -68,6 +68,16 @@ body {
   top: max(0.75rem, env(safe-area-inset-top));
 }
 
+.safe-bottom-left {
+  left: max(0.75rem, env(safe-area-inset-left));
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.safe-bottom-right {
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
 @media (max-width: 640px) {
   .menu-btn {
     min-height: 3rem;
