@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Difficulty, GameMode } from '../types';
 import type { MapTheme } from '../data/maps';
-import { isMapOwnedForFamilyMode, selectableMapsForFamilyMode } from '../theme/meteorMania';
+import { METEOR_MANIA_HARD_MODE_LABEL, isMapOwnedForFamilyMode, selectableMapsForFamilyMode } from '../theme/meteorMania';
 
 interface Props {
   mode: GameMode;
@@ -77,7 +77,7 @@ export function MapSelect({
                 </div>
                 {m.nightmareOnly && (
                   <span className="absolute right-2 top-2 rounded bg-neon-red/80 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-white">
-                    {familyFriendlyMode ? 'Red Alert Exclusive' : 'Nightmare Exclusive'}
+                    {familyFriendlyMode ? `${METEOR_MANIA_HARD_MODE_LABEL} Exclusive` : 'Nightmare Exclusive'}
                   </span>
                 )}
                 {m.bossRushOnly && (

@@ -48,7 +48,7 @@ export const SKIN_TONES = [
   { key: 'tan', label: 'Tan', color: '#a96745' },
   { key: 'brown', label: 'Brown', color: '#75452f' },
   { key: 'deep', label: 'Deep', color: '#48291f' },
-  { key: 'undead', label: 'Undead', color: '#8aa17a' },
+  { key: 'undead', label: 'Alien Green', color: '#67e87f' },
 ] as const;
 
 export const HAIR_STYLES = [
@@ -107,6 +107,13 @@ export const EXPRESSIONS: ExpressionDef[] = [
     outfitReactive: true,
   },
   {
+    key: 'first-light',
+    label: 'First Light',
+    icon: '._.',
+    description: 'Calm, focused, and ready for launch.',
+    familyFriendly: true,
+  },
+  {
     key: 'mission-calm',
     label: 'Mission Calm',
     icon: '-_-',
@@ -119,6 +126,28 @@ export const EXPRESSIONS: ExpressionDef[] = [
     icon: '^_^',
     description: 'A bright look for a close save.',
     familyFriendly: true,
+  },
+  {
+    key: 'wide-eyed-wonder',
+    label: 'Wide-Eyed Wonder',
+    icon: 'o_o',
+    description: 'Big eyes for a close meteor pass.',
+    familyFriendly: true,
+  },
+  {
+    key: 'family-scarred-smirk',
+    label: 'Scarred Smirk',
+    icon: '/¬_¬',
+    description: 'A battle-ready smile for the next launch.',
+    familyFriendly: true,
+  },
+  {
+    key: 'still-standing',
+    label: 'Still Standing',
+    icon: '◉‿○',
+    description: 'One charged eye and steady nerves.',
+    familyFriendly: true,
+    outfitReactive: true,
   },
   {
     key: 'star-ready',

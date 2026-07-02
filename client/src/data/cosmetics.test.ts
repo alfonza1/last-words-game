@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cosmeticByKey, DEFAULT_CHARACTER, EXPRESSIONS, HAIR_STYLES, lipColorForSkinTone, normalizeCharacter, skinColor } from './cosmetics';
+import { cosmeticByKey, DEFAULT_CHARACTER, EXPRESSIONS, HAIR_STYLES, SKIN_TONES, lipColorForSkinTone, normalizeCharacter, skinColor } from './cosmetics';
 
 describe('default character', () => {
   it('selects buzz hair for new survivors', () => {
@@ -33,6 +33,13 @@ describe('default character', () => {
   it('derives lips from the selected skin tone', () => {
     expect(lipColorForSkinTone('warm')).not.toBe(lipColorForSkinTone('undead'));
     expect(lipColorForSkinTone('warm')).not.toBe(skinColor('warm'));
+  });
+
+  it('renames the former undead skin tone as an alien option', () => {
+    expect(SKIN_TONES.find((tone) => tone.key === 'undead')).toMatchObject({
+      label: 'Alien Green',
+      color: '#67e87f',
+    });
   });
 });
 
@@ -102,7 +109,20 @@ describe('Meteor Mania cosmetics', () => {
   it('adds family-friendly expressions', () => {
     const familyExpressions = EXPRESSIONS.filter((expression) => expression.familyFriendly);
 
-    expect(familyExpressions.map((expression) => expression.key)).toEqual(['mission-calm', 'zero-g-grin', 'star-ready']);
+    expect(familyExpressions.map((expression) => expression.key)).toEqual([
+      'first-light',
+      'mission-calm',
+      'zero-g-grin',
+      'wide-eyed-wonder',
+      'family-scarred-smirk',
+      'still-standing',
+      'star-ready',
+    ]);
+    expect(EXPRESSIONS.find((expression) => expression.key === 'first-light')?.label).toBe('First Light');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'wide-eyed-wonder')?.label).toBe('Wide-Eyed Wonder');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'family-scarred-smirk')?.label).toBe('Scarred Smirk');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'still-standing')?.label).toBe('Still Standing');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'still-standing')?.outfitReactive).toBe(true);
     expect(EXPRESSIONS.find((expression) => expression.key === 'star-ready')?.outfitReactive).toBe(true);
     expect(EXPRESSIONS.find((expression) => expression.key === 'zero-g-grin')?.label).toBe('Zero-G Grin');
   });
