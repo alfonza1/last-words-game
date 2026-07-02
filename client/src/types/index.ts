@@ -66,6 +66,8 @@ export interface Zombie {
   spawnsLeft?: number; // screamer: remaining adds
   isBoss?: boolean;
   bossName?: string;
+  /** Signature meteor tint for a boss ("mega meteor" in family-friendly mode). */
+  bossColor?: string;
   frozen?: number; // seconds of freeze remaining
 }
 

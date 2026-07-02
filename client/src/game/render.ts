@@ -3853,7 +3853,7 @@ function drawMeteor(ctx: CanvasRenderingContext2D, z: Zombie, s: GameState, them
             : z.type === 'tank'
               ? '#ff7a45'
               : z.isBoss
-                ? '#f8d66d'
+                ? z.bossColor ?? '#f8d66d'
                 : '#9cf6ff';
   const shell = z.type === 'armored' || z.isBoss ? '#283247' : '#172033';
 
