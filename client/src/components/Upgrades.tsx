@@ -3,7 +3,8 @@ import type { CharacterLoadout, GameStats, UpgradeKey, Upgrades as UpgradesType 
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, upgradeCost } from '../data/upgrades';
 import { POWERUP_DEFS } from '../data/powerups';
 import { COIN_PACKS } from '../data/coinPacks';
-import { COSMETICS, DEFAULT_CHARACTER, type CosmeticDef, type CosmeticSlot } from '../data/cosmetics';
+import { DEFAULT_CHARACTER, type CosmeticDef, type CosmeticSlot } from '../data/cosmetics';
+import { cosmeticsForFamilyMode } from '../theme/meteorMania';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -29,6 +30,7 @@ interface Props {
   character: CharacterLoadout;
   /** Whether the player is signed in (required to purchase). */
   signedIn: boolean;
+  familyFriendlyMode?: boolean;
   /** Purchase is authoritative on the backend — just send the key. */
   onBuy: (key: UpgradeKey) => void;
   /** Buy one charge of a consumable powerup. */
@@ -49,6 +51,7 @@ export function Upgrades({
   ownedCosmetics,
   character,
   signedIn,
+  familyFriendlyMode = false,
   onBuy,
   onBuyPowerup,
   onBuyCosmetic,
@@ -63,7 +66,7 @@ export function Upgrades({
   // Stable catalog order — bought items don't jump to the front of the list.
   // Exclusive Mythic gear is showcased at the top of its section, above Legendary.
   const gearFor = (slot: CosmeticSlot) =>
-    COSMETICS.filter((item) => item.slot === slot && item.cost > 0).sort(
+    cosmeticsForFamilyMode(slot, familyFriendlyMode).filter((item) => item.cost > 0).sort(
       (a, b) => Number(b.rarity === 'exclusive-mythic') - Number(a.rarity === 'exclusive-mythic'),
     );
 
@@ -88,7 +91,11 @@ export function Upgrades({
   const gearCard = (item: CosmeticDef) => {
     const isOwned = owned.has(item.key);
     const affordable = coins >= item.cost;
-    const preview: CharacterLoadout = { ...DEFAULT_CHARACTER, [item.slot]: item.key };
+    const preview: CharacterLoadout = {
+      ...DEFAULT_CHARACTER,
+      outfit: familyFriendlyMode ? 'outfit-orbit-cadet' : DEFAULT_CHARACTER.outfit,
+      [item.slot]: item.key,
+    };
     const exclusive = item.rarity === 'exclusive-mythic';
     // Exclusive Mythic gets a purple haze; other rarities keep their accent border.
     const rarityColor = exclusive
@@ -233,8 +240,8 @@ export function Upgrades({
 
       <section className={sectionClass('gear')}>
       <p className="text-xs text-white/55">Cosmetics give no competitive advantage.</p>
-      <h2 className="text-sm font-bold uppercase tracking-widest text-neon-pink">Survivor Gear</h2>
-      <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Outfits</h3>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-neon-pink">{familyFriendlyMode ? 'Meteor Gear' : 'Survivor Gear'}</h2>
+      <h3 className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">{familyFriendlyMode ? 'Flight Suits' : 'Outfits'}</h3>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{gearFor('outfit').map(gearCard)}</div>
       </section>
 

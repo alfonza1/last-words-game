@@ -5,22 +5,27 @@ import { AdBanner } from './AdBanner';
 type Board = 'typers' | 'solvers';
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-/** Solvers board "Mode" label from a run's play style. */
 const STYLE_LABEL: Record<string, string> = {
   riddles: 'Riddle',
   math: 'Math',
   trivia: 'Trivia',
   typing: 'Typing',
 };
+
 function modeLabel(e: LeaderboardEntry): string {
   return STYLE_LABEL[e.style] ?? 'Puzzle';
 }
 
-export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack: () => void; mobileSpeechExperience?: boolean }) {
+export function Leaderboard({
+  onBack,
+  mobileSpeechExperience = false,
+}: {
+  onBack: () => void;
+  mobileSpeechExperience?: boolean;
+  familyFriendlyMode?: boolean;
+}) {
   const [data, setData] = useState<Leaderboards | null>(null);
   const [error, setError] = useState(false);
-  // Mobile plays the speech/solver experience — there's no typing here, so the
-  // typers board is irrelevant. Start on (and lock to) solvers.
   const [board, setBoard] = useState<Board>(mobileSpeechExperience ? 'solvers' : 'typers');
 
   useEffect(() => {
@@ -33,7 +38,7 @@ export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack
     };
   }, []);
 
-  const entries = data ? data[board] ?? null : null; // tolerate an older API response
+  const entries = data ? data[board] ?? null : null;
   const cols = 'grid-cols-[2.75rem_1fr_5rem_3rem_4rem]';
 
   return (
@@ -52,8 +57,6 @@ export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack
         <p className="mt-1 text-xs uppercase tracking-[0.35em] text-neon-cyan">🌍 Top 20 in the World</p>
       </div>
 
-      {/* Board toggle: typers vs solvers (riddle / math / trivia). Mobile has no
-          typing experience, so the toggle is hidden and only solvers is shown. */}
       {!mobileSpeechExperience && (
         <div className="mx-auto flex w-full max-w-sm gap-2 rounded-lg border border-white/10 bg-ink-800/60 p-1">
           <button
@@ -75,16 +78,18 @@ export function Leaderboard({ onBack, mobileSpeechExperience = false }: { onBack
         </div>
       )}
       <p className="-mt-2 text-center text-[11px] text-white/35">
-        {board === 'typers' ? "Elite Typists - Top Typing Defense scores." : 'Sharpest minds — Top Riddle, Math & Trivia Defense scores.'}
+        {board === 'typers'
+          ? 'Elite Typists - Top Typing Defense scores.'
+          : 'Sharpest minds - Top Riddle, Math & Trivia Defense scores.'}
       </p>
 
       {error && <p className="text-center text-sm text-neon-red">Couldn’t load the leaderboard right now.</p>}
       {!error && entries === null && (
-        <p className="animate-pulse text-center text-sm tracking-widest text-neon-green/70">LOADING…</p>
+        <p className="animate-pulse text-center text-sm tracking-widest text-neon-green/70">LOADING...</p>
       )}
       {entries !== null && entries.length === 0 && (
         <p className="mt-8 text-center text-sm text-white/50">
-          No scores yet — be the first {board === 'typers' ? 'typer' : 'solver'} on the board!
+          No scores yet - be the first {board === 'typers' ? 'typer' : 'solver'} on the board!
         </p>
       )}
 

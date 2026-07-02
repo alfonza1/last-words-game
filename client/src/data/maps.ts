@@ -29,6 +29,7 @@ export interface MapTheme {
   name: string;
   description: string;
   cost: number; // coins to buy (0 = free)
+  familyFriendly?: boolean;
   nightmareOnly?: boolean; // only selectable on Nightmare difficulty
   bossRushOnly?: boolean; // only selectable in Boss Rush mode
   palette: MapPalette;
@@ -110,6 +111,54 @@ export const MAPS: MapTheme[] = [
       fog: '220,150,80', moon: '#ffcf8f', glow: 'rgba(255,170,70,0.45)', accent: '#ff9d2b',
     },
     features: { ...NONE, arena: true },
+  },
+  {
+    id: 'planet-aurora',
+    name: 'Aurora Prime',
+    description: 'A blue-green home world with defense towers, soft auroras, and the first meteor storm.',
+    cost: 0,
+    familyFriendly: true,
+    palette: {
+      skyTop: '#041225', skyHorizon: '#123c46', ground1: '#12372f', ground2: '#06110f',
+      fog: '76,230,210', moon: '#dffcff', glow: 'rgba(92,245,220,0.38)', accent: '#4df4d0',
+    },
+    features: { ...NONE },
+  },
+  {
+    id: 'planet-crystal',
+    name: 'Crystal Vale',
+    description: 'A glittering violet planet where meteor showers bounce through giant prism fields.',
+    cost: 250,
+    familyFriendly: true,
+    palette: {
+      skyTop: '#09051f', skyHorizon: '#2c195c', ground1: '#1c2357', ground2: '#070713',
+      fog: '156,130,255', moon: '#f1e8ff', glow: 'rgba(170,120,255,0.44)', accent: '#9cf6ff',
+    },
+    features: { ...NONE },
+  },
+  {
+    id: 'planet-volcanic',
+    name: 'Ember Moon',
+    description: 'A molten red moon with defense pylons holding the lava fields back.',
+    cost: 650,
+    familyFriendly: true,
+    palette: {
+      skyTop: '#13050b', skyHorizon: '#3a142a', ground1: '#342019', ground2: '#0b0504',
+      fog: '255,116,68', moon: '#ffe0a8', glow: 'rgba(255,128,66,0.4)', accent: '#ffcf5a',
+    },
+    features: { ...NONE, embers: true },
+  },
+  {
+    id: 'planet-nebula',
+    name: 'Nebula Reef',
+    description: 'A deep-space reef planet under ringlight, built for late-game meteor madness.',
+    cost: 1000,
+    familyFriendly: true,
+    palette: {
+      skyTop: '#020718', skyHorizon: '#171a52', ground1: '#132044', ground2: '#03060f',
+      fog: '89,190,255', moon: '#c7f5ff', glow: 'rgba(80,180,255,0.42)', accent: '#ff7ad9',
+    },
+    features: { ...NONE },
   },
   {
     id: 'inferno',

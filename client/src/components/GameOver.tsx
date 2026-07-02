@@ -12,6 +12,7 @@ interface Props {
   isHighScore: boolean;
   rewardCoins: number;
   wpmBonus: WpmBonus;
+  familyFriendlyMode?: boolean;
   /** Watch the rewarded ad → grant coins. Returns coins granted (throws on error). */
   onWatchAd: () => Promise<number>;
   onRestart: () => void;
@@ -24,6 +25,7 @@ export function GameOver({
   isHighScore,
   rewardCoins,
   wpmBonus,
+  familyFriendlyMode = false,
   onWatchAd,
   onRestart,
   onMenu,
@@ -56,7 +58,7 @@ export function GameOver({
             : 'text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.8)]'
         }`}
       >
-        {survived ? 'YOU SURVIVED' : 'GAME OVER'}
+        {survived ? (familyFriendlyMode ? 'PLANET SAVED' : 'YOU SURVIVED') : familyFriendlyMode ? 'DEFENSE BROKEN' : 'GAME OVER'}
       </h1>
       {isHighScore && <div className="animate-pulse text-xl font-bold text-neon-amber">★ NEW HIGH SCORE ★</div>}
 
@@ -65,9 +67,9 @@ export function GameOver({
         <Big label="Wave" value={result.wave} accent="#39ff14" />
         {!result.riddle && <Big label="WPM" value={result.wpm} accent="#00f0ff" />}
         <Big label="Accuracy" value={`${result.accuracy}%`} accent="#39ff14" />
-        <Big label="Survived" value={formatTime(result.survivalMs)} accent="#e8ffe8" />
-        <Big label="Kills" value={result.kills} accent="#ff2bd6" />
-        <Big label="Bosses" value={result.bossesDefeated} accent="#ff2bd6" />
+        <Big label={familyFriendlyMode ? 'Defense Time' : 'Survived'} value={formatTime(result.survivalMs)} accent="#e8ffe8" />
+        <Big label={familyFriendlyMode ? 'Meteors' : 'Kills'} value={result.kills} accent="#ff2bd6" />
+        <Big label={familyFriendlyMode ? 'Mega Meteors' : 'Bosses'} value={result.bossesDefeated} accent="#ff2bd6" />
         <Big label="Coins" value={result.coins} accent="#ffd166" />
       </div>
 
@@ -101,13 +103,13 @@ export function GameOver({
 
       <div className="flex w-full max-w-md gap-3">
         <button className="menu-btn flex-1 text-center" onClick={onRestart}>
-          ↻ Play Again
+          {familyFriendlyMode ? 'Launch Again' : 'Play Again'}
         </button>
         <button className="menu-btn flex-1 text-center" onClick={onMenu}>
           ⏏ Menu
         </button>
       </div>
-      <p className="text-xs text-white/40">{mode.toUpperCase()} · press Enter to play again</p>
+      <p className="text-xs text-white/40">{mode.toUpperCase()} - press Enter to play again</p>
 
       <AdBanner />
 

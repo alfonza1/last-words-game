@@ -1,6 +1,9 @@
 import type { CharacterLoadout, GameState } from '../types';
 import { OUTFIT_PALETTES, hairColor, lipColorForSkinTone, skinColor } from '../data/cosmetics';
 
+const RIFLE_MUZZLE_DISTANCE = 92;
+const ZAPPER_MUZZLE_DISTANCE = 70;
+
 /** Draw the equipped survivor prone at the defensive line, aiming into play. */
 export function drawSurvivor(
   ctx: CanvasRenderingContext2D,
@@ -28,6 +31,7 @@ export function drawSurvivor(
   const hair = hairColor(character.hairColor);
   const outfit = OUTFIT_PALETTES[character.outfit] ?? OUTFIT_PALETTES['outfit-field'];
   const glow = outfit.glow ?? outfit.trim;
+  const familyFriendlyMode = s.settings.familyFriendlyMode;
   // Exclusive Mythics replace the survivor entirely (skull / plague-doctor mask).
   const fullCharacter =
     character.outfit === 'outfit-godmode-revenant' || character.outfit === 'outfit-neon-plague-saint';
@@ -40,7 +44,7 @@ export function drawSurvivor(
   const breathing = Math.sin(time * 0.0024) * 0.85 * scale;
   const shotStrength = s.survivorShot ? Math.max(0, s.survivorShot.life / s.survivorShot.ttl) : 0;
   const recoil = shotStrength * 2.8 * scale;
-  const muzzleDistance = 92 * scale;
+  const muzzleDistance = (familyFriendlyMode ? ZAPPER_MUZZLE_DISTANCE : RIFLE_MUZZLE_DISTANCE) * scale;
   const shoulderWorldX = x + direction * (20 * scale - recoil);
   const shoulderWorldY = y + breathing - 20 * scale;
   const muzzleWorldX = shoulderWorldX + direction * Math.cos(aimAngle) * muzzleDistance;
@@ -138,11 +142,141 @@ export function drawSurvivor(
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // Rifle pivots to the engine-selected zombie and recoils on a completed word.
+  // Weapon pivots to the engine-selected target and recoils on a completed word.
   ctx.save();
   ctx.translate(20 * scale - recoil, -20 * scale);
   ctx.rotate(aimAngle);
 
+  if (familyFriendlyMode) {
+    drawZapperWeapon(ctx, outfit.trim, shotStrength, scale, Boolean(s.survivorShot));
+  } else {
+    drawRifleWeapon(ctx, outfit.trim, shotStrength, scale, Boolean(s.survivorShot));
+  }
+  ctx.restore();
+  ctx.restore();
+
+  if (s.survivorShot) {
+    drawTracer(ctx, muzzleWorldX, muzzleWorldY, s.survivorShot, scale, familyFriendlyMode);
+  }
+}
+
+function drawZapperWeapon(
+  ctx: CanvasRenderingContext2D,
+  trim: string,
+  shotStrength: number,
+  scale: number,
+  isFiring: boolean,
+) {
+  const cyan = '#7cf6ff';
+  const magenta = '#ff7ad9';
+
+  ctx.fillStyle = '#082335';
+  roundRect(ctx, -4 * scale, -8 * scale, 16 * scale, 16 * scale, 6 * scale);
+  ctx.fill();
+  ctx.strokeStyle = cyan;
+  ctx.lineWidth = 1.2 * scale;
+  ctx.globalAlpha = 0.75;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  const body = ctx.createLinearGradient(8 * scale, -9 * scale, 52 * scale, 9 * scale);
+  body.addColorStop(0, '#062031');
+  body.addColorStop(0.55, '#0b3a52');
+  body.addColorStop(1, '#041821');
+  ctx.fillStyle = body;
+  roundRect(ctx, 6 * scale, -9 * scale, 46 * scale, 18 * scale, 9 * scale);
+  ctx.fill();
+  ctx.strokeStyle = cyan;
+  ctx.lineWidth = 1.25 * scale;
+  ctx.stroke();
+
+  ctx.strokeStyle = trim;
+  ctx.globalAlpha = 0.7;
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.moveTo(14 * scale, -5 * scale);
+  ctx.lineTo(45 * scale, -5 * scale);
+  ctx.moveTo(14 * scale, 5 * scale);
+  ctx.lineTo(45 * scale, 5 * scale);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.rotate(-0.28);
+  ctx.fillStyle = '#0c2f45';
+  roundRect(ctx, 25 * scale, -16 * scale, 25 * scale, 5 * scale, 2.5 * scale);
+  ctx.fill();
+  ctx.strokeStyle = cyan;
+  ctx.globalAlpha = 0.65;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.rotate(0.28);
+  ctx.fillStyle = '#0c2f45';
+  roundRect(ctx, 25 * scale, 11 * scale, 25 * scale, 5 * scale, 2.5 * scale);
+  ctx.fill();
+  ctx.strokeStyle = cyan;
+  ctx.globalAlpha = 0.65;
+  ctx.stroke();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = '#05151f';
+  ctx.beginPath();
+  ctx.arc(30 * scale, 0, 7 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowColor = magenta;
+  ctx.shadowBlur = 8 * scale;
+  ctx.fillStyle = magenta;
+  ctx.beginPath();
+  ctx.arc(30 * scale, 0, 3.1 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.strokeStyle = cyan;
+  ctx.lineWidth = 3 * scale;
+  ctx.beginPath();
+  ctx.moveTo(49 * scale, 0);
+  ctx.lineTo(60 * scale, 0);
+  ctx.stroke();
+
+  ctx.lineWidth = 1.8 * scale;
+  ctx.beginPath();
+  ctx.ellipse(64 * scale, 0, 6 * scale, 9 * scale, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(61 * scale, -7 * scale);
+  ctx.lineTo(68 * scale, -10 * scale);
+  ctx.moveTo(61 * scale, 7 * scale);
+  ctx.lineTo(68 * scale, 10 * scale);
+  ctx.stroke();
+
+  if (!isFiring) return;
+
+  const muzzleX = ZAPPER_MUZZLE_DISTANCE * scale;
+  ctx.strokeStyle = `rgba(124,246,255,${shotStrength})`;
+  ctx.fillStyle = `rgba(124,246,255,${0.22 + shotStrength * 0.42})`;
+  ctx.shadowColor = cyan;
+  ctx.shadowBlur = 20 * shotStrength;
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.arc(muzzleX, 0, 8 * scale * shotStrength, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(muzzleX + 7 * scale, 0, 14 * scale * shotStrength, -0.85, 0.85);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+function drawRifleWeapon(
+  ctx: CanvasRenderingContext2D,
+  trim: string,
+  shotStrength: number,
+  scale: number,
+  isFiring: boolean,
+) {
   // Stock seated into the shoulder.
   ctx.fillStyle = '#090d0f';
   ctx.beginPath();
@@ -160,7 +294,7 @@ export function drawSurvivor(
   ctx.strokeStyle = '#829198';
   ctx.lineWidth = 1.1 * scale;
   ctx.stroke();
-  ctx.fillStyle = outfit.trim;
+  ctx.fillStyle = trim;
   ctx.globalAlpha = 0.7;
   ctx.fillRect(17 * scale, -4 * scale, 23 * scale, 2 * scale);
   ctx.globalAlpha = 1;
@@ -181,41 +315,35 @@ export function drawSurvivor(
   ctx.fillStyle = '#1b272c';
   roundRect(ctx, 7 * scale, -11 * scale, 17 * scale, 7 * scale, 2 * scale);
   ctx.fill();
-  ctx.strokeStyle = outfit.trim;
+  ctx.strokeStyle = trim;
   ctx.globalAlpha = 0.85;
   ctx.stroke();
   ctx.globalAlpha = 1;
-  ctx.fillStyle = outfit.trim;
+  ctx.fillStyle = trim;
   ctx.fillRect(28 * scale, 5 * scale, 3 * scale, 9 * scale);
 
-  if (s.survivorShot) {
-    const muzzleX = 94 * scale;
-    ctx.fillStyle = `rgba(255,235,145,${shotStrength})`;
-    ctx.shadowColor = '#ffd166';
-    ctx.shadowBlur = 18 * shotStrength;
-    ctx.beginPath();
-    ctx.moveTo(muzzleX, 0);
-    ctx.lineTo(muzzleX + 18 * scale * shotStrength, -7 * scale);
-    ctx.lineTo(muzzleX + 10 * scale * shotStrength, 0);
-    ctx.lineTo(muzzleX + 18 * scale * shotStrength, 7 * scale);
-    ctx.closePath();
-    ctx.fill();
-    ctx.shadowBlur = 0;
+  if (!isFiring) return;
 
-    // A brief brass casing sells the shot without adding screen clutter.
-    ctx.fillStyle = `rgba(255,193,74,${shotStrength})`;
-    ctx.save();
-    ctx.translate(8 * scale, -8 * scale);
-    ctx.rotate(-0.8 + shotStrength);
-    ctx.fillRect(0, 0, 5 * scale, 2 * scale);
-    ctx.restore();
-  }
-  ctx.restore();
-  ctx.restore();
+  const muzzleX = 94 * scale;
+  ctx.fillStyle = `rgba(255,235,145,${shotStrength})`;
+  ctx.shadowColor = '#ffd166';
+  ctx.shadowBlur = 18 * shotStrength;
+  ctx.beginPath();
+  ctx.moveTo(muzzleX, 0);
+  ctx.lineTo(muzzleX + 18 * scale * shotStrength, -7 * scale);
+  ctx.lineTo(muzzleX + 10 * scale * shotStrength, 0);
+  ctx.lineTo(muzzleX + 18 * scale * shotStrength, 7 * scale);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
 
-  if (s.survivorShot) {
-    drawTracer(ctx, muzzleWorldX, muzzleWorldY, s.survivorShot, scale);
-  }
+  // A brief brass casing sells the shot without adding screen clutter.
+  ctx.fillStyle = `rgba(255,193,74,${shotStrength})`;
+  ctx.save();
+  ctx.translate(8 * scale, -8 * scale);
+  ctx.rotate(-0.8 + shotStrength);
+  ctx.fillRect(0, 0, 5 * scale, 2 * scale);
+  ctx.restore();
 }
 
 function drawCombatFace(
@@ -227,6 +355,9 @@ function drawCombatFace(
 ) {
   const eyeX = 34 * scale;
   const eyeY = -29 * scale;
+  const scarredSmirkExpression = expression === 'grave-grin' || expression === 'zero-g-grin';
+  const wideEyedExpression = expression === 'haunted' || expression === 'wide-eyed-wonder';
+  const chargedEyeExpression = expression === 'not-yet-dead' || expression === 'still-standing';
   ctx.save();
   ctx.lineCap = 'round';
   ctx.lineWidth = Math.max(0.9, scale);
@@ -248,7 +379,7 @@ function drawCombatFace(
     return;
   }
 
-  if (expression === 'haunted') {
+  if (wideEyedExpression) {
     ctx.fillStyle = '#eef4ef';
     ctx.strokeStyle = '#111719';
     ctx.beginPath();
@@ -270,7 +401,45 @@ function drawCombatFace(
     return;
   }
 
-  if (expression === 'not-yet-dead') {
+  if (expression === 'star-ready') {
+    ctx.fillStyle = glow;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    drawStar(ctx, 33 * scale, eyeY, 3.6 * scale, 1.65 * scale);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#101416';
+    ctx.lineWidth = Math.max(0.55, 0.65 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = lips;
+    ctx.lineWidth = Math.max(0.85, scale);
+    ctx.beginPath();
+    ctx.moveTo(35 * scale, -22 * scale);
+    ctx.quadraticCurveTo(40 * scale, -18 * scale, 45 * scale, -22 * scale);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (expression === 'mission-calm') {
+    ctx.strokeStyle = '#111719';
+    ctx.lineWidth = Math.max(0.9, 1.1 * scale);
+    ctx.beginPath();
+    ctx.moveTo(29 * scale, eyeY);
+    ctx.lineTo(37 * scale, eyeY);
+    ctx.moveTo(42 * scale, eyeY);
+    ctx.lineTo(48 * scale, eyeY);
+    ctx.stroke();
+    ctx.strokeStyle = lips;
+    ctx.beginPath();
+    ctx.moveTo(36 * scale, -22 * scale);
+    ctx.lineTo(43 * scale, -22 * scale);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (chargedEyeExpression) {
     ctx.strokeStyle = '#111719';
     ctx.lineWidth = Math.max(0.9, 1.15 * scale);
     ctx.beginPath();
@@ -301,7 +470,7 @@ function drawCombatFace(
     ctx.lineTo(42.5 * scale, -21.5 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
-  } else if (expression === 'grave-grin') {
+  } else if (scarredSmirkExpression) {
     ctx.strokeStyle = '#6d211c';
     ctx.lineWidth = Math.max(0.85, 1.05 * scale);
     ctx.beginPath();
@@ -335,8 +504,8 @@ function drawCombatFace(
 
   ctx.strokeStyle = expression === 'blood-rush' ? '#111719' : lips;
   ctx.beginPath();
-  if (expression === 'grave-grin' || expression === 'not-yet-dead') {
-    if (expression === 'grave-grin') {
+  if (scarredSmirkExpression || chargedEyeExpression) {
+    if (scarredSmirkExpression) {
       ctx.lineWidth = Math.max(0.95, 1.05 * scale);
       ctx.moveTo(34.8 * scale, -22.5 * scale);
       ctx.bezierCurveTo(38 * scale, -21.2 * scale, 41 * scale, -21.8 * scale, 43.2 * scale, -24 * scale);
@@ -373,15 +542,22 @@ function drawTracer(
   muzzleY: number,
   shot: NonNullable<GameState['survivorShot']>,
   scale: number,
+  familyFriendlyMode: boolean,
 ) {
   const frac = Math.max(0, shot.life / shot.ttl);
   const gradient = ctx.createLinearGradient(muzzleX, muzzleY, shot.x, shot.y);
-  gradient.addColorStop(0, `rgba(255,245,180,${0.9 * frac})`);
-  gradient.addColorStop(0.6, `rgba(255,180,70,${0.45 * frac})`);
-  gradient.addColorStop(1, 'rgba(255,80,30,0)');
+  if (familyFriendlyMode) {
+    gradient.addColorStop(0, `rgba(180,255,255,${0.95 * frac})`);
+    gradient.addColorStop(0.5, `rgba(80,240,255,${0.55 * frac})`);
+    gradient.addColorStop(1, 'rgba(255,122,217,0)');
+  } else {
+    gradient.addColorStop(0, `rgba(255,245,180,${0.9 * frac})`);
+    gradient.addColorStop(0.6, `rgba(255,180,70,${0.45 * frac})`);
+    gradient.addColorStop(1, 'rgba(255,80,30,0)');
+  }
   ctx.strokeStyle = gradient;
-  ctx.lineWidth = 1.4 * scale;
-  ctx.shadowColor = '#ffd166';
+  ctx.lineWidth = (familyFriendlyMode ? 2.4 : 1.4) * scale;
+  ctx.shadowColor = familyFriendlyMode ? '#7cf6ff' : '#ffd166';
   ctx.shadowBlur = 6 * frac;
   ctx.beginPath();
   ctx.moveTo(muzzleX, muzzleY);
@@ -500,6 +676,81 @@ function drawOutfitDetails(
     roundRect(ctx, 14.5 * scale, -6 * scale, 3 * scale, 5 * scale, 1 * scale);
     ctx.fill();
     ctx.shadowBlur = 0;
+    ctx.restore();
+  } else if (outfit === 'outfit-orbit-cadet') {
+    ctx.beginPath();
+    ctx.moveTo(-10 * scale, -13 * scale);
+    ctx.lineTo(2 * scale, -1 * scale);
+    ctx.lineTo(14 * scale, -13 * scale);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(2 * scale, 3 * scale, 3.5 * scale, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (outfit === 'outfit-stellar-ranger') {
+    ctx.beginPath();
+    ctx.moveTo(-16 * scale, -10 * scale);
+    ctx.lineTo(20 * scale, -10 * scale);
+    ctx.moveTo(-7 * scale, -17 * scale);
+    ctx.lineTo(-3 * scale, 13 * scale);
+    ctx.moveTo(12 * scale, -17 * scale);
+    ctx.lineTo(8 * scale, 13 * scale);
+    ctx.stroke();
+  } else if (outfit === 'outfit-comet-rider') {
+    ctx.beginPath();
+    ctx.moveTo(-14 * scale, -11 * scale);
+    ctx.quadraticCurveTo(2 * scale, -2 * scale, 18 * scale, -14 * scale);
+    ctx.moveTo(-4 * scale, 12 * scale);
+    ctx.quadraticCurveTo(5 * scale, 0, 18 * scale, -7 * scale);
+    ctx.stroke();
+  } else if (outfit === 'outfit-nebula-guardian') {
+    ctx.save();
+    ctx.strokeStyle = '#9cf6ff';
+    ctx.beginPath();
+    ctx.moveTo(-9 * scale, -14 * scale);
+    ctx.lineTo(2 * scale, -6 * scale);
+    ctx.lineTo(13 * scale, -14 * scale);
+    ctx.stroke();
+    ctx.shadowColor = '#ff7ad9';
+    ctx.shadowBlur = 7 * scale;
+    ctx.fillStyle = '#ff7ad9';
+    ctx.beginPath();
+    ctx.arc(2 * scale, -1 * scale, 3 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  } else if (outfit === 'outfit-starforged-titan') {
+    ctx.save();
+    ctx.fillStyle = '#10131c';
+    ctx.strokeStyle = '#f8d66d';
+    ctx.lineWidth = 1.4 * scale;
+    roundRect(ctx, -10 * scale, -16 * scale, 24 * scale, 28 * scale, 4 * scale);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#f8d66d';
+    ctx.fillRect(-22 * scale, -17 * scale, 9 * scale, 4 * scale);
+    ctx.fillRect(17 * scale, -17 * scale, 9 * scale, 4 * scale);
+    ctx.shadowColor = '#7cf6ff';
+    ctx.shadowBlur = 8 * scale;
+    ctx.fillStyle = '#7cf6ff';
+    ctx.beginPath();
+    ctx.arc(2 * scale, -5 * scale, 2.2 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  } else if (outfit === 'outfit-cosmic-phoenix') {
+    ctx.save();
+    ctx.strokeStyle = '#ffcf5a';
+    ctx.lineWidth = 1.8 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-12 * scale, -11 * scale);
+    ctx.quadraticCurveTo(2 * scale, 2 * scale, 16 * scale, -11 * scale);
+    ctx.moveTo(-11 * scale, 12 * scale);
+    ctx.quadraticCurveTo(2 * scale, 19 * scale, 15 * scale, 12 * scale);
+    ctx.stroke();
+    ctx.shadowColor = '#ff7ad9';
+    ctx.shadowBlur = 8 * scale;
+    ctx.fillStyle = '#ff7ad9';
+    ctx.beginPath();
+    ctx.arc(2 * scale, -1 * scale, 3 * scale, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   } else {
     ctx.fillRect(-4 * scale, -15 * scale, 3 * scale, 19 * scale);
@@ -685,6 +936,82 @@ function drawAccessory(ctx: CanvasRenderingContext2D, type: string, glow: string
     ctx.lineTo(34 * scale, -35 * scale);
     ctx.stroke();
     ctx.shadowBlur = 0;
+  } else if (type === 'accessory-star-visor') {
+    ctx.save();
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 6 * scale;
+    ctx.fillStyle = '#06131f';
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 1.3 * scale;
+    roundRect(ctx, 10 * scale, -29 * scale, 26 * scale, 7 * scale, 3 * scale);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#ffffff';
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(13 * scale, -27 * scale);
+    ctx.lineTo(31 * scale, -27 * scale);
+    ctx.stroke();
+    ctx.restore();
+  } else if (type === 'accessory-orbit-drone') {
+    ctx.save();
+    const a = time * 0.0019;
+    ctx.translate(21 * scale + Math.cos(a) * 14 * scale, -40 * scale + Math.sin(a) * 8 * scale);
+    ctx.lineJoin = 'round';
+    ctx.fillStyle = glow;
+    ctx.globalAlpha = 0.2;
+    ctx.beginPath();
+    ctx.ellipse(-8 * scale, 1 * scale, 4.5 * scale, 2.4 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#07151f';
+    ctx.strokeStyle = glow;
+    ctx.lineWidth = 1.25 * scale;
+    ctx.beginPath();
+    ctx.moveTo(-7 * scale, 0);
+    ctx.lineTo(0, -5 * scale);
+    ctx.lineTo(8 * scale, -2 * scale);
+    ctx.lineTo(9 * scale, 3 * scale);
+    ctx.lineTo(-3 * scale, 5 * scale);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#ffcf5a';
+    ctx.beginPath();
+    ctx.moveTo(0, -5 * scale);
+    ctx.lineTo(-3 * scale, -10 * scale);
+    ctx.moveTo(4 * scale, -3.5 * scale);
+    ctx.lineTo(9 * scale, -8 * scale);
+    ctx.stroke();
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 8 * scale;
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(2 * scale, 0, (1.5 + Math.sin(time * 0.006) * 0.5) * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  } else if (type === 'accessory-saturn-crown') {
+    ctx.save();
+    ctx.strokeStyle = glow;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    ctx.lineWidth = 2 * scale;
+    ctx.setLineDash([8 * scale, 4 * scale]);
+    ctx.lineDashOffset = (time * 0.025) % 64;
+    ctx.beginPath();
+    ctx.ellipse(23 * scale, -43 * scale, 18 * scale, 5 * scale, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = '#ffcf5a';
+    ctx.lineWidth = 1.2 * scale;
+    ctx.beginPath();
+    ctx.ellipse(23 * scale, -43 * scale, 10 * scale, 3 * scale, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#ffcf5a';
+    ctx.beginPath();
+    ctx.arc(23 * scale, -43 * scale, 2.1 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   } else if (type === 'accessory-blackout-shoulder-drone') {
     ctx.save();
     // Smoothly orbits around the survivor's head/shoulder on a wide ellipse.
@@ -900,5 +1227,18 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, outer: number, inner: number) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const radius = i % 2 === 0 ? outer : inner;
+    const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+    const px = x + Math.cos(angle) * radius;
+    const py = y + Math.sin(angle) * radius;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
   ctx.closePath();
 }

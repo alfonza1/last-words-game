@@ -31,4 +31,27 @@ class CharacterCatalogTest {
     assertEquals(CharacterCatalog.ACCESSORY, halo.slot());
     assertEquals(33_333, halo.cost());
   }
+
+  @Test
+  void registersMeteorManiaExclusiveMythicSet() {
+    CharacterCatalog.Def titan = CharacterCatalog.find("outfit-starforged-titan");
+    assertNotNull(titan);
+    assertEquals(CharacterCatalog.OUTFIT, titan.slot());
+    assertEquals(66_666, titan.cost());
+
+    CharacterCatalog.Def phoenix = CharacterCatalog.find("outfit-cosmic-phoenix");
+    assertNotNull(phoenix);
+    assertEquals(CharacterCatalog.OUTFIT, phoenix.slot());
+    assertEquals(66_666, phoenix.cost());
+
+    CharacterCatalog.Def drone = CharacterCatalog.find("accessory-orbit-drone");
+    assertNotNull(drone);
+    assertEquals(CharacterCatalog.ACCESSORY, drone.slot());
+    assertEquals(33_333, drone.cost());
+
+    CharacterCatalog.Def crown = CharacterCatalog.find("accessory-saturn-crown");
+    assertNotNull(crown);
+    assertEquals(CharacterCatalog.ACCESSORY, crown.slot());
+    assertEquals(33_333, crown.cost());
+  }
 }

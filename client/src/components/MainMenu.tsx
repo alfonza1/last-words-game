@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CharacterLoadout, Difficulty, GameMode, GameStats, PuzzleStyle } from '../types';
 import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
+import { METEOR_MANIA_HARD_MODE_LABEL } from '../theme/meteorMania';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -19,6 +20,13 @@ interface Props {
   onRiddleMode: (v: boolean) => void;
   onPuzzleStyle: (s: PuzzleStyle) => void;
   mobileSpeechExperience?: boolean;
+  familyFriendlyMode?: boolean;
+  // Mobile-only in-flow wallet/account row at the bottom of the menu.
+  coins: number;
+  signedIn: boolean;
+  onOpenCoins: () => void;
+  onSignIn: () => void;
+  onSignOut: () => void;
 }
 
 type Style = 'typing' | PuzzleStyle;
@@ -51,6 +59,37 @@ const STYLE_META: Record<Style, { label: string; short: string; emoji: string; b
     short: 'QUIZ',
     emoji: '🧠',
     blurb: 'Answer trivia questions to fire a multi-kill volley.',
+    tagWord: 'QUESTION',
+  },
+};
+
+const METEOR_STYLE_META: Record<Style, { label: string; short: string; emoji: string; blurb: string; tagWord: string }> = {
+  typing: {
+    label: 'Typing',
+    short: 'TYPE',
+    emoji: '⌨',
+    blurb: 'Each completed word zaps the nearest meteor. High WPM earns extra points and coins.',
+    tagWord: 'WORD',
+  },
+  riddles: {
+    label: 'Riddle',
+    short: 'CLUE',
+    emoji: '🧩',
+    blurb: 'Solve short riddles to launch a multi-zap burst.',
+    tagWord: 'RIDDLE',
+  },
+  math: {
+    label: 'Math',
+    short: 'MATH',
+    emoji: '➗',
+    blurb: 'Solve math problems to chain-zap meteor waves.',
+    tagWord: 'PROBLEM',
+  },
+  trivia: {
+    label: 'Trivia',
+    short: 'QUIZ',
+    emoji: '🧠',
+    blurb: 'Answer trivia questions to launch a planet-saving volley.',
     tagWord: 'QUESTION',
   },
 };
@@ -104,6 +143,53 @@ const DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long: string
   },
 };
 
+const METEOR_DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long: string }>> = {
+  typing: {
+    easy: { short: 'Short words with a relaxed meteor shower.', long: 'Short words with a relaxed meteor shower.' },
+    normal: {
+      short: 'Words + numbers. Earn 1.25x coins and score.',
+      long: 'Words and numbers against a faster meteor storm. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Exact case + symbols. Earn 2x coins and score.',
+      long: `Exact-case words, numbers, and symbols during ${METEOR_MANIA_HARD_MODE_LABEL} chaos. Earn 2x coins and score.`,
+    },
+  },
+  riddles: {
+    easy: { short: 'Straightforward clues with extra time to solve.', long: 'Straightforward clues with extra time to solve.' },
+    normal: {
+      short: 'Sharper clues. Earn 1.25x coins and score.',
+      long: 'Sharper clues and a faster meteor fall. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Hardest clues. Earn 2x coins and score.',
+      long: `The hardest clues under a ${METEOR_MANIA_HARD_MODE_LABEL} storm. Earn 2x coins and score.`,
+    },
+  },
+  math: {
+    easy: { short: 'Quick addition and subtraction, relaxed meteors.', long: 'Quick addition and subtraction, relaxed meteors.' },
+    normal: {
+      short: 'Bigger sums. Earn 1.25x coins and score.',
+      long: 'Multiplication and bigger sums against a full meteor wave. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Multi-step problems. Earn 2x coins and score.',
+      long: 'Multi-step problems while the planet defense is under max pressure. Earn 2x coins and score.',
+    },
+  },
+  trivia: {
+    easy: { short: 'Everyday questions with time to think.', long: 'Everyday questions with time to think.' },
+    normal: {
+      short: 'Trickier questions. Earn 1.25x coins and score.',
+      long: 'Trickier questions and a faster meteor fall. Earn 1.25x coins and score.',
+    },
+    nightmare: {
+      short: 'Tough questions. Earn 2x coins and score.',
+      long: 'Tough questions under maximum defense pressure. Earn 2x coins and score.',
+    },
+  },
+};
+
 export function MainMenu({
   stats,
   riddleStats,
@@ -118,21 +204,42 @@ export function MainMenu({
   onRiddleMode,
   onPuzzleStyle,
   mobileSpeechExperience = false,
+  familyFriendlyMode = false,
+  coins,
+  signedIn,
+  onOpenCoins,
+  onSignIn,
+  onSignOut,
 }: Props) {
   const activeStyle: Style = riddleMode ? puzzleStyle : mobileSpeechExperience ? 'riddles' : 'typing';
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
+  const styleMeta = familyFriendlyMode ? METEOR_STYLE_META : STYLE_META;
+  const diffBlurb = familyFriendlyMode ? METEOR_DIFF_BLURB : DIFF_BLURB;
+  const difficultyLabel = (d: Difficulty) => (familyFriendlyMode && d === 'nightmare' ? METEOR_MANIA_HARD_MODE_LABEL : DIFFICULTY_CONFIGS[d].label);
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
   const [mobileRecordsOpen, setMobileRecordsOpen] = useState(false);
   const recordsTitle = 'Career Stats';
 
   return (
-    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-6 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
+    <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-24 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
       <div className="text-center">
         <h1 className="text-2xl font-black tracking-tight text-neon-green drop-shadow-[0_0_24px_rgba(57,255,20,0.6)] sm:text-6xl lg:text-7xl">
-          LAST<span className="text-neon-pink"> WORDS</span>
+          {familyFriendlyMode ? (
+            <>
+              METEOR<span className="text-neon-pink"> MANIA</span>
+            </>
+          ) : (
+            <>
+              LAST<span className="text-neon-pink"> WORDS</span>
+            </>
+          )}
         </h1>
-        <p className="mt-1 hidden text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:block sm:text-sm sm:tracking-[0.35em]">
-          TYPE OR BE DEVOURED
+        <p
+          className={`mt-1 text-center text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:text-sm sm:tracking-[0.35em] ${
+            familyFriendlyMode ? 'block' : 'hidden sm:block'
+          }`}
+        >
+          {familyFriendlyMode ? 'SAVE YOUR PLANET' : 'TYPE OR BE DEVOURED'}
         </p>
       </div>
 
@@ -150,15 +257,15 @@ export function MainMenu({
                     difficulty === d ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
-                  {DIFFICULTY_CONFIGS[d].label}
+                  {difficultyLabel(d)}
                 </button>
               ))}
             </div>
             <p className="mt-1 text-[11px] leading-snug text-white/40 sm:hidden">
-              {DIFF_BLURB[activeStyle][difficulty].short}
+              {diffBlurb[activeStyle][difficulty].short}
             </p>
             <p className="mt-1.5 hidden min-h-[2.25rem] text-xs leading-snug text-white/40 sm:block">
-              {DIFF_BLURB[activeStyle][difficulty].long}
+              {diffBlurb[activeStyle][difficulty].long}
             </p>
           </div>
 
@@ -179,21 +286,21 @@ export function MainMenu({
                   }`}
                 >
                   <span>
-                    <span className="mr-1">{STYLE_META[s].emoji}</span>
-                    {STYLE_META[s].label} Defense
+                    <span className="mr-1">{styleMeta[s].emoji}</span>
+                    {styleMeta[s].label} Defense
                   </span>
                 </button>
               ))}
             </div>
-            <p className="mt-1 min-h-0 text-[11px] leading-snug text-white/40 sm:mt-1.5 sm:min-h-[2.25rem] sm:text-xs">{STYLE_META[activeStyle].blurb}</p>
+            <p className="mt-1 min-h-0 text-[11px] leading-snug text-white/40 sm:mt-1.5 sm:min-h-[2.25rem] sm:text-xs">{styleMeta[activeStyle].blurb}</p>
           </div>
 
           {/* Desktop deploy (in flow). On mobile these render below, above Career Stats. */}
           <div className="hidden sm:block">
-            <SectionLabel>Deploy</SectionLabel>
+            <SectionLabel>{familyFriendlyMode ? 'Launch' : 'Deploy'}</SectionLabel>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
-              <DeployButton tone="green" title="Start Survival" detail="Endless waves" onClick={() => onStart('survival')} />
-              <DeployButton tone="pink" title="Start Boss Rush" detail="Boss gauntlet" onClick={() => onStart('bossrush')} />
+              <DeployButton tone="green" title={familyFriendlyMode ? 'Start Planet Defense' : 'Start Survival'} detail={familyFriendlyMode ? 'Endless meteors' : 'Endless waves'} onClick={() => onStart('survival')} />
+              <DeployButton tone="pink" title={familyFriendlyMode ? 'Start Comet Storm' : 'Start Boss Rush'} detail={familyFriendlyMode ? 'Mega meteor run' : 'Boss gauntlet'} onClick={() => onStart('bossrush')} />
             </div>
           </div>
 
@@ -201,17 +308,17 @@ export function MainMenu({
           <div className="grid grid-cols-2 gap-2 sm:hidden">
             <button
               onClick={() => onStart('survival')}
-              className="rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2.5 text-center transition active:scale-95"
+              className="rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2 text-center transition active:scale-95"
             >
-              <span className="block text-sm font-black uppercase tracking-wide text-neon-green">▶ Start Survival</span>
-              <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Endless waves</span>
+              <span className="block text-sm font-black uppercase tracking-wide text-neon-green">{familyFriendlyMode ? 'Start Planet Defense' : 'Start Survival'}</span>
+              <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">{familyFriendlyMode ? 'Endless meteors' : 'Endless waves'}</span>
             </button>
             <button
               onClick={() => onStart('bossrush')}
-              className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2.5 text-center transition active:scale-95"
+              className="rounded-lg border border-neon-pink/60 bg-neon-pink/10 px-3 py-2 text-center transition active:scale-95"
             >
-              <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">▶ Start Boss Rush</span>
-              <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">Boss gauntlet</span>
+              <span className="block text-sm font-black uppercase tracking-wide text-neon-pink">{familyFriendlyMode ? 'Start Comet Storm' : 'Start Boss Rush'}</span>
+              <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">{familyFriendlyMode ? 'Mega meteor run' : 'Boss gauntlet'}</span>
             </button>
           </div>
 
@@ -242,6 +349,27 @@ export function MainMenu({
             </button>
           </div>
 
+          {/* Mobile wallet + account — in flow at the bottom with a divider, so
+              there's clear, device-independent space from the nav buttons above.
+              Coins on the left, sign-in/account on the right. */}
+          <div className="mt-1.5 flex items-center gap-2 border-t border-white/10 pt-2 sm:hidden">
+            <button
+              onClick={onOpenCoins}
+              className="flex-1 truncate rounded-full border border-neon-amber/50 bg-black/60 px-3 py-1.5 text-center text-xs font-black uppercase tracking-wider text-neon-amber transition active:scale-95"
+            >
+              🪙 {coins.toLocaleString()} Coins
+            </button>
+            <div className="flex flex-1 items-center justify-center gap-2 truncate rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs">
+              {signedIn && <span className="min-w-0 truncate text-white/60">{username}</span>}
+              <button
+                onClick={signedIn ? onSignOut : onSignIn}
+                className="shrink-0 font-black uppercase tracking-wider text-neon-green active:scale-95"
+              >
+                {signedIn ? 'Sign out' : 'Sign in'}
+              </button>
+            </div>
+          </div>
+
           {/* Desktop nav (reverted to prior menu-btn + emojis). */}
           <div className="hidden grid-cols-2 gap-3 sm:grid" aria-label="Menu navigation">
             <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
@@ -266,7 +394,7 @@ export function MainMenu({
         >
           <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-neon-green/10 to-transparent" />
           <div className="absolute left-3 right-44 top-3 z-10 sm:right-3">
-            <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-neon-cyan/70">Survivor</div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-neon-cyan/70">{familyFriendlyMode ? 'Planet Pilot' : 'Survivor'}</div>
             <div className="max-w-[min(100%,14rem)] truncate text-xl font-black tracking-wide text-neon-green drop-shadow-[0_0_12px_rgba(57,255,20,0.55)] sm:max-w-[220px]">
               {username}
             </div>
@@ -282,11 +410,13 @@ export function MainMenu({
         </button>
 
         <div className="order-3 hidden sm:block lg:order-none">
-          <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} />
+          <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} familyFriendlyMode={familyFriendlyMode} />
         </div>
       </div>
 
-      <p className="hidden text-xs tracking-[0.25em] text-white/25 sm:block">SURVIVE THE NIGHT | OUTLAST THE DEAD</p>
+      <p className="hidden text-xs tracking-[0.25em] text-white/25 sm:block">
+        {familyFriendlyMode ? 'SAVE THE PLANET | DEFEND THROUGH THE STORM' : 'SURVIVE THE NIGHT | OUTLAST THE DEAD'}
+      </p>
       <div className="hidden w-full sm:block">
         <AdBanner />
       </div>
@@ -306,7 +436,7 @@ export function MainMenu({
                 Close
               </button>
             </div>
-            <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} compact />
+            <Records stats={stats} riddleStats={riddleStats} riddleMode={activeStyle !== 'typing'} compact familyFriendlyMode={familyFriendlyMode} />
           </div>
         </div>
       )}
@@ -341,14 +471,17 @@ function Records({
   riddleStats,
   riddleMode,
   compact = false,
+  familyFriendlyMode = false,
 }: {
   stats: GameStats;
   riddleStats: GameStats;
   riddleMode: boolean;
   compact?: boolean;
+  familyFriendlyMode?: boolean;
 }) {
   const selected = riddleMode ? riddleStats : stats;
-  const bestMode = STYLE_META[(riddleStats.bestMode as Style) || 'riddles']?.label ?? '-';
+  const styleMeta = familyFriendlyMode ? METEOR_STYLE_META : STYLE_META;
+  const bestMode = styleMeta[(riddleStats.bestMode as Style) || 'riddles']?.label ?? '-';
   return (
     <div className={`rounded-xl border border-neon-pink/25 bg-ink-800/70 ${compact ? 'p-3' : 'p-4'}`}>
       <h3 className={`${compact ? 'mb-2 text-xs' : 'mb-3 text-sm'} font-bold uppercase tracking-widest text-neon-pink`}>
@@ -356,10 +489,10 @@ function Records({
       </h3>
       <dl className={`${compact ? 'space-y-1 text-xs' : 'space-y-1.5 text-sm'}`}>
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
-        <Row k="Longest Survival" v={formatTime(selected.longestSurvivalMs)} />
+        <Row k={familyFriendlyMode ? 'Longest Defense' : 'Longest Survival'} v={formatTime(selected.longestSurvivalMs)} />
         {riddleMode ? <Row k="Best Mode" v={riddleStats.bestMode ? bestMode : '-'} /> : <Row k="Highest WPM" v={selected.highestWpm} />}
-        <Row k="Total Kills" v={selected.totalKills} />
-        <Row k="Bosses Defeated" v={selected.bossesDefeated} />
+        <Row k={familyFriendlyMode ? 'Meteors Zapped' : 'Total Kills'} v={selected.totalKills} />
+        <Row k={familyFriendlyMode ? 'Mega Meteors' : 'Bosses Defeated'} v={selected.bossesDefeated} />
         <Row k="Longest Streak" v={selected.longestStreak} />
         <Row k="Coins Earned" v={(selected.coinsEarned ?? 0).toLocaleString()} />
       </dl>

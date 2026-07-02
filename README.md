@@ -1,10 +1,10 @@
 <div align="center">
 
-# 🧟 Last Words
+# 🧟 Last Words Game
 
 ### An arcade typing-survival game with a production-grade, scale-to-zero cloud backend.
 
-Type to shoot. Solve riddles, math, and trivia to fire volleys. Outlast the horde — on desktop, or by voice on mobile.
+Type or speak to fire volleys. Fight zombies in Dead Keys, or switch to family-friendly Meteor Mania to zap meteors and save the planet.
 
 <br/>
 
@@ -41,7 +41,7 @@ Type to shoot. Solve riddles, math, and trivia to fire volleys. Outlast the hord
 
 ## Why this project is worth a look
 
-A complete, deployed full-stack product, not a tutorial exercise. The pieces most worth a look, roughly ordered by what tends to stand out to reviewers:
+A complete, deployed full-stack product, not a tutorial exercise. These are the pieces most worth a look:
 
 | | |
 | --- | --- |
@@ -52,21 +52,23 @@ A complete, deployed full-stack product, not a tutorial exercise. The pieces mos
 | **Tested, with CI gates** | Vitest (client) and JUnit plus a full Spring context-load test (server) must pass before any deploy, so wiring and logic regressions fail CI instead of production. |
 | **Production observability** | Sentry error and performance tracing plus structured Cloud Logging — real visibility into a running system, not `println` debugging. |
 | **Decoupled, unit-tested engine** | A deterministic, seeded TypeScript game engine drives spawning, waves, scoring, and power-ups with no React dependency, and renders to a plain `<canvas>`. |
+| **Family-friendly Meteor Mania mode** | A content-safe space variant swaps maps, labels, cosmetics, expressions, enemy art, SFX copy, and zapper visuals without forking the core game loop. |
+| **Multi-input gameplay** | Typing, riddles, math, trivia, and mobile voice answers share the same balancing model, so desktop and touch players can compete on the same boards. |
 | **Production hygiene** | Per-IP rate limiting and security headers run ahead of auth; secrets live in GCP Secret Manager and CI, never in the repo. |
-| **Polished client** | Route-level code-splitting, fully offline guest play with later sign-in import, code-drawn (zero-asset) cosmetics, and a scaffolded Stripe checkout. |
+| **Polished client** | Path-based SPA routing, route-level code-splitting, fully offline guest play with later sign-in import, code-drawn cosmetics, and a scaffolded Stripe checkout. |
 
 ### Tech stack
 
 | Layer | Technology |
 | --- | --- |
-| Client | React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · HTML5 Canvas · Vitest |
-| Backend | Java 17 · Spring Boot 3 (Web, Data JPA) · Maven · JUnit 5 |
-| Data | Neon (serverless Postgres) in prod · H2 locally |
-| Auth | Firebase Authentication (ID-token verification, Nimbus JOSE + JWT) |
-| Hosting | Cloud Run (API) · Cloudflare Pages (client) |
-| CI/CD | GitHub Actions · Workload Identity Federation (OIDC) · Artifact Registry · Docker |
-| Ops | Sentry · Google Cloud Logging · Secret Manager |
-| Payments | Stripe (coin packs) |
+| Client | React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · HTML5 Canvas · Web Speech API · Firebase Web SDK · @sentry/react · Vitest |
+| Backend | Java 17 · Spring Boot 3.2 (Web, Data JPA) · Maven · JUnit 5 |
+| Data | Neon (serverless Postgres) in prod · H2 locally · localStorage guest/offline profile |
+| Auth | Firebase Authentication · Firebase ID-token verification (Nimbus JOSE + JWT) |
+| Hosting | Cloud Run (API) · Cloudflare Pages (static client + SPA fallback) |
+| CI/CD | GitHub Actions · Workload Identity Federation (OIDC) · Artifact Registry · Docker · release branch validation |
+| Ops | Sentry (React + Spring Boot + Logback/source context) · Google Cloud Logging · Secret Manager |
+| Payments | Stripe hosted checkout (coin packs) |
 
 ### Services & why each was chosen
 
@@ -86,9 +88,10 @@ A complete, deployed full-stack product, not a tutorial exercise. The pieces mos
 
 ## Gameplay at a glance
 
-- Two modes: Survival (endless escalating waves) and Boss Rush (a boss gauntlet).
-- Four play styles — Typing, Riddle, Math, and Trivia Defense. Volley sizes are tuned so each style clears about the same zombies per minute, so you can play whichever you enjoy.
-- Three difficulties (Easy / Normal / Nightmare) with score and coin multipliers that scale with risk.
+- Two core modes: Survival (endless escalating waves) and Boss Rush (a boss gauntlet), with Meteor Mania labels for Planet Defense and Comet Storm.
+- Four play styles: Typing Defense, Riddle Defense, Math Defense, and Trivia Defense. Volley sizes are tuned so each style clears about the same threats per minute, so you can play whichever you enjoy.
+- Three difficulty curves (Easy / Normal / Nightmare), with Meteor Mania renaming the hardest curve to Meteor Mayhem while keeping the same 2x risk/reward.
+- Family-friendly mode swaps in planets, meteors, zapper visuals, space-themed maps/cosmetics, and safer copy without splitting player progression.
 - On touch devices the game switches to a hold-to-speak voice-answer flow with tappable power-ups, so there is no on-screen keyboard to fight.
 - Earn coins per run and spend them on consumable power-ups (grenade, freeze, med-kit), temporary upgrades, and code-drawn cosmetics up to an exclusive mythic tier. Coin packs are available via Stripe.
 - Separate Top Typers and Top Solvers leaderboards.

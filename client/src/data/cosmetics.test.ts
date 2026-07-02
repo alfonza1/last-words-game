@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cosmeticByKey, DEFAULT_CHARACTER, EXPRESSIONS, HAIR_STYLES, lipColorForSkinTone, normalizeCharacter, skinColor } from './cosmetics';
+import { cosmeticByKey, DEFAULT_CHARACTER, EXPRESSIONS, HAIR_STYLES, SKIN_TONES, lipColorForSkinTone, normalizeCharacter, skinColor } from './cosmetics';
 
 describe('default character', () => {
   it('selects buzz hair for new survivors', () => {
@@ -33,6 +33,13 @@ describe('default character', () => {
   it('derives lips from the selected skin tone', () => {
     expect(lipColorForSkinTone('warm')).not.toBe(lipColorForSkinTone('undead'));
     expect(lipColorForSkinTone('warm')).not.toBe(skinColor('warm'));
+  });
+
+  it('renames the former undead skin tone as an alien option', () => {
+    expect(SKIN_TONES.find((tone) => tone.key === 'undead')).toMatchObject({
+      label: 'Alien Green',
+      color: '#67e87f',
+    });
   });
 });
 
@@ -86,5 +93,36 @@ describe('exclusive mythic cosmetics', () => {
     }
     expect(cosmeticByKey('accessory-blackout-shoulder-drone')?.outfitReactive).toBe(true);
     expect(cosmeticByKey('accessory-toxic-angel-halo')?.outfitReactive).toBe(true);
+  });
+});
+
+describe('Meteor Mania cosmetics', () => {
+  it('adds a free starter suit and family-safe mythic sets', () => {
+    expect(cosmeticByKey('outfit-orbit-cadet')?.cost).toBe(0);
+    expect(cosmeticByKey('outfit-orbit-cadet')?.familyFriendly).toBe(true);
+    expect(cosmeticByKey('outfit-starforged-titan')?.rarity).toBe('exclusive-mythic');
+    expect(cosmeticByKey('outfit-cosmic-phoenix')?.rarity).toBe('exclusive-mythic');
+    expect(cosmeticByKey('accessory-orbit-drone')?.cost).toBe(33333);
+    expect(cosmeticByKey('accessory-saturn-crown')?.outfitReactive).toBe(true);
+  });
+
+  it('adds family-friendly expressions', () => {
+    const familyExpressions = EXPRESSIONS.filter((expression) => expression.familyFriendly);
+
+    expect(familyExpressions.map((expression) => expression.key)).toEqual([
+      'first-light',
+      'mission-calm',
+      'zero-g-grin',
+      'wide-eyed-wonder',
+      'still-standing',
+      'star-ready',
+    ]);
+    expect(EXPRESSIONS.find((expression) => expression.key === 'first-light')?.label).toBe('First Light');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'wide-eyed-wonder')?.label).toBe('Wide-Eyed Wonder');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'family-scarred-smirk')).toBeUndefined();
+    expect(EXPRESSIONS.find((expression) => expression.key === 'still-standing')?.label).toBe('Still Standing');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'still-standing')?.outfitReactive).toBe(true);
+    expect(EXPRESSIONS.find((expression) => expression.key === 'star-ready')?.outfitReactive).toBe(true);
+    expect(EXPRESSIONS.find((expression) => expression.key === 'zero-g-grin')?.label).toBe('Zero-G Grin');
   });
 });

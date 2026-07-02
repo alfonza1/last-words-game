@@ -40,8 +40,9 @@ export const DEFAULT_UPGRADES: Upgrades = {
 };
 
 export const DEFAULT_SETTINGS: Settings = {
-  difficulty: 'normal',
+  difficulty: 'easy',
   map: 'graveyard',
+  familyFriendlyMode: false,
   screenShake: true,
   music: true,
   musicVolume: 0.65,

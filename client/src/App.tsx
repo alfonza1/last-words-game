@@ -33,10 +33,15 @@ import {
   type Profile,
   type RunPayload,
 } from './lib/api';
-import { getMap, MAPS } from './data/maps';
+import { MAPS } from './data/maps';
 import { DEFAULT_CHARACTER, DEFAULT_COSMETICS, cosmeticByKey, normalizeCharacter } from './data/cosmetics';
 import { POWERUP_DEFS } from './data/powerups';
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, canUpgrade, upgradeCost } from './data/upgrades';
+import {
+  mapIdForFamilyMode,
+  normalizeCharacterForFamilyMode,
+  normalizeSettingsForFamilyMode,
+} from './theme/meteorMania';
 import { audio } from './lib/audio';
 import { useAuth } from './lib/auth';
 import { useToast } from './lib/toast';
@@ -64,9 +69,10 @@ const Closet = lazy(() => import('./components/Closet').then((m) => ({ default: 
 
 const REWARD_COINS = 50; // bonus for an optional rewarded ad (server is authoritative)
 const EMPTY_WPM_BONUS: WpmBonus = { tiers: 0, coins: 0, score: 0 };
+const APP_TITLE = 'Last Words Game';
 
 const SCREEN_ROUTES: Record<Screen, string> = {
-  menu: '/menu',
+  menu: '/',
   mapselect: '/maps',
   game: '/game',
   gameover: '/game-over',
@@ -82,25 +88,20 @@ const ROUTE_SCREENS = Object.entries(SCREEN_ROUTES).reduce(
   (acc, [screen, route]) => ({ ...acc, [route]: screen as Screen }),
   {} as Record<string, Screen>,
 );
-
-const SCREEN_TITLES: Record<Screen, string> = {
-  menu: 'Menu',
-  mapselect: 'Select Map',
-  game: 'Run',
-  gameover: 'Game Over',
-  upgrades: 'Store',
-  closet: 'Closet',
-  howto: 'How to Play',
-  settings: 'Settings',
-  signin: 'Sign In',
-  leaderboard: 'Leaderboard',
+const LEGACY_HASH_ROUTES: Record<string, Screen> = {
+  '/menu': 'menu',
 };
 
 function screenFromHash(): Screen | null {
   if (typeof window === 'undefined') return null;
-  const raw = window.location.hash.replace(/^#/, '');
-  if (!raw) return null;
-  return ROUTE_SCREENS[raw] ?? null;
+  const rawHash = window.location.hash.replace(/^#/, '');
+  if (!rawHash) return null;
+  return ROUTE_SCREENS[rawHash] ?? LEGACY_HASH_ROUTES[rawHash] ?? null;
+}
+
+function screenFromLocation(): Screen | null {
+  if (typeof window === 'undefined') return null;
+  return ROUTE_SCREENS[window.location.pathname] ?? null;
 }
 
 function difficultyForMode(mode: GameMode, difficulty: Difficulty): Difficulty {
@@ -114,7 +115,7 @@ export default function App() {
     (e: unknown) => toast.error((e as Error)?.message || 'Something went wrong. Please try again.'),
     [toast],
   );
-  const [screen, setScreen] = useState<Screen>(() => screenFromHash() ?? 'menu');
+  const [screen, setScreen] = useState<Screen>(() => screenFromHash() ?? screenFromLocation() ?? 'menu');
   const [storeReturn, setStoreReturn] = useState<'menu' | 'closet'>('menu');
   const [username, setUsername] = useState<string>('');
   const [signInReason, setSignInReason] = useState<string | undefined>(undefined);
@@ -130,27 +131,36 @@ export default function App() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const syncFromHash = () => {
-      const routed = screenFromHash();
+    const legacyHashScreen = screenFromHash();
+    if (legacyHashScreen) {
+      window.history.replaceState(null, '', SCREEN_ROUTES[legacyHashScreen]);
+    } else if (window.location.hash && screenFromLocation()) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+
+    const syncFromPath = () => {
+      const routed = screenFromLocation();
       if (routed) setScreen(routed);
     };
 
-    if (!screenFromHash()) {
-      window.history.replaceState(null, '', `#${SCREEN_ROUTES.menu}`);
+    if (!screenFromLocation()) {
+      window.history.replaceState(null, '', SCREEN_ROUTES.menu);
     }
-    window.addEventListener('hashchange', syncFromHash);
-    window.addEventListener('popstate', syncFromHash);
+    window.addEventListener('popstate', syncFromPath);
     return () => {
-      window.removeEventListener('hashchange', syncFromHash);
-      window.removeEventListener('popstate', syncFromHash);
+      window.removeEventListener('popstate', syncFromPath);
     };
   }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const nextHash = `#${SCREEN_ROUTES[screen]}`;
-    if (window.location.hash !== nextHash) window.history.pushState(null, '', nextHash);
-    document.title = `Last Words - ${SCREEN_TITLES[screen]}`;
+    const nextPath = SCREEN_ROUTES[screen];
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState(null, '', nextPath);
+    } else if (window.location.hash) {
+      window.history.replaceState(null, '', nextPath);
+    }
+    document.title = APP_TITLE;
   }, [screen]);
 
   // Signed-in progress lives on the server (keyed to the Firebase uid).
@@ -174,6 +184,11 @@ export default function App() {
 
   // Upgrades only apply while they have games left (signed-in only).
   const activeUpgrades = upgradeGames > 0 ? upgrades : DEFAULT_UPGRADES;
+  const familyFriendlyMode = settings.familyFriendlyMode;
+  const displayCharacter = useMemo(
+    () => normalizeCharacterForFamilyMode(character, familyFriendlyMode),
+    [character, familyFriendlyMode],
+  );
 
   const applyProfile = useCallback((p: Profile) => {
     setStats(p.stats);
@@ -265,18 +280,17 @@ export default function App() {
   }, []);
 
   const persistSettings = useCallback((s: Settings) => {
-    setSettings(s);
-    saveSettings(s);
+    const nextSettings = normalizeSettingsForFamilyMode(s);
+    setSettings(nextSettings);
+    saveSettings(nextSettings);
   }, []);
 
   const chooseMode = useCallback(
     (m: GameMode) => {
       // Drop a mode/difficulty-exclusive map that isn't valid for this mode.
-      const sel = getMap(settings.map);
       const effectiveDifficulty = difficultyForMode(m, settings.difficulty);
-      const invalid =
-        (sel.nightmareOnly && effectiveDifficulty !== 'nightmare') || (sel.bossRushOnly && m !== 'bossrush');
-      if (invalid) persistSettings({ ...settings, map: 'graveyard' });
+      const map = mapIdForFamilyMode(settings.map, settings.familyFriendlyMode, m, effectiveDifficulty);
+      if (map !== settings.map) persistSettings({ ...settings, map });
       setMode(m);
       setScreen('mapselect');
     },
@@ -492,7 +506,7 @@ export default function App() {
       if (!user) {
         setCharacter(look);
         persistGuest({ character: look });
-        toast.success('Survivor look equipped!');
+        toast.success(familyFriendlyMode ? 'Look equipped!' : 'Survivor look equipped!');
         return;
       }
       const previous = character;
@@ -504,14 +518,14 @@ export default function App() {
           throw new Error('Face expression could not be saved. Please try again.');
         }
         applyProfile(profile);
-        toast.success('Survivor look equipped!');
+        toast.success(familyFriendlyMode ? 'Look equipped!' : 'Survivor look equipped!');
       } catch (error) {
         setCharacter(previous);
         fail(error);
         throw error;
       }
     },
-    [user, character, persistGuest, applyProfile, toast, fail],
+    [user, character, familyFriendlyMode, persistGuest, applyProfile, toast, fail],
   );
 
   // Optional rewarded ad → bonus coins. Server-authoritative for accounts;
@@ -554,13 +568,21 @@ export default function App() {
 
   const setDifficulty = useCallback(
     (d: Difficulty) => {
-      // A nightmare-only map can't be used off Nightmare — fall back to graveyard.
-      const map = d !== 'nightmare' && getMap(settings.map).nightmareOnly ? 'graveyard' : settings.map;
+      // Drop a mode/difficulty-exclusive map that is not valid for this run.
+      const effectiveDifficulty = difficultyForMode(mode, d);
+      const map = mapIdForFamilyMode(settings.map, settings.familyFriendlyMode, mode, effectiveDifficulty);
       persistSettings({ ...settings, difficulty: d, map });
     },
-    [settings, persistSettings],
+    [mode, settings, persistSettings],
   );
-  const setMap = useCallback((id: string) => persistSettings({ ...settings, map: id }), [settings, persistSettings]);
+  const setMap = useCallback(
+    (id: string) =>
+      persistSettings({
+        ...settings,
+        map: mapIdForFamilyMode(id, settings.familyFriendlyMode, mode, difficultyForMode(mode, settings.difficulty)),
+      }),
+    [mode, settings, persistSettings],
+  );
 
   // Enter to restart from the game-over screen.
   useEffect(() => {
@@ -589,7 +611,7 @@ export default function App() {
             powerups={powerups}
             upgradesActive={upgradeGames > 0}
             settings={settings}
-            character={character}
+            character={displayCharacter}
             riddleMode={gameRiddleMode}
             puzzleStyle={settings.puzzleStyle}
             onGameOver={handleGameOver}
@@ -610,6 +632,7 @@ export default function App() {
             difficulty={difficultyForMode(mode, settings.difficulty)}
             selectedMapId={settings.map}
             ownedMaps={maps}
+            familyFriendlyMode={familyFriendlyMode}
             onSelect={setMap}
             onBuyMap={buyMap}
             onDeploy={() => startGame(mode)}
@@ -627,6 +650,7 @@ export default function App() {
             onWatchAd={claimReward}
             onRestart={() => startGame(mode)}
             onMenu={() => setScreen('menu')}
+            familyFriendlyMode={familyFriendlyMode}
           />
         ) : null;
       case 'upgrades':
@@ -637,8 +661,9 @@ export default function App() {
             gamesLeft={upgradeGames}
             powerups={powerups}
             ownedCosmetics={cosmetics}
-            character={character}
+            character={displayCharacter}
             signedIn={signedIn}
+            familyFriendlyMode={familyFriendlyMode}
             onBuy={buyUpgrade}
             onBuyPowerup={buyPowerup}
             onBuyCosmetic={buyCosmetic}
@@ -650,10 +675,11 @@ export default function App() {
       case 'closet':
         return (
           <Closet
-            character={character}
+            character={displayCharacter}
             ownedCosmetics={cosmetics}
             signedIn={signedIn}
-            username={username || 'Survivor'}
+            username={username || (familyFriendlyMode ? 'Pilot' : 'Survivor')}
+            familyFriendlyMode={familyFriendlyMode}
             onEquip={equipCharacter}
             onOpenStore={() => openStore('closet')}
             onBack={() => setScreen('menu')}
@@ -664,6 +690,7 @@ export default function App() {
           <HowToPlay
             onBack={() => setScreen('menu')}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+            familyFriendlyMode={familyFriendlyMode}
           />
         );
       case 'settings':
@@ -690,6 +717,7 @@ export default function App() {
           <Leaderboard
             onBack={() => setScreen('menu')}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+            familyFriendlyMode={familyFriendlyMode}
           />
         );
       case 'menu':
@@ -699,8 +727,8 @@ export default function App() {
             stats={stats}
             riddleStats={riddleStats}
             difficulty={settings.difficulty}
-            character={character}
-            username={username || 'Survivor'}
+            character={displayCharacter}
+            username={username || (familyFriendlyMode ? 'Pilot' : 'Survivor')}
             riddleMode={mobileExperience.mobileSpeechExperience ? true : settings.riddleMode}
             puzzleStyle={settings.puzzleStyle}
             onStart={chooseMode}
@@ -709,6 +737,12 @@ export default function App() {
             onRiddleMode={(v) => persistSettings({ ...settings, riddleMode: v })}
             onPuzzleStyle={(s) => persistSettings({ ...settings, riddleMode: true, puzzleStyle: s })}
             mobileSpeechExperience={mobileExperience.mobileSpeechExperience}
+            familyFriendlyMode={familyFriendlyMode}
+            coins={stats.totalCoins}
+            signedIn={signedIn}
+            onOpenCoins={() => setShowCoinPacks(true)}
+            onSignIn={() => requireSignIn()}
+            onSignOut={() => setConfirmSignOut(true)}
           />
         );
     }
@@ -724,6 +758,8 @@ export default function App() {
     maps,
     cosmetics,
     character,
+    displayCharacter,
+    familyFriendlyMode,
     result,
     isHighScore,
     wpmBonus,
@@ -771,7 +807,8 @@ export default function App() {
     return <ServerDown onPlayOffline={() => void signOut()} />;
   }
 
-  const accountLabel = signedIn ? username || user?.email || 'Player' : username || 'Survivor';
+  const fallbackAccountLabel = familyFriendlyMode ? 'Pilot' : 'Survivor';
+  const accountLabel = signedIn ? username || user?.email || 'Player' : username || fallbackAccountLabel;
   const showAccountChip = screen !== 'game' && screen !== 'signin';
   const showWalletChip = showAccountChip;
   // On the mobile home and closet screens the fixed chips are hidden so those

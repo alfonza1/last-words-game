@@ -269,7 +269,7 @@ export class GameEngine {
     s.wordQueue = [];
     this.riddleQueue = [];
     this.syncRiddlePrompt();
-    this.addEvent('YOU SURVIVED', 'finisher');
+    this.addEvent(this.state.settings.familyFriendlyMode ? 'PLANET SAVED' : 'YOU SURVIVED', 'finisher');
   }
 
   private syncRiddlePrompt() {
@@ -331,9 +331,9 @@ export class GameEngine {
   activeCommands(): string[] {
     const cmds: string[] = [];
     const c = this.state.powerups.consumables;
-    if (c.grenade > 0) cmds.push('grenade');
-    if (c.freeze > 0) cmds.push('freeze');
-    if (c.medkit > 0) cmds.push('medkit');
+    if (c.grenade > 0) cmds.push(this.commandWordForKey('grenade'));
+    if (c.freeze > 0) cmds.push(this.commandWordForKey('freeze'));
+    if (c.medkit > 0) cmds.push(this.commandWordForKey('medkit'));
     return cmds;
   }
 
@@ -504,7 +504,7 @@ export class GameEngine {
     if (bossWave) {
       s.waveZombiesToSpawn = s.mode === 'bossrush' ? 1 : 1;
       s.bossWarning = 3.2;
-      this.addEvent('⚠ BOSS INCOMING ⚠', 'companion');
+      this.addEvent(s.settings.familyFriendlyMode ? 'MEGA METEOR INBOUND' : 'BOSS INCOMING', 'companion');
     } else {
       const cfg = getDifficultyConfig(s.difficulty);
       s.waveZombiesToSpawn = waveZombieCount(cfg, wave);
@@ -550,7 +550,7 @@ export class GameEngine {
       boss.y = spawnY;
       s.zombies.push(boss);
       s.bossActive = true;
-      this.addEvent(boss.bossName ?? 'BOSS', 'companion');
+      this.addEvent(s.settings.familyFriendlyMode ? 'MEGA METEOR' : boss.bossName ?? 'BOSS', 'companion');
     } else {
       const type = zombieTypeForWave(this.rng, s.wave);
       const z = createZombie(type, { rng: this.rng, width: s.width, wave: s.wave, speed });
@@ -582,7 +582,7 @@ export class GameEngine {
           z.spawnsLeft = (z.spawnsLeft ?? 1) - 1;
           z.spawnTimer = 4.5;
           s.zombies.push(createScreamerAdd(z, { rng: this.rng, width: s.width, wave: s.wave, speed: z.speed }));
-          this.addEvent('Screamer is calling more!', 'companion');
+          this.addEvent(s.settings.familyFriendlyMode ? 'Meteor split into fragments!' : 'Screamer is calling more!', 'companion');
         }
       }
 
@@ -610,7 +610,7 @@ export class GameEngine {
       s.health = 0;
       s.flash = 1;
       s.shake = Math.max(s.shake, 24);
-      this.addFloating(s.width / 2, s.height * 0.5, 'OVERRUN', '#ff3860', 30);
+      this.addFloating(s.width / 2, s.height * 0.5, s.settings.familyFriendlyMode ? 'SHIELD BREAK' : 'OVERRUN', '#ff3860', 30);
       return;
     }
 
@@ -618,7 +618,7 @@ export class GameEngine {
     if (s.powerups.shieldCharges > 0) {
       s.powerups.shieldCharges -= 1;
       this.addFloating(z.x, s.height - 80, 'BLOCKED', '#00f0ff', 22);
-      this.addEvent('Shield absorbed a hit!', 'companion');
+      this.addEvent(s.settings.familyFriendlyMode ? 'Barrier absorbed a hit!' : 'Shield absorbed a hit!', 'companion');
       s.shake = Math.max(s.shake, 8);
       return;
     }
@@ -831,7 +831,7 @@ export class GameEngine {
       s.bossesDefeated += 1;
       s.bossActive = false;
       s.shake = Math.max(s.shake, 20);
-      this.addEvent(`${z.bossName ?? 'BOSS'} DESTROYED`, 'finisher');
+      this.addEvent(s.settings.familyFriendlyMode ? 'MEGA METEOR ZAPPED' : `${z.bossName ?? 'BOSS'} DESTROYED`, 'finisher');
     }
 
     // Shotgun: a primed kill blasts nearby zombies.
@@ -843,7 +843,7 @@ export class GameEngine {
       );
       for (const o of nearby) this.killZombie(o, true, rewardCombo);
       if (nearby.length > 0) {
-        this.addFloating(z.x, z.y, `SHOTGUN x${nearby.length}`, '#ff2bd6', 22);
+        this.addFloating(z.x, z.y, `${s.settings.familyFriendlyMode ? 'BURST' : 'SHOTGUN'} x${nearby.length}`, '#ff2bd6', 22);
         s.shake = Math.max(s.shake, 16);
       }
     }
@@ -865,7 +865,7 @@ export class GameEngine {
     if (isHeadshot(word.replace(/\s+/g, '').length, clearedMs)) {
       const bonus = 50 * getDifficultyConfig(s.difficulty).scoreMult;
       s.score += bonus;
-      this.addFloating(s.width / 2, s.height * 0.4, 'HEADSHOT', '#ff2bd6', 26);
+      this.addFloating(s.width / 2, s.height * 0.4, s.settings.familyFriendlyMode ? 'PERFECT ZAP' : 'HEADSHOT', '#ff2bd6', 26);
     }
 
     this.checkPowerups();
@@ -886,7 +886,7 @@ export class GameEngine {
     const s = this.state;
     if (shouldArmShotgun(s.streak) && !s.powerups.shotgunArmed) {
       s.powerups.shotgunArmed = true;
-      this.addEvent('SHOTGUN ARMED — next kill blasts a cone!', 'companion');
+      this.addEvent(s.settings.familyFriendlyMode ? 'POWER ZAP READY - next meteor bursts nearby!' : 'SHOTGUN ARMED - next kill blasts a cone!', 'companion');
     }
     if (shouldGrantShield(s.noMistakeStreak)) {
       s.powerups.shieldCharges += 1;
@@ -911,29 +911,46 @@ export class GameEngine {
 
   private checkFinishers() {
     const s = this.state;
-    if (s.streak === 25) this.addEvent('NO MERCY COMBO', 'finisher');
-    else if (s.streak === 50) this.addEvent('PERFECT DEFENSE', 'finisher');
-    else if (s.streak === 100) this.addEvent('BUNKER CLEAR', 'finisher');
+    if (s.streak === 25) this.addEvent(s.settings.familyFriendlyMode ? 'ORBIT COMBO' : 'NO MERCY COMBO', 'finisher');
+    else if (s.streak === 50) this.addEvent(s.settings.familyFriendlyMode ? 'PERFECT SHIELD' : 'PERFECT DEFENSE', 'finisher');
+    else if (s.streak === 100) this.addEvent(s.settings.familyFriendlyMode ? 'PLANET LOCKED' : 'BUNKER CLEAR', 'finisher');
   }
 
   // --- Commands -----------------------------------------------------------
 
+  private commandWordForKey(key: string): string {
+    if (!this.state.settings.familyFriendlyMode) return key;
+    if (key === 'grenade') return 'burst';
+    if (key === 'freeze') return 'stasis';
+    if (key === 'medkit') return 'repair';
+    return key;
+  }
+
+  private commandKeyForWord(word: string): string {
+    if (!this.state.settings.familyFriendlyMode) return word;
+    if (word === 'burst') return 'grenade';
+    if (word === 'stasis') return 'freeze';
+    if (word === 'repair') return 'medkit';
+    return word;
+  }
+
   /** Activate a consumable powerup (bought in the store, typed in-game). */
   private runCommand(cmd: string) {
     const s = this.state;
-    if (cmd === 'grenade' && s.powerups.consumables.grenade > 0) {
+    const key = this.commandKeyForWord(cmd);
+    if (key === 'grenade' && s.powerups.consumables.grenade > 0) {
       s.powerups.consumables.grenade -= 1;
-      this.clearNearestCluster(GRENADE_RADIUS, 'GRENADE');
-    } else if (cmd === 'freeze' && s.powerups.consumables.freeze > 0) {
+      this.clearNearestCluster(GRENADE_RADIUS, s.settings.familyFriendlyMode ? 'BURST' : 'GRENADE');
+    } else if (key === 'freeze' && s.powerups.consumables.freeze > 0) {
       s.powerups.consumables.freeze -= 1;
       s.powerups.freezeMs = FREEZE_MS;
-      this.addEvent('ZOMBIES FROZEN', 'companion');
-      this.addFloating(s.width / 2, s.height * 0.45, 'FREEZE', '#00f0ff', 24);
-    } else if (cmd === 'medkit' && s.powerups.consumables.medkit > 0) {
+      this.addEvent(s.settings.familyFriendlyMode ? 'METEORS HELD' : 'ZOMBIES FROZEN', 'companion');
+      this.addFloating(s.width / 2, s.height * 0.45, s.settings.familyFriendlyMode ? 'STASIS' : 'FREEZE', '#00f0ff', 24);
+    } else if (key === 'medkit' && s.powerups.consumables.medkit > 0) {
       s.powerups.consumables.medkit -= 1;
       s.health = clamp(s.health + MEDKIT_HEAL, 0, s.maxHealth);
-      this.addEvent('+HEALTH', 'companion');
-      this.addFloating(s.width / 2, s.height * 0.45, `+${MEDKIT_HEAL} HP`, '#39ff14', 24);
+      this.addEvent(s.settings.familyFriendlyMode ? '+SHIELD' : '+HEALTH', 'companion');
+      this.addFloating(s.width / 2, s.height * 0.45, `+${MEDKIT_HEAL} ${s.settings.familyFriendlyMode ? 'SHIELD' : 'HP'}`, '#39ff14', 24);
     }
   }
 
