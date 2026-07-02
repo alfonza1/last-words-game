@@ -32,6 +32,7 @@ export function createBossZombie(def: BossDef, x: number, speed: number, wave: n
     hitFlash: 0,
     isBoss: true,
     bossName: def.name,
+    bossColor: def.color,
   };
 }
 
