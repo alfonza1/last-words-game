@@ -32,6 +32,6 @@ describe('Meteor Mania theme helpers', () => {
   });
 
   it('defaults Meteor Mania characters to a simple family-safe face', () => {
-    expect(normalizeCharacterForFamilyMode(DEFAULT_CHARACTER, true).expression).toBe('mission-calm');
+    expect(normalizeCharacterForFamilyMode(DEFAULT_CHARACTER, true).expression).toBe('first-light');
   });
 });

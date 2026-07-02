@@ -107,6 +107,13 @@ export const EXPRESSIONS: ExpressionDef[] = [
     outfitReactive: true,
   },
   {
+    key: 'first-light',
+    label: 'First Light',
+    icon: '._.',
+    description: 'Calm, focused, and ready for launch.',
+    familyFriendly: true,
+  },
+  {
     key: 'mission-calm',
     label: 'Mission Calm',
     icon: '-_-',
