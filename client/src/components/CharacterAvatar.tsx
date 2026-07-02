@@ -232,8 +232,12 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
 
 function Face({ expression, glow, lips }: { expression: string; glow: string; lips: string }) {
   const ink = '#101416';
+  const scarredSmirkExpression =
+    expression === 'grave-grin' || expression === 'family-scarred-smirk' || expression === 'zero-g-grin';
+  const wideEyedExpression = expression === 'haunted' || expression === 'wide-eyed-wonder';
+  const chargedEyeExpression = expression === 'not-yet-dead' || expression === 'still-standing';
 
-  if (expression === 'grave-grin') {
+  if (scarredSmirkExpression) {
     return (
       <g>
         <path d="M91 61 Q99 56 106 61 M116 62 Q122 56 130 58" fill="none" stroke={ink} strokeWidth="2.6" strokeLinecap="round" />
@@ -260,7 +264,7 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
     );
   }
 
-  if (expression === 'haunted') {
+  if (wideEyedExpression) {
     return (
       <g>
         <path d="M93 60 Q99 55 105 60 M115 60 Q121 55 127 60" fill="none" stroke={ink} strokeOpacity=".65" strokeWidth="2" />
@@ -287,7 +291,7 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
     );
   }
 
-  if (expression === 'not-yet-dead') {
+  if (chargedEyeExpression) {
     return (
       <g>
         <path d="M91 61 L105 58 M116 58 L130 61" stroke={ink} strokeWidth="2.5" strokeLinecap="round" />
@@ -319,18 +323,6 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
         <path d="M93 67 H105 M115 67 H127" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
         <path d="M100 84 H120" stroke={lips} strokeWidth="2.1" strokeLinecap="round" />
         <path d="M86 55 Q99 48 110 49 Q123 48 136 55" fill="none" stroke={glow} strokeWidth="1.4" strokeLinecap="round" opacity=".5" />
-      </g>
-    );
-  }
-
-  if (expression === 'zero-g-grin') {
-    return (
-      <g>
-        <path d="M91 62 Q99 56 106 62 M114 62 Q122 56 130 62" fill="none" stroke={ink} strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx="99" cy="69" r="2.5" fill={ink} />
-        <circle cx="121" cy="69" r="2.5" fill={ink} />
-        <path d="M96 82 Q110 93 124 82" fill="none" stroke={lips} strokeWidth="2.7" strokeLinecap="round" />
-        <path d="M102 86 Q111 90 120 86" fill="none" stroke="#f1f8ff" strokeWidth="1" strokeLinecap="round" opacity=".45" />
       </g>
     );
   }

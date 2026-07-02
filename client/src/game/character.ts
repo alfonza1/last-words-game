@@ -355,6 +355,10 @@ function drawCombatFace(
 ) {
   const eyeX = 34 * scale;
   const eyeY = -29 * scale;
+  const scarredSmirkExpression =
+    expression === 'grave-grin' || expression === 'family-scarred-smirk' || expression === 'zero-g-grin';
+  const wideEyedExpression = expression === 'haunted' || expression === 'wide-eyed-wonder';
+  const chargedEyeExpression = expression === 'not-yet-dead' || expression === 'still-standing';
   ctx.save();
   ctx.lineCap = 'round';
   ctx.lineWidth = Math.max(0.9, scale);
@@ -376,7 +380,7 @@ function drawCombatFace(
     return;
   }
 
-  if (expression === 'haunted') {
+  if (wideEyedExpression) {
     ctx.fillStyle = '#eef4ef';
     ctx.strokeStyle = '#111719';
     ctx.beginPath();
@@ -443,31 +447,7 @@ function drawCombatFace(
     return;
   }
 
-  if (expression === 'zero-g-grin') {
-    ctx.strokeStyle = '#111719';
-    ctx.lineWidth = Math.max(0.9, 1.1 * scale);
-    ctx.beginPath();
-    ctx.moveTo(29 * scale, -31 * scale);
-    ctx.quadraticCurveTo(33 * scale, -35 * scale, 37 * scale, -31 * scale);
-    ctx.moveTo(42 * scale, -31 * scale);
-    ctx.quadraticCurveTo(46 * scale, -35 * scale, 50 * scale, -31 * scale);
-    ctx.stroke();
-    ctx.fillStyle = '#111719';
-    ctx.beginPath();
-    ctx.arc(33 * scale, eyeY, 1.55 * scale, 0, Math.PI * 2);
-    ctx.arc(46 * scale, eyeY, 1.55 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = lips;
-    ctx.lineWidth = Math.max(0.9, 1.15 * scale);
-    ctx.beginPath();
-    ctx.moveTo(35 * scale, -22 * scale);
-    ctx.quadraticCurveTo(41 * scale, -17 * scale, 47 * scale, -22 * scale);
-    ctx.stroke();
-    ctx.restore();
-    return;
-  }
-
-  if (expression === 'not-yet-dead') {
+  if (chargedEyeExpression) {
     ctx.strokeStyle = '#111719';
     ctx.lineWidth = Math.max(0.9, 1.15 * scale);
     ctx.beginPath();
@@ -498,7 +478,7 @@ function drawCombatFace(
     ctx.lineTo(42.5 * scale, -21.5 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
-  } else if (expression === 'grave-grin') {
+  } else if (scarredSmirkExpression) {
     ctx.strokeStyle = '#6d211c';
     ctx.lineWidth = Math.max(0.85, 1.05 * scale);
     ctx.beginPath();
@@ -532,8 +512,8 @@ function drawCombatFace(
 
   ctx.strokeStyle = expression === 'blood-rush' ? '#111719' : lips;
   ctx.beginPath();
-  if (expression === 'grave-grin' || expression === 'not-yet-dead') {
-    if (expression === 'grave-grin') {
+  if (scarredSmirkExpression || chargedEyeExpression) {
+    if (scarredSmirkExpression) {
       ctx.lineWidth = Math.max(0.95, 1.05 * scale);
       ctx.moveTo(34.8 * scale, -22.5 * scale);
       ctx.bezierCurveTo(38 * scale, -21.2 * scale, 41 * scale, -21.8 * scale, 43.2 * scale, -24 * scale);

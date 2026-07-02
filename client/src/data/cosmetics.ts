@@ -128,6 +128,28 @@ export const EXPRESSIONS: ExpressionDef[] = [
     familyFriendly: true,
   },
   {
+    key: 'wide-eyed-wonder',
+    label: 'Wide-Eyed Wonder',
+    icon: 'o_o',
+    description: 'Big eyes for a close meteor pass.',
+    familyFriendly: true,
+  },
+  {
+    key: 'family-scarred-smirk',
+    label: 'Scarred Smirk',
+    icon: '/¬_¬',
+    description: 'A battle-ready smile for the next launch.',
+    familyFriendly: true,
+  },
+  {
+    key: 'still-standing',
+    label: 'Still Standing',
+    icon: '◉‿○',
+    description: 'One charged eye and steady nerves.',
+    familyFriendly: true,
+    outfitReactive: true,
+  },
+  {
     key: 'star-ready',
     label: 'Star Ready',
     icon: '*_*',
