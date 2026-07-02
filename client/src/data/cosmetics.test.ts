@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cosmeticByKey, DEFAULT_CHARACTER, EXPRESSIONS, HAIR_STYLES, lipColorForSkinTone, normalizeCharacter, skinColor } from './cosmetics';
+import { cosmeticByKey, DEFAULT_CHARACTER, EXPRESSIONS, HAIR_STYLES, SKIN_TONES, lipColorForSkinTone, normalizeCharacter, skinColor } from './cosmetics';
 
 describe('default character', () => {
   it('selects buzz hair for new survivors', () => {
@@ -33,6 +33,13 @@ describe('default character', () => {
   it('derives lips from the selected skin tone', () => {
     expect(lipColorForSkinTone('warm')).not.toBe(lipColorForSkinTone('undead'));
     expect(lipColorForSkinTone('warm')).not.toBe(skinColor('warm'));
+  });
+
+  it('renames the former undead skin tone as an alien option', () => {
+    expect(SKIN_TONES.find((tone) => tone.key === 'undead')).toMatchObject({
+      label: 'Alien Green',
+      color: '#67e87f',
+    });
   });
 });
 

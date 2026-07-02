@@ -16,6 +16,7 @@ export const METEOR_MANIA_DEFAULT_MAP = 'planet-aurora';
 export const METEOR_MANIA_DEFAULT_OUTFIT = 'outfit-orbit-cadet';
 export const METEOR_MANIA_DEFAULT_ACCESSORY = 'accessory-none';
 export const METEOR_MANIA_DEFAULT_EXPRESSION = 'first-light';
+export const METEOR_MANIA_HARD_MODE_LABEL = 'Meteor Mayhem';
 
 function mapMatchesFamilyMode(map: MapTheme, familyFriendlyMode: boolean): boolean {
   return Boolean(map.familyFriendly) === familyFriendlyMode;

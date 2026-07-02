@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CharacterLoadout, Difficulty, GameMode, GameStats, PuzzleStyle } from '../types';
 import { formatTime } from '../lib/utils';
 import { DIFFICULTY_CONFIGS } from '../game/difficulty';
+import { METEOR_MANIA_HARD_MODE_LABEL } from '../theme/meteorMania';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -151,7 +152,7 @@ const METEOR_DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long:
     },
     nightmare: {
       short: 'Exact case + symbols. Earn 2x coins and score.',
-      long: 'Exact-case words, numbers, and symbols during Red Alert chaos. Earn 2x coins and score.',
+      long: `Exact-case words, numbers, and symbols during ${METEOR_MANIA_HARD_MODE_LABEL} chaos. Earn 2x coins and score.`,
     },
   },
   riddles: {
@@ -162,7 +163,7 @@ const METEOR_DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long:
     },
     nightmare: {
       short: 'Hardest clues. Earn 2x coins and score.',
-      long: 'The hardest clues under a Red Alert meteor storm. Earn 2x coins and score.',
+      long: `The hardest clues under a ${METEOR_MANIA_HARD_MODE_LABEL} storm. Earn 2x coins and score.`,
     },
   },
   math: {
@@ -214,7 +215,7 @@ export function MainMenu({
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const styleMeta = familyFriendlyMode ? METEOR_STYLE_META : STYLE_META;
   const diffBlurb = familyFriendlyMode ? METEOR_DIFF_BLURB : DIFF_BLURB;
-  const difficultyLabel = (d: Difficulty) => (familyFriendlyMode && d === 'nightmare' ? 'Red Alert' : DIFFICULTY_CONFIGS[d].label);
+  const difficultyLabel = (d: Difficulty) => (familyFriendlyMode && d === 'nightmare' ? METEOR_MANIA_HARD_MODE_LABEL : DIFFICULTY_CONFIGS[d].label);
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
   const [mobileRecordsOpen, setMobileRecordsOpen] = useState(false);
   const recordsTitle = 'Career Stats';

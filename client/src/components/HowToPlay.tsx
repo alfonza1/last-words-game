@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { METEOR_MANIA_HARD_MODE_LABEL } from '../theme/meteorMania';
 
 interface Props {
   onBack: () => void;
@@ -19,7 +20,7 @@ const DEFENSE: [string, string][] = [
 
 const METEOR_DEFENSE: [string, string][] = [
   ['Typing Defense', 'Type the highlighted word, then press SPACE. Each completed word zaps the nearest meteor; an empty field pulls the next threat in immediately.'],
-  ['Riddle Defense', 'Solve the riddle, then press SPACE. A solve launches a multi-zap volley: 5 / 8 / 12 zaps on Easy / Normal / Red Alert.'],
+  ['Riddle Defense', `Solve the riddle, then press SPACE. A solve launches a multi-zap volley: 5 / 8 / 12 zaps on Easy / Normal / ${METEOR_MANIA_HARD_MODE_LABEL}.`],
   ['Math Defense', 'Solve the arithmetic, then press SPACE. Harder math each difficulty; a solve launches 3 / 4 / 6 zaps.'],
   ['Trivia Defense', 'Answer the question, then press SPACE. Tougher questions each difficulty; a solve launches 3 / 5 / 8 zaps.'],
   ['Even by Design', 'Volley sizes are tuned so every style clears about the same meteors per minute as typing - pick what you enjoy.'],

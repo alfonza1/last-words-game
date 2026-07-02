@@ -48,7 +48,7 @@ export const SKIN_TONES = [
   { key: 'tan', label: 'Tan', color: '#a96745' },
   { key: 'brown', label: 'Brown', color: '#75452f' },
   { key: 'deep', label: 'Deep', color: '#48291f' },
-  { key: 'undead', label: 'Undead', color: '#8aa17a' },
+  { key: 'undead', label: 'Alien Green', color: '#67e87f' },
 ] as const;
 
 export const HAIR_STYLES = [
