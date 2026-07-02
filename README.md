@@ -2,9 +2,9 @@
 
 # 🧟 Last Words Game
 
-### An arcade typing-survival game with a production-grade, scale-to-zero cloud backend.
+### A desktop and mobile arcade defense game with a production-grade, scale-to-zero cloud backend.
 
-Type or speak to fire volleys. Fight zombies in Dead Keys, or switch to family-friendly Meteor Mania to zap meteors and save the planet.
+Choose Typing, Riddle, Math, or Trivia Defense on desktop, then switch to hold-to-speak voice controls on mobile. Fight zombies in Dead Keys, or play family-friendly Meteor Mania to zap meteors and save the planet.
 
 <br/>
 
@@ -89,7 +89,7 @@ A complete, deployed full-stack product, not a tutorial exercise. These are the 
 ## Gameplay at a glance
 
 - Two core modes: Survival (endless escalating waves) and Boss Rush (a boss gauntlet), with Meteor Mania labels for Planet Defense and Comet Storm.
-- Four play styles: Typing Defense, Riddle Defense, Math Defense, and Trivia Defense. Volley sizes are tuned so each style clears about the same threats per minute, so you can play whichever you enjoy.
+- Four play styles: Typing Defense, Riddle Defense, Math Defense, and Trivia Defense. Volley sizes are tuned so keyboard, puzzle, and voice-answer runs clear about the same threats per minute.
 - Three difficulty curves (Easy / Normal / Nightmare), with Meteor Mania renaming the hardest curve to Meteor Mayhem while keeping the same 2x risk/reward.
 - Family-friendly mode swaps in planets, meteors, zapper visuals, space-themed maps/cosmetics, and safer copy without splitting player progression.
 - On touch devices the game switches to a hold-to-speak voice-answer flow with tappable power-ups, so there is no on-screen keyboard to fight.
@@ -209,8 +209,8 @@ Collapsed by default — click a section to expand it.
 <details>
 <summary><b>Client &amp; game engine</b></summary>
 
-- **Framework-agnostic engine:** a deterministic, seeded TypeScript engine drives spawning, waves, typing and solving, scoring, and power-ups. It has no React dependency, which makes it unit-testable in isolation and renderable to a plain `<canvas>`.
-- **Adaptive mobile UX:** a capability probe swaps the desktop typing loop for a hold-to-speak voice experience with tappable power-ups, and the store collapses into a tabbed, single-screen layout on small viewports.
+- **Framework-agnostic engine:** a deterministic, seeded TypeScript engine drives spawning, waves, word matching, puzzle solving, scoring, and power-ups. It has no React dependency, which makes it unit-testable in isolation and renderable to a plain `<canvas>`.
+- **Adaptive mobile UX:** a capability probe swaps desktop keyboard controls for a hold-to-speak voice experience with tappable power-ups, and the store collapses into a tabbed, single-screen layout on small viewports.
 - **Code-drawn cosmetics:** outfits and characters are drawn in SVG (shop and closet) and on canvas (gameplay) — no image assets, including animated and rarity-tiered "Exclusive Mythic" skins.
 - **Resilient by default:** guests play fully offline via `localStorage`; a backend-offline banner degrades gracefully; the client does no API polling while idle, keeping the scale-to-zero backend asleep.
 
