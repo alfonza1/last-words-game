@@ -431,13 +431,6 @@ function drawCombatFace(
     ctx.moveTo(42 * scale, eyeY);
     ctx.lineTo(48 * scale, eyeY);
     ctx.stroke();
-    ctx.strokeStyle = glow;
-    ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(27 * scale, -34 * scale);
-    ctx.quadraticCurveTo(37 * scale, -39 * scale, 49 * scale, -34 * scale);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
     ctx.strokeStyle = lips;
     ctx.beginPath();
     ctx.moveTo(36 * scale, -22 * scale);
