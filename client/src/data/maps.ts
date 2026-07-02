@@ -115,7 +115,7 @@ export const MAPS: MapTheme[] = [
   {
     id: 'planet-aurora',
     name: 'Aurora Prime',
-    description: 'A blue-green home world with defense towers, soft auroras, and the first meteor storm.',
+    description: 'Your blue-green home world — colony domes and breathing auroras meet the first meteor storm.',
     cost: 0,
     familyFriendly: true,
     palette: {
@@ -127,7 +127,7 @@ export const MAPS: MapTheme[] = [
   {
     id: 'planet-crystal',
     name: 'Crystal Vale',
-    description: 'A glittering violet planet where meteor showers bounce through giant prism fields.',
+    description: 'A violet world of towering prisms where meteor light shatters into drifting rainbow shards.',
     cost: 250,
     familyFriendly: true,
     palette: {
@@ -139,7 +139,7 @@ export const MAPS: MapTheme[] = [
   {
     id: 'planet-volcanic',
     name: 'Ember Moon',
-    description: 'A molten red moon with defense pylons holding the lava fields back.',
+    description: 'A molten moon where glowing containment pylons hold the lava seas back beneath a cracked giant.',
     cost: 650,
     familyFriendly: true,
     palette: {
@@ -151,7 +151,7 @@ export const MAPS: MapTheme[] = [
   {
     id: 'planet-nebula',
     name: 'Nebula Reef',
-    description: 'A deep-space reef planet under ringlight, built for late-game meteor madness.',
+    description: 'A bioluminescent coral world under a ringed giant, built for late-game meteor madness.',
     cost: 1000,
     familyFriendly: true,
     palette: {
