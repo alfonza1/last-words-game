@@ -69,6 +69,7 @@ const Closet = lazy(() => import('./components/Closet').then((m) => ({ default: 
 
 const REWARD_COINS = 50; // bonus for an optional rewarded ad (server is authoritative)
 const EMPTY_WPM_BONUS: WpmBonus = { tiers: 0, coins: 0, score: 0 };
+const APP_TITLE = 'Last Words Game';
 
 const SCREEN_ROUTES: Record<Screen, string> = {
   menu: '/',
@@ -89,19 +90,6 @@ const ROUTE_SCREENS = Object.entries(SCREEN_ROUTES).reduce(
 );
 const LEGACY_HASH_ROUTES: Record<string, Screen> = {
   '/menu': 'menu',
-};
-
-const SCREEN_TITLES: Record<Screen, string> = {
-  menu: 'Menu',
-  mapselect: 'Select Map',
-  game: 'Run',
-  gameover: 'Game Over',
-  upgrades: 'Store',
-  closet: 'Closet',
-  howto: 'How to Play',
-  settings: 'Settings',
-  signin: 'Sign In',
-  leaderboard: 'Leaderboard',
 };
 
 function screenFromHash(): Screen | null {
@@ -172,7 +160,7 @@ export default function App() {
     } else if (window.location.hash) {
       window.history.replaceState(null, '', nextPath);
     }
-    document.title = `Last Words - ${SCREEN_TITLES[screen]}`;
+    document.title = APP_TITLE;
   }, [screen]);
 
   // Signed-in progress lives on the server (keyed to the Firebase uid).
