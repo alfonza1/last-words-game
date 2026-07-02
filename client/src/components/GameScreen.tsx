@@ -796,7 +796,7 @@ function PowerupBar({
           </span>
         );
       })}
-      <span className="hidden text-white/30 sm:inline">- buy more in the {familyFriendlyMode ? 'Gear Bay' : 'Store'}</span>
+      <span className="hidden text-white/30 sm:inline">- buy more in the Store</span>
     </div>
   );
 }
@@ -823,10 +823,10 @@ function powerupCopy(def: (typeof POWERUP_DEFS)[number], familyFriendlyMode: boo
   }
   return {
     ...def,
-    name: 'Shield Patch',
+    name: 'Repair Burst',
     word: 'repair',
     icon: '+',
-    description: 'Restores a chunk of planet shield health.',
+    description: 'Restores a chunk of planet defense health.',
   };
 }
 

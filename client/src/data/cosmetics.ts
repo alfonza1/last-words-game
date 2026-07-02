@@ -198,7 +198,7 @@ export const COSMETICS: CosmeticDef[] = [
     key: 'outfit-orbit-cadet',
     slot: 'outfit',
     name: 'Orbit Cadet',
-    description: 'A clean starter flight suit with a bright planet-shield badge.',
+    description: 'A clean starter flight suit with a bright planet defense badge.',
     cost: 0,
     rarity: 'standard',
     familyFriendly: true,

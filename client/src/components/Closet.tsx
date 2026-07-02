@@ -124,7 +124,7 @@ export function Closet({
           ← Back
         </button>
         <div className="order-1 min-w-0 basis-full sm:order-none sm:min-w-[210px] sm:basis-auto sm:flex-1">
-          <h1 className="truncate text-xl font-black tracking-widest text-neon-cyan sm:text-2xl">{username}{familyFriendlyMode ? "'s Suit Lab" : "'s Closet"}</h1>
+          <h1 className="truncate text-xl font-black tracking-widest text-neon-cyan sm:text-2xl">{username}'s Closet</h1>
           <p className="text-[8px] uppercase tracking-[0.2em] text-white/35 sm:text-[10px] sm:tracking-[0.28em]">
             {familyFriendlyMode ? 'Build your planet-saving look' : 'Build your last known look'}
           </p>
@@ -134,7 +134,7 @@ export function Closet({
           className="group order-3 flex min-h-11 flex-1 basis-0 items-center justify-center gap-2 rounded-lg border border-neon-pink/65 bg-gradient-to-r from-neon-pink/15 via-black/40 to-neon-cyan/10 px-3 py-2 text-center shadow-[0_0_18px_rgba(255,43,214,0.18)] transition hover:border-neon-pink hover:bg-neon-pink/20 hover:shadow-[0_0_24px_rgba(255,43,214,0.28)] sm:order-none sm:ml-auto sm:flex-none sm:basis-auto sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-left"
         >
           <span className="h-2 w-2 rounded-full bg-neon-pink shadow-[0_0_12px_rgba(255,43,214,0.9)] transition group-hover:bg-neon-cyan group-hover:shadow-[0_0_14px_rgba(0,240,255,0.9)]" />
-          <span className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">{familyFriendlyMode ? 'Open Gear Bay' : 'Open Shop'}</span>
+          <span className="text-xs font-black uppercase tracking-[0.24em] text-neon-pink">Open Store</span>
         </button>
       </div>
 
@@ -353,7 +353,7 @@ export function Closet({
                 onClick={discardAndExit}
                 className="flex-1 rounded-lg border border-neon-amber/50 bg-neon-amber/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-neon-amber hover:bg-neon-amber/20"
               >
-                {pendingExit === 'store' ? (familyFriendlyMode ? 'Open Gear Bay' : 'Open Shop') : 'Discard Changes'}
+                {pendingExit === 'store' ? 'Open Store' : 'Discard Changes'}
               </button>
             </div>
           </div>

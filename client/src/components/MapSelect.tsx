@@ -21,7 +21,7 @@ const MODE_LABEL: Record<GameMode, string> = {
 };
 
 const METEOR_MODE_LABEL: Record<GameMode, string> = {
-  survival: 'Planet Shield',
+  survival: 'Planet Defense',
   bossrush: 'Comet Storm',
 };
 
@@ -77,7 +77,7 @@ export function MapSelect({
                 </div>
                 {m.nightmareOnly && (
                   <span className="absolute right-2 top-2 rounded bg-neon-red/80 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-white">
-                    Nightmare Exclusive
+                    {familyFriendlyMode ? 'Red Alert Exclusive' : 'Nightmare Exclusive'}
                   </span>
                 )}
                 {m.bossRushOnly && (

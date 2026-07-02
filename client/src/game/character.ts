@@ -1,6 +1,9 @@
 import type { CharacterLoadout, GameState } from '../types';
 import { OUTFIT_PALETTES, hairColor, lipColorForSkinTone, skinColor } from '../data/cosmetics';
 
+const RIFLE_MUZZLE_DISTANCE = 92;
+const ZAPPER_MUZZLE_DISTANCE = 70;
+
 /** Draw the equipped survivor prone at the defensive line, aiming into play. */
 export function drawSurvivor(
   ctx: CanvasRenderingContext2D,
@@ -41,7 +44,7 @@ export function drawSurvivor(
   const breathing = Math.sin(time * 0.0024) * 0.85 * scale;
   const shotStrength = s.survivorShot ? Math.max(0, s.survivorShot.life / s.survivorShot.ttl) : 0;
   const recoil = shotStrength * 2.8 * scale;
-  const muzzleDistance = 92 * scale;
+  const muzzleDistance = (familyFriendlyMode ? ZAPPER_MUZZLE_DISTANCE : RIFLE_MUZZLE_DISTANCE) * scale;
   const shoulderWorldX = x + direction * (20 * scale - recoil);
   const shoulderWorldY = y + breathing - 20 * scale;
   const muzzleWorldX = shoulderWorldX + direction * Math.cos(aimAngle) * muzzleDistance;
@@ -144,6 +147,136 @@ export function drawSurvivor(
   ctx.translate(20 * scale - recoil, -20 * scale);
   ctx.rotate(aimAngle);
 
+  if (familyFriendlyMode) {
+    drawZapperWeapon(ctx, outfit.trim, shotStrength, scale, Boolean(s.survivorShot));
+  } else {
+    drawRifleWeapon(ctx, outfit.trim, shotStrength, scale, Boolean(s.survivorShot));
+  }
+  ctx.restore();
+  ctx.restore();
+
+  if (s.survivorShot) {
+    drawTracer(ctx, muzzleWorldX, muzzleWorldY, s.survivorShot, scale, familyFriendlyMode);
+  }
+}
+
+function drawZapperWeapon(
+  ctx: CanvasRenderingContext2D,
+  trim: string,
+  shotStrength: number,
+  scale: number,
+  isFiring: boolean,
+) {
+  const cyan = '#7cf6ff';
+  const magenta = '#ff7ad9';
+
+  ctx.fillStyle = '#082335';
+  roundRect(ctx, -4 * scale, -8 * scale, 16 * scale, 16 * scale, 6 * scale);
+  ctx.fill();
+  ctx.strokeStyle = cyan;
+  ctx.lineWidth = 1.2 * scale;
+  ctx.globalAlpha = 0.75;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  const body = ctx.createLinearGradient(8 * scale, -9 * scale, 52 * scale, 9 * scale);
+  body.addColorStop(0, '#062031');
+  body.addColorStop(0.55, '#0b3a52');
+  body.addColorStop(1, '#041821');
+  ctx.fillStyle = body;
+  roundRect(ctx, 6 * scale, -9 * scale, 46 * scale, 18 * scale, 9 * scale);
+  ctx.fill();
+  ctx.strokeStyle = cyan;
+  ctx.lineWidth = 1.25 * scale;
+  ctx.stroke();
+
+  ctx.strokeStyle = trim;
+  ctx.globalAlpha = 0.7;
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.moveTo(14 * scale, -5 * scale);
+  ctx.lineTo(45 * scale, -5 * scale);
+  ctx.moveTo(14 * scale, 5 * scale);
+  ctx.lineTo(45 * scale, 5 * scale);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.rotate(-0.28);
+  ctx.fillStyle = '#0c2f45';
+  roundRect(ctx, 25 * scale, -16 * scale, 25 * scale, 5 * scale, 2.5 * scale);
+  ctx.fill();
+  ctx.strokeStyle = cyan;
+  ctx.globalAlpha = 0.65;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.rotate(0.28);
+  ctx.fillStyle = '#0c2f45';
+  roundRect(ctx, 25 * scale, 11 * scale, 25 * scale, 5 * scale, 2.5 * scale);
+  ctx.fill();
+  ctx.strokeStyle = cyan;
+  ctx.globalAlpha = 0.65;
+  ctx.stroke();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = '#05151f';
+  ctx.beginPath();
+  ctx.arc(30 * scale, 0, 7 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowColor = magenta;
+  ctx.shadowBlur = 8 * scale;
+  ctx.fillStyle = magenta;
+  ctx.beginPath();
+  ctx.arc(30 * scale, 0, 3.1 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.strokeStyle = cyan;
+  ctx.lineWidth = 3 * scale;
+  ctx.beginPath();
+  ctx.moveTo(49 * scale, 0);
+  ctx.lineTo(60 * scale, 0);
+  ctx.stroke();
+
+  ctx.lineWidth = 1.8 * scale;
+  ctx.beginPath();
+  ctx.ellipse(64 * scale, 0, 6 * scale, 9 * scale, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(61 * scale, -7 * scale);
+  ctx.lineTo(68 * scale, -10 * scale);
+  ctx.moveTo(61 * scale, 7 * scale);
+  ctx.lineTo(68 * scale, 10 * scale);
+  ctx.stroke();
+
+  if (!isFiring) return;
+
+  const muzzleX = ZAPPER_MUZZLE_DISTANCE * scale;
+  ctx.strokeStyle = `rgba(124,246,255,${shotStrength})`;
+  ctx.fillStyle = `rgba(124,246,255,${0.22 + shotStrength * 0.42})`;
+  ctx.shadowColor = cyan;
+  ctx.shadowBlur = 20 * shotStrength;
+  ctx.lineWidth = 2 * scale;
+  ctx.beginPath();
+  ctx.arc(muzzleX, 0, 8 * scale * shotStrength, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(muzzleX + 7 * scale, 0, 14 * scale * shotStrength, -0.85, 0.85);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+function drawRifleWeapon(
+  ctx: CanvasRenderingContext2D,
+  trim: string,
+  shotStrength: number,
+  scale: number,
+  isFiring: boolean,
+) {
   // Stock seated into the shoulder.
   ctx.fillStyle = '#090d0f';
   ctx.beginPath();
@@ -155,13 +288,13 @@ export function drawSurvivor(
   ctx.fill();
 
   // Receiver and handguard.
-  ctx.fillStyle = familyFriendlyMode ? '#082335' : '#151e22';
+  ctx.fillStyle = '#151e22';
   roundRect(ctx, -3 * scale, -5 * scale, 48 * scale, 10 * scale, 2 * scale);
   ctx.fill();
-  ctx.strokeStyle = familyFriendlyMode ? '#7cf6ff' : '#829198';
+  ctx.strokeStyle = '#829198';
   ctx.lineWidth = 1.1 * scale;
   ctx.stroke();
-  ctx.fillStyle = outfit.trim;
+  ctx.fillStyle = trim;
   ctx.globalAlpha = 0.7;
   ctx.fillRect(17 * scale, -4 * scale, 23 * scale, 2 * scale);
   ctx.globalAlpha = 1;
@@ -176,60 +309,41 @@ export function drawSurvivor(
   ctx.closePath();
   ctx.fill();
   ctx.fillRect(0, 4 * scale, 5 * scale, 12 * scale);
-  ctx.fillStyle = familyFriendlyMode ? '#061927' : '#05080a';
+  ctx.fillStyle = '#05080a';
   ctx.fillRect(43 * scale, -2 * scale, 43 * scale, 4 * scale);
   ctx.fillRect(84 * scale, -4 * scale, 8 * scale, 8 * scale);
   ctx.fillStyle = '#1b272c';
   roundRect(ctx, 7 * scale, -11 * scale, 17 * scale, 7 * scale, 2 * scale);
   ctx.fill();
-  ctx.strokeStyle = outfit.trim;
+  ctx.strokeStyle = trim;
   ctx.globalAlpha = 0.85;
   ctx.stroke();
   ctx.globalAlpha = 1;
-  ctx.fillStyle = outfit.trim;
+  ctx.fillStyle = trim;
   ctx.fillRect(28 * scale, 5 * scale, 3 * scale, 9 * scale);
 
-  if (s.survivorShot) {
-    const muzzleX = 94 * scale;
-    if (familyFriendlyMode) {
-      ctx.strokeStyle = `rgba(124,246,255,${shotStrength})`;
-      ctx.fillStyle = `rgba(124,246,255,${0.25 + shotStrength * 0.45})`;
-      ctx.shadowColor = '#7cf6ff';
-      ctx.shadowBlur = 20 * shotStrength;
-      ctx.lineWidth = 2 * scale;
-      ctx.beginPath();
-      ctx.arc(muzzleX + 5 * scale, 0, 9 * scale * shotStrength, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    } else {
-      ctx.fillStyle = `rgba(255,235,145,${shotStrength})`;
-      ctx.shadowColor = '#ffd166';
-      ctx.shadowBlur = 18 * shotStrength;
-      ctx.beginPath();
-      ctx.moveTo(muzzleX, 0);
-      ctx.lineTo(muzzleX + 18 * scale * shotStrength, -7 * scale);
-      ctx.lineTo(muzzleX + 10 * scale * shotStrength, 0);
-      ctx.lineTo(muzzleX + 18 * scale * shotStrength, 7 * scale);
-      ctx.closePath();
-      ctx.fill();
-      ctx.shadowBlur = 0;
+  if (!isFiring) return;
 
-      // A brief brass casing sells the shot without adding screen clutter.
-      ctx.fillStyle = `rgba(255,193,74,${shotStrength})`;
-      ctx.save();
-      ctx.translate(8 * scale, -8 * scale);
-      ctx.rotate(-0.8 + shotStrength);
-      ctx.fillRect(0, 0, 5 * scale, 2 * scale);
-      ctx.restore();
-    }
-  }
-  ctx.restore();
-  ctx.restore();
+  const muzzleX = 94 * scale;
+  ctx.fillStyle = `rgba(255,235,145,${shotStrength})`;
+  ctx.shadowColor = '#ffd166';
+  ctx.shadowBlur = 18 * shotStrength;
+  ctx.beginPath();
+  ctx.moveTo(muzzleX, 0);
+  ctx.lineTo(muzzleX + 18 * scale * shotStrength, -7 * scale);
+  ctx.lineTo(muzzleX + 10 * scale * shotStrength, 0);
+  ctx.lineTo(muzzleX + 18 * scale * shotStrength, 7 * scale);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
 
-  if (s.survivorShot) {
-    drawTracer(ctx, muzzleWorldX, muzzleWorldY, s.survivorShot, scale, familyFriendlyMode);
-  }
+  // A brief brass casing sells the shot without adding screen clutter.
+  ctx.fillStyle = `rgba(255,193,74,${shotStrength})`;
+  ctx.save();
+  ctx.translate(8 * scale, -8 * scale);
+  ctx.rotate(-0.8 + shotStrength);
+  ctx.fillRect(0, 0, 5 * scale, 2 * scale);
+  ctx.restore();
 }
 
 function drawCombatFace(
@@ -280,6 +394,75 @@ function drawCombatFace(
     ctx.quadraticCurveTo(39 * scale, -25 * scale, 42 * scale, -21 * scale);
     ctx.stroke();
     ctx.globalAlpha = 1;
+    ctx.restore();
+    return;
+  }
+
+  if (expression === 'star-ready') {
+    ctx.fillStyle = glow;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 7 * scale;
+    drawStar(ctx, 33 * scale, eyeY, 3.6 * scale, 1.65 * scale);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#101416';
+    ctx.lineWidth = Math.max(0.55, 0.65 * scale);
+    ctx.stroke();
+    ctx.strokeStyle = lips;
+    ctx.lineWidth = Math.max(0.85, scale);
+    ctx.beginPath();
+    ctx.moveTo(35 * scale, -22 * scale);
+    ctx.quadraticCurveTo(40 * scale, -18 * scale, 45 * scale, -22 * scale);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (expression === 'mission-calm') {
+    ctx.strokeStyle = '#111719';
+    ctx.lineWidth = Math.max(0.9, 1.1 * scale);
+    ctx.beginPath();
+    ctx.moveTo(29 * scale, eyeY);
+    ctx.lineTo(37 * scale, eyeY);
+    ctx.moveTo(42 * scale, eyeY);
+    ctx.lineTo(48 * scale, eyeY);
+    ctx.stroke();
+    ctx.strokeStyle = glow;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(27 * scale, -34 * scale);
+    ctx.quadraticCurveTo(37 * scale, -39 * scale, 49 * scale, -34 * scale);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = lips;
+    ctx.beginPath();
+    ctx.moveTo(36 * scale, -22 * scale);
+    ctx.lineTo(43 * scale, -22 * scale);
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (expression === 'zero-g-grin') {
+    ctx.strokeStyle = '#111719';
+    ctx.lineWidth = Math.max(0.9, 1.1 * scale);
+    ctx.beginPath();
+    ctx.moveTo(29 * scale, -31 * scale);
+    ctx.quadraticCurveTo(33 * scale, -35 * scale, 37 * scale, -31 * scale);
+    ctx.moveTo(42 * scale, -31 * scale);
+    ctx.quadraticCurveTo(46 * scale, -35 * scale, 50 * scale, -31 * scale);
+    ctx.stroke();
+    ctx.fillStyle = '#111719';
+    ctx.beginPath();
+    ctx.arc(33 * scale, eyeY, 1.55 * scale, 0, Math.PI * 2);
+    ctx.arc(46 * scale, eyeY, 1.55 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = lips;
+    ctx.lineWidth = Math.max(0.9, 1.15 * scale);
+    ctx.beginPath();
+    ctx.moveTo(35 * scale, -22 * scale);
+    ctx.quadraticCurveTo(41 * scale, -17 * scale, 47 * scale, -22 * scale);
+    ctx.stroke();
     ctx.restore();
     return;
   }
@@ -1072,5 +1255,18 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, outer: number, inner: number) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const radius = i % 2 === 0 ? outer : inner;
+    const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+    const px = x + Math.cos(angle) * radius;
+    const py = y + Math.sin(angle) * radius;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
   ctx.closePath();
 }

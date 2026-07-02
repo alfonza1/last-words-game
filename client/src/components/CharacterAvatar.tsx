@@ -303,6 +303,38 @@ function Face({ expression, glow, lips }: { expression: string; glow: string; li
     );
   }
 
+  if (expression === 'star-ready') {
+    return (
+      <g>
+        <path d="M98 59 L100.5 65 L107 65.5 L102 69.5 L104 76 L98 72.5 L92 76 L94 69.5 L89 65.5 L95.5 65 Z" fill={glow} stroke="#06131f" strokeWidth="1.3" />
+        <path d="M122 59 L124.5 65 L131 65.5 L126 69.5 L128 76 L122 72.5 L116 76 L118 69.5 L113 65.5 L119.5 65 Z" fill={glow} stroke="#06131f" strokeWidth="1.3" />
+        <path d="M99 85 Q110 91 121 85" fill="none" stroke={lips} strokeWidth="2.5" strokeLinecap="round" />
+      </g>
+    );
+  }
+
+  if (expression === 'mission-calm') {
+    return (
+      <g>
+        <path d="M93 67 H105 M115 67 H127" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M100 84 H120" stroke={lips} strokeWidth="2.1" strokeLinecap="round" />
+        <path d="M86 55 Q99 48 110 49 Q123 48 136 55" fill="none" stroke={glow} strokeWidth="1.4" strokeLinecap="round" opacity=".5" />
+      </g>
+    );
+  }
+
+  if (expression === 'zero-g-grin') {
+    return (
+      <g>
+        <path d="M91 62 Q99 56 106 62 M114 62 Q122 56 130 62" fill="none" stroke={ink} strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="99" cy="69" r="2.5" fill={ink} />
+        <circle cx="121" cy="69" r="2.5" fill={ink} />
+        <path d="M96 82 Q110 93 124 82" fill="none" stroke={lips} strokeWidth="2.7" strokeLinecap="round" />
+        <path d="M102 86 Q111 90 120 86" fill="none" stroke="#f1f8ff" strokeWidth="1" strokeLinecap="round" opacity=".45" />
+      </g>
+    );
+  }
+
   return (
     <g>
       <path d="M94 63 Q99 61 104 63 M116 63 Q121 61 126 63" fill="none" stroke={ink} strokeWidth="2" strokeLinecap="round" />

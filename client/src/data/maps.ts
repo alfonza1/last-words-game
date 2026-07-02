@@ -115,7 +115,7 @@ export const MAPS: MapTheme[] = [
   {
     id: 'planet-aurora',
     name: 'Aurora Prime',
-    description: 'A blue-green home world with shield towers, soft auroras, and the first meteor storm.',
+    description: 'A blue-green home world with defense towers, soft auroras, and the first meteor storm.',
     cost: 0,
     familyFriendly: true,
     palette: {
@@ -139,7 +139,7 @@ export const MAPS: MapTheme[] = [
   {
     id: 'planet-volcanic',
     name: 'Ember Moon',
-    description: 'A molten red moon with shield pylons holding the lava fields back.',
+    description: 'A molten red moon with defense pylons holding the lava fields back.',
     cost: 650,
     familyFriendly: true,
     palette: {
