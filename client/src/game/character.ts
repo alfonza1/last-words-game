@@ -355,8 +355,7 @@ function drawCombatFace(
 ) {
   const eyeX = 34 * scale;
   const eyeY = -29 * scale;
-  const scarredSmirkExpression =
-    expression === 'grave-grin' || expression === 'family-scarred-smirk' || expression === 'zero-g-grin';
+  const scarredSmirkExpression = expression === 'grave-grin' || expression === 'zero-g-grin';
   const wideEyedExpression = expression === 'haunted' || expression === 'wide-eyed-wonder';
   const chargedEyeExpression = expression === 'not-yet-dead' || expression === 'still-standing';
   ctx.save();

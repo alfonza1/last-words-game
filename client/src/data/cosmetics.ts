@@ -135,13 +135,6 @@ export const EXPRESSIONS: ExpressionDef[] = [
     familyFriendly: true,
   },
   {
-    key: 'family-scarred-smirk',
-    label: 'Scarred Smirk',
-    icon: '/¬_¬',
-    description: 'A battle-ready smile for the next launch.',
-    familyFriendly: true,
-  },
-  {
     key: 'still-standing',
     label: 'Still Standing',
     icon: '◉‿○',

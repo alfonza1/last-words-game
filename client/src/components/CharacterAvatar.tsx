@@ -232,8 +232,7 @@ export function CharacterAvatar({ character, className = '', armed = false }: Pr
 
 function Face({ expression, glow, lips }: { expression: string; glow: string; lips: string }) {
   const ink = '#101416';
-  const scarredSmirkExpression =
-    expression === 'grave-grin' || expression === 'family-scarred-smirk' || expression === 'zero-g-grin';
+  const scarredSmirkExpression = expression === 'grave-grin' || expression === 'zero-g-grin';
   const wideEyedExpression = expression === 'haunted' || expression === 'wide-eyed-wonder';
   const chargedEyeExpression = expression === 'not-yet-dead' || expression === 'still-standing';
 

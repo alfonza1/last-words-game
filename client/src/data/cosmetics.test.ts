@@ -114,13 +114,12 @@ describe('Meteor Mania cosmetics', () => {
       'mission-calm',
       'zero-g-grin',
       'wide-eyed-wonder',
-      'family-scarred-smirk',
       'still-standing',
       'star-ready',
     ]);
     expect(EXPRESSIONS.find((expression) => expression.key === 'first-light')?.label).toBe('First Light');
     expect(EXPRESSIONS.find((expression) => expression.key === 'wide-eyed-wonder')?.label).toBe('Wide-Eyed Wonder');
-    expect(EXPRESSIONS.find((expression) => expression.key === 'family-scarred-smirk')?.label).toBe('Scarred Smirk');
+    expect(EXPRESSIONS.find((expression) => expression.key === 'family-scarred-smirk')).toBeUndefined();
     expect(EXPRESSIONS.find((expression) => expression.key === 'still-standing')?.label).toBe('Still Standing');
     expect(EXPRESSIONS.find((expression) => expression.key === 'still-standing')?.outfitReactive).toBe(true);
     expect(EXPRESSIONS.find((expression) => expression.key === 'star-ready')?.outfitReactive).toBe(true);
