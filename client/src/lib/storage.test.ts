@@ -55,6 +55,7 @@ describe('save/load round trips', () => {
     expect(loadStats(store)).toEqual(DEFAULT_STATS);
     expect(loadUpgrades(store)).toEqual(DEFAULT_UPGRADES);
     expect(loadHighScores(store)).toEqual([]);
+    expect(loadSettings(store).difficulty).toBe('easy');
   });
   it('persists and reloads stats', () => {
     const s = { ...DEFAULT_STATS, bestScore: 1234 };
