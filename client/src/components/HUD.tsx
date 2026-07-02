@@ -37,7 +37,7 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
   const familyFriendlyMode = s.settings.familyFriendlyMode;
   const activePowerups: Array<{ label: string; color: string }> = [];
   if (p.shotgunArmed) activePowerups.push({ label: familyFriendlyMode ? 'POWER ZAP' : 'SHOTGUN', color: '#ff2bd6' });
-  if (p.shieldCharges > 0) activePowerups.push({ label: `SHIELD x${p.shieldCharges}`, color: '#00f0ff' });
+  if (p.shieldCharges > 0) activePowerups.push({ label: `${familyFriendlyMode ? 'BARRIER' : 'SHIELD'} x${p.shieldCharges}`, color: '#00f0ff' });
   if (p.doubleDamageMs > 0) activePowerups.push({ label: '2x DMG', color: '#ffb300' });
   if (p.slowMotionMs > 0) activePowerups.push({ label: 'SLOW-MO', color: '#9b5de5' });
   if (p.freezeMs > 0) activePowerups.push({ label: 'FROZEN', color: '#00f0ff' });
@@ -48,7 +48,7 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
         {/* Health + wave */}
         <div className="w-40 max-w-[42vw] space-y-1 sm:w-64">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-neon-red">{familyFriendlyMode ? 'SHIELD' : 'HEALTH'}</span>
+            <span className="font-bold text-neon-red">{familyFriendlyMode ? 'DEFENSE' : 'HEALTH'}</span>
             <span className="tabular-nums text-white/70">
               {Math.ceil(s.health)} / {s.maxHealth}
             </span>
@@ -111,7 +111,7 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
 
       {/* Boss warning overlay */}
       {s.bossWarning > 0 && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="pointer-events-none absolute inset-x-0 top-24 flex items-center justify-center sm:top-28">
           <div className="animate-pulse text-center">
             <div className="text-5xl font-black tracking-[0.3em] text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.9)]">
               {familyFriendlyMode ? 'MEGA METEOR' : 'BOSS'}

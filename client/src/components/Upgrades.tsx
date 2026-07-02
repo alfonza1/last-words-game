@@ -167,7 +167,7 @@ export function Upgrades({
         >
           ← Back
         </button>
-        <h1 className="text-center text-2xl font-black tracking-wide text-neon-green sm:text-3xl">{familyFriendlyMode ? 'GEAR BAY' : 'STORE'}</h1>
+        <h1 className="text-center text-2xl font-black tracking-wide text-neon-green sm:text-3xl">STORE</h1>
         {/* Coin balance shows in the fixed top-left wallet chip (App), matching the home page. */}
         <div aria-hidden />
       </div>

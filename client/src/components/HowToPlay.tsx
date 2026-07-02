@@ -19,7 +19,7 @@ const DEFENSE: [string, string][] = [
 
 const METEOR_DEFENSE: [string, string][] = [
   ['Typing Defense', 'Type the highlighted word, then press SPACE. Each completed word zaps the nearest meteor; an empty field pulls the next threat in immediately.'],
-  ['Riddle Defense', 'Solve the riddle, then press SPACE. A solve launches a multi-zap volley: 5 / 8 / 12 zaps on Easy / Normal / Nightmare.'],
+  ['Riddle Defense', 'Solve the riddle, then press SPACE. A solve launches a multi-zap volley: 5 / 8 / 12 zaps on Easy / Normal / Red Alert.'],
   ['Math Defense', 'Solve the arithmetic, then press SPACE. Harder math each difficulty; a solve launches 3 / 4 / 6 zaps.'],
   ['Trivia Defense', 'Answer the question, then press SPACE. Tougher questions each difficulty; a solve launches 3 / 5 / 8 zaps.'],
   ['Even by Design', 'Volley sizes are tuned so every style clears about the same meteors per minute as typing - pick what you enjoy.'],
@@ -43,7 +43,7 @@ const METEOR_THREATS: [string, string][] = [
   ['Glitch Rock', 'Flickering meteor - 2 zaps'],
   ['Iron Core', 'Heavy plating - 2 zaps'],
   ['Splitter', 'Breaks into two skimmers if left alone - 2 zaps'],
-  ['Boulder', 'Slow, durable, heavy shield damage - 3 zaps'],
+  ['Boulder', 'Slow, durable, heavy defense damage - 3 zaps'],
   ['Mega Meteor', 'Large health bar - reaching the planet ends the run'],
 ];
 
@@ -57,7 +57,7 @@ const AUTO_POWERUPS: [string, string][] = [
 
 const METEOR_AUTO_POWERUPS: [string, string][] = [
   ['Power Zap', 'Every 10-word streak arms the next zap to burst nearby meteors.'],
-  ['Shield', 'Every 15 mistake-free words grants one shield charge. Mega meteors ignore shields.'],
+  ['Barrier', 'Every 15 mistake-free words grants one barrier charge. Mega meteors ignore barriers.'],
   ['Double Damage', 'Maintaining at least 55 WPM can trigger 5 seconds of double zap damage.'],
   ['Slow Motion', 'At 95% accuracy after 12 words, slow motion can trigger for 5 seconds.'],
   ['Perfect Zap', 'Clear a target quickly for bonus points.'],
@@ -72,7 +72,7 @@ const CONSUMABLES: [string, string][] = [
 const METEOR_CONSUMABLES: [string, string][] = [
   ['burst', 'Clears a nearby cluster of meteors.'],
   ['stasis', 'Stops every meteor for 3 seconds.'],
-  ['repair', 'Restores 35 planet shield health.'],
+  ['repair', 'Restores 35 planet defense health.'],
 ];
 
 function Card({
@@ -135,7 +135,7 @@ export function HowToPlay({ onBack, mobileSpeechExperience = false, familyFriend
         <div>
           <h1 className="text-3xl font-black tracking-wide text-neon-green sm:text-4xl">HOW TO PLAY</h1>
           <p className="text-sm text-white/50">
-            {familyFriendlyMode ? 'Choose your defense. Zap meteors. Keep your planet shield standing.' : 'Choose your defense. Drop the dead. Keep the bunker standing.'}
+            {familyFriendlyMode ? 'Choose your defense. Zap meteors. Keep your planet standing.' : 'Choose your defense. Drop the dead. Keep the bunker standing.'}
           </p>
         </div>
       </div>

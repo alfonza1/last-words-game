@@ -618,7 +618,7 @@ export class GameEngine {
     if (s.powerups.shieldCharges > 0) {
       s.powerups.shieldCharges -= 1;
       this.addFloating(z.x, s.height - 80, 'BLOCKED', '#00f0ff', 22);
-      this.addEvent(s.settings.familyFriendlyMode ? 'Planet shield absorbed a hit!' : 'Shield absorbed a hit!', 'companion');
+      this.addEvent(s.settings.familyFriendlyMode ? 'Barrier absorbed a hit!' : 'Shield absorbed a hit!', 'companion');
       s.shake = Math.max(s.shake, 8);
       return;
     }

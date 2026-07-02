@@ -58,7 +58,7 @@ export function GameOver({
             : 'text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.8)]'
         }`}
       >
-        {survived ? (familyFriendlyMode ? 'PLANET SAVED' : 'YOU SURVIVED') : familyFriendlyMode ? 'SHIELD BROKEN' : 'GAME OVER'}
+        {survived ? (familyFriendlyMode ? 'PLANET SAVED' : 'YOU SURVIVED') : familyFriendlyMode ? 'DEFENSE BROKEN' : 'GAME OVER'}
       </h1>
       {isHighScore && <div className="animate-pulse text-xl font-bold text-neon-amber">★ NEW HIGH SCORE ★</div>}
 
@@ -67,7 +67,7 @@ export function GameOver({
         <Big label="Wave" value={result.wave} accent="#39ff14" />
         {!result.riddle && <Big label="WPM" value={result.wpm} accent="#00f0ff" />}
         <Big label="Accuracy" value={`${result.accuracy}%`} accent="#39ff14" />
-        <Big label={familyFriendlyMode ? 'Shield Time' : 'Survived'} value={formatTime(result.survivalMs)} accent="#e8ffe8" />
+        <Big label={familyFriendlyMode ? 'Defense Time' : 'Survived'} value={formatTime(result.survivalMs)} accent="#e8ffe8" />
         <Big label={familyFriendlyMode ? 'Meteors' : 'Kills'} value={result.kills} accent="#ff2bd6" />
         <Big label={familyFriendlyMode ? 'Mega Meteors' : 'Bosses'} value={result.bossesDefeated} accent="#ff2bd6" />
         <Big label="Coins" value={result.coins} accent="#ffd166" />

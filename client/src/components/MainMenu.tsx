@@ -64,31 +64,31 @@ const STYLE_META: Record<Style, { label: string; short: string; emoji: string; b
 
 const METEOR_STYLE_META: Record<Style, { label: string; short: string; emoji: string; blurb: string; tagWord: string }> = {
   typing: {
-    label: 'Typing',
+    label: 'KEYS Typing',
     short: 'TYPE',
-    emoji: 'KEYS',
+    emoji: '⌨',
     blurb: 'Each completed word zaps the nearest meteor. High WPM earns extra points and coins.',
     tagWord: 'WORD',
   },
   riddles: {
-    label: 'Riddle',
+    label: 'CLUE Riddle',
     short: 'CLUE',
-    emoji: 'CLUE',
+    emoji: '🧩',
     blurb: 'Solve short riddles to launch a multi-zap burst.',
     tagWord: 'RIDDLE',
   },
   math: {
-    label: 'Math',
+    label: 'MATH Math',
     short: 'MATH',
-    emoji: 'MATH',
+    emoji: '➗',
     blurb: 'Solve math problems to chain-zap meteor waves.',
     tagWord: 'PROBLEM',
   },
   trivia: {
-    label: 'Trivia',
+    label: 'QUIZ Trivia',
     short: 'QUIZ',
-    emoji: 'QUIZ',
-    blurb: 'Answer trivia questions to fire a planetary shield volley.',
+    emoji: '🧠',
+    blurb: 'Answer trivia questions to launch a planet-saving volley.',
     tagWord: 'QUESTION',
   },
 };
@@ -151,7 +151,7 @@ const METEOR_DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long:
     },
     nightmare: {
       short: 'Exact case + symbols. Earn 2x coins and score.',
-      long: 'Exact-case words, numbers, and symbols during orbital chaos. Earn 2x coins and score.',
+      long: 'Exact-case words, numbers, and symbols during Red Alert chaos. Earn 2x coins and score.',
     },
   },
   riddles: {
@@ -162,7 +162,7 @@ const METEOR_DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long:
     },
     nightmare: {
       short: 'Hardest clues. Earn 2x coins and score.',
-      long: 'The hardest clues under a red-alert meteor storm. Earn 2x coins and score.',
+      long: 'The hardest clues under a Red Alert meteor storm. Earn 2x coins and score.',
     },
   },
   math: {
@@ -173,7 +173,7 @@ const METEOR_DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long:
     },
     nightmare: {
       short: 'Multi-step problems. Earn 2x coins and score.',
-      long: 'Multi-step problems while the planet shield is under max pressure. Earn 2x coins and score.',
+      long: 'Multi-step problems while the planet defense is under max pressure. Earn 2x coins and score.',
     },
   },
   trivia: {
@@ -184,7 +184,7 @@ const METEOR_DIFF_BLURB: Record<Style, Record<Difficulty, { short: string; long:
     },
     nightmare: {
       short: 'Tough questions. Earn 2x coins and score.',
-      long: 'Tough questions under maximum shield pressure. Earn 2x coins and score.',
+      long: 'Tough questions under maximum defense pressure. Earn 2x coins and score.',
     },
   },
 };
@@ -214,9 +214,10 @@ export function MainMenu({
   const styles = mobileSpeechExperience ? STYLE_ORDER.filter((s) => s !== 'typing') : STYLE_ORDER;
   const styleMeta = familyFriendlyMode ? METEOR_STYLE_META : STYLE_META;
   const diffBlurb = familyFriendlyMode ? METEOR_DIFF_BLURB : DIFF_BLURB;
+  const difficultyLabel = (d: Difficulty) => (familyFriendlyMode && d === 'nightmare' ? 'Red Alert' : DIFFICULTY_CONFIGS[d].label);
   const selectStyle = (s: Style) => (s === 'typing' ? onRiddleMode(false) : onPuzzleStyle(s));
   const [mobileRecordsOpen, setMobileRecordsOpen] = useState(false);
-  const recordsTitle = familyFriendlyMode ? 'Mission Stats' : 'Career Stats';
+  const recordsTitle = 'Career Stats';
 
   return (
     <div className="crt relative mx-auto flex h-full w-full max-w-6xl flex-col items-center justify-start gap-2 overflow-y-auto px-3 pb-24 pt-1 sm:gap-5 sm:px-6 sm:pb-10 sm:pt-6 lg:justify-center lg:p-6">
@@ -233,7 +234,7 @@ export function MainMenu({
           )}
         </h1>
         <p className="mt-1 hidden text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:block sm:text-sm sm:tracking-[0.35em]">
-          {familyFriendlyMode ? 'ZAP THE SKY. SAVE YOUR PLANET.' : 'TYPE OR BE DEVOURED'}
+          {familyFriendlyMode ? 'TYPE THE SKY. SAVE YOUR PLANET.' : 'TYPE OR BE DEVOURED'}
         </p>
       </div>
 
@@ -251,7 +252,7 @@ export function MainMenu({
                     difficulty === d ? 'bg-neon-green/15 text-neon-green shadow-neon' : 'text-white/55 hover:text-white/90'
                   }`}
                 >
-                  {DIFFICULTY_CONFIGS[d].label}
+                  {difficultyLabel(d)}
                 </button>
               ))}
             </div>
@@ -293,7 +294,7 @@ export function MainMenu({
           <div className="hidden sm:block">
             <SectionLabel>{familyFriendlyMode ? 'Launch' : 'Deploy'}</SectionLabel>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-1">
-              <DeployButton tone="green" title={familyFriendlyMode ? 'Start Planet Shield' : 'Start Survival'} detail={familyFriendlyMode ? 'Endless meteors' : 'Endless waves'} onClick={() => onStart('survival')} />
+              <DeployButton tone="green" title={familyFriendlyMode ? 'Start Planet Defense' : 'Start Survival'} detail={familyFriendlyMode ? 'Endless meteors' : 'Endless waves'} onClick={() => onStart('survival')} />
               <DeployButton tone="pink" title={familyFriendlyMode ? 'Start Comet Storm' : 'Start Boss Rush'} detail={familyFriendlyMode ? 'Mega meteor run' : 'Boss gauntlet'} onClick={() => onStart('bossrush')} />
             </div>
           </div>
@@ -304,7 +305,7 @@ export function MainMenu({
               onClick={() => onStart('survival')}
               className="rounded-lg border border-neon-green/60 bg-neon-green/10 px-3 py-2 text-center transition active:scale-95"
             >
-              <span className="block text-sm font-black uppercase tracking-wide text-neon-green">{familyFriendlyMode ? 'Start Planet Shield' : 'Start Survival'}</span>
+              <span className="block text-sm font-black uppercase tracking-wide text-neon-green">{familyFriendlyMode ? 'Start Planet Defense' : 'Start Survival'}</span>
               <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-widest text-white/40">{familyFriendlyMode ? 'Endless meteors' : 'Endless waves'}</span>
             </button>
             <button
@@ -330,10 +331,10 @@ export function MainMenu({
           {/* Mobile nav (kept): large tappable buttons. */}
           <div className="grid grid-cols-2 gap-2 sm:hidden" aria-label="Menu navigation">
             <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('upgrades')}>
-              {familyFriendlyMode ? 'Gear Bay' : 'Store'}
+              Store
             </button>
             <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('leaderboard')}>
-              {familyFriendlyMode ? 'Mission Board' : 'Leaderboard'}
+              Leaderboard
             </button>
             <button className="rounded-lg border border-neon-green/35 bg-ink-700/70 px-4 py-3 text-left text-sm font-semibold tracking-wide text-neon-green transition hover:border-neon-green hover:bg-ink-600 focus:outline-none focus:ring-2 focus:ring-neon-green/60" onClick={() => onNav('howto')}>
               How to Play
@@ -367,10 +368,10 @@ export function MainMenu({
           {/* Desktop nav (reverted to prior menu-btn + emojis). */}
           <div className="hidden grid-cols-2 gap-3 sm:grid" aria-label="Menu navigation">
             <button className="menu-btn text-base" onClick={() => onNav('upgrades')}>
-              <span className="mr-2 inline-block w-5 text-center">🛒</span>{familyFriendlyMode ? 'Gear Bay' : 'Store'}
+              <span className="mr-2 inline-block w-5 text-center">🛒</span>Store
             </button>
             <button className="menu-btn text-base" onClick={() => onNav('leaderboard')}>
-              <span className="mr-2 inline-block w-5 text-center">🏆</span>{familyFriendlyMode ? 'Mission Board' : 'Leaderboard'}
+              <span className="mr-2 inline-block w-5 text-center">🏆</span>Leaderboard
             </button>
             <button className="menu-btn text-base" onClick={() => onNav('howto')}>
               <span className="mr-2 inline-block w-5 text-center">❓</span>How to Play
@@ -399,7 +400,7 @@ export function MainMenu({
             className="absolute bottom-[-22px] right-0 h-[252px] w-[199px] transition group-hover:scale-[1.025] sm:inset-x-0 sm:bottom-9 sm:mx-auto sm:h-[270px] sm:w-[214px] lg:h-[310px] lg:w-[245px]"
           />
           <div className="absolute bottom-3 left-3 right-44 flex justify-start border-t border-white/10 pt-2 text-[10px] uppercase tracking-widest sm:inset-x-4 sm:justify-end">
-            <span className="font-bold text-neon-green">{familyFriendlyMode ? 'Suit Lab' : 'Customize'}</span>
+            <span className="font-bold text-neon-green">Customize</span>
           </div>
         </button>
 
@@ -409,7 +410,7 @@ export function MainMenu({
       </div>
 
       <p className="hidden text-xs tracking-[0.25em] text-white/25 sm:block">
-        {familyFriendlyMode ? 'SAVE THE PLANET | OUTZAP THE STORM' : 'SURVIVE THE NIGHT | OUTLAST THE DEAD'}
+        {familyFriendlyMode ? 'SAVE THE PLANET | DEFEND THROUGH THE STORM' : 'SURVIVE THE NIGHT | OUTLAST THE DEAD'}
       </p>
       <div className="hidden w-full sm:block">
         <AdBanner />
@@ -479,11 +480,11 @@ function Records({
   return (
     <div className={`rounded-xl border border-neon-pink/25 bg-ink-800/70 ${compact ? 'p-3' : 'p-4'}`}>
       <h3 className={`${compact ? 'mb-2 text-xs' : 'mb-3 text-sm'} font-bold uppercase tracking-widest text-neon-pink`}>
-        {familyFriendlyMode ? 'Mission Stats' : 'Career Stats'}
+        Career Stats
       </h3>
       <dl className={`${compact ? 'space-y-1 text-xs' : 'space-y-1.5 text-sm'}`}>
         <Row k="Best Score" v={selected.bestScore.toLocaleString()} />
-        <Row k={familyFriendlyMode ? 'Longest Shield' : 'Longest Survival'} v={formatTime(selected.longestSurvivalMs)} />
+        <Row k={familyFriendlyMode ? 'Longest Defense' : 'Longest Survival'} v={formatTime(selected.longestSurvivalMs)} />
         {riddleMode ? <Row k="Best Mode" v={riddleStats.bestMode ? bestMode : '-'} /> : <Row k="Highest WPM" v={selected.highestWpm} />}
         <Row k={familyFriendlyMode ? 'Meteors Zapped' : 'Total Kills'} v={selected.totalKills} />
         <Row k={familyFriendlyMode ? 'Mega Meteors' : 'Bosses Defeated'} v={selected.bossesDefeated} />
