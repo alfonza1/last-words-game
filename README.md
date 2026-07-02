@@ -6,6 +6,8 @@
 
 Choose Typing, Riddle, Math, or Trivia Defense on desktop, then switch to hold-to-speak voice controls on mobile. Fight zombies in Dead Keys, or play family-friendly Meteor Mania to zap meteors and save the planet.
 
+**Play it live:** [www.playlastwords.com](https://www.playlastwords.com)
+
 <br/>
 
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
