@@ -41,6 +41,10 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
   if (p.doubleDamageMs > 0) activePowerups.push({ label: '2x DMG', color: '#ffb300' });
   if (p.slowMotionMs > 0) activePowerups.push({ label: 'SLOW-MO', color: '#9b5de5' });
   if (p.freezeMs > 0) activePowerups.push({ label: 'FROZEN', color: '#00f0ff' });
+  const bossWarningPosition = familyFriendlyMode ? 'top-[10.75rem] sm:top-48' : 'top-24 sm:top-28';
+  const bossWarningTitle = familyFriendlyMode
+    ? 'text-2xl tracking-[0.22em] sm:text-4xl sm:tracking-[0.28em]'
+    : 'text-5xl tracking-[0.3em]';
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-2 sm:p-3">
@@ -111,9 +115,9 @@ export function HUD({ s, muted, onPause, onToggleMute }: HUDProps) {
 
       {/* Boss warning overlay */}
       {s.bossWarning > 0 && (
-        <div className="pointer-events-none absolute inset-x-0 top-24 flex items-center justify-center sm:top-28">
-          <div className="animate-pulse text-center">
-            <div className="text-5xl font-black tracking-[0.3em] text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.9)]">
+        <div className={`pointer-events-none absolute inset-x-0 flex items-center justify-center px-4 ${bossWarningPosition}`}>
+          <div className="animate-pulse rounded-full border border-neon-red/40 bg-black/45 px-5 py-2 text-center shadow-[0_0_22px_rgba(255,56,96,0.35)] backdrop-blur-sm">
+            <div className={`${bossWarningTitle} font-black text-neon-red drop-shadow-[0_0_20px_rgba(255,56,96,0.9)]`}>
               {familyFriendlyMode ? 'MEGA METEOR' : 'BOSS'}
             </div>
             <div className="text-sm tracking-widest text-white/70">INCOMING</div>

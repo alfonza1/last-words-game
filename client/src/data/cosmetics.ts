@@ -107,13 +107,6 @@ export const EXPRESSIONS: ExpressionDef[] = [
     outfitReactive: true,
   },
   {
-    key: 'star-ready',
-    label: 'Star Ready',
-    icon: '*_*',
-    description: 'Locked in on the sky.',
-    familyFriendly: true,
-  },
-  {
     key: 'mission-calm',
     label: 'Mission Calm',
     icon: '-_-',
@@ -126,6 +119,14 @@ export const EXPRESSIONS: ExpressionDef[] = [
     icon: '^_^',
     description: 'A bright look for a close save.',
     familyFriendly: true,
+  },
+  {
+    key: 'star-ready',
+    label: 'Star Ready',
+    icon: '*_*',
+    description: 'Locked in on the sky.',
+    familyFriendly: true,
+    outfitReactive: true,
   },
 ];
 
