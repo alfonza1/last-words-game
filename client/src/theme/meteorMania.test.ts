@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_CHARACTER } from '../data/cosmetics';
 import { DEFAULT_SETTINGS } from '../lib/storage';
-import { normalizeSettingsForFamilyMode, selectableMapsForFamilyMode } from './meteorMania';
+import { normalizeCharacterForFamilyMode, normalizeSettingsForFamilyMode, selectableMapsForFamilyMode } from './meteorMania';
 
 describe('Meteor Mania theme helpers', () => {
   it('preserves normal mode-only maps when unrelated settings are saved', () => {
@@ -28,5 +29,9 @@ describe('Meteor Mania theme helpers', () => {
 
     expect(deadKeysMaps.every((map) => !map.familyFriendly)).toBe(true);
     expect(meteorMaps.every((map) => map.familyFriendly)).toBe(true);
+  });
+
+  it('defaults Meteor Mania characters to a simple family-safe face', () => {
+    expect(normalizeCharacterForFamilyMode(DEFAULT_CHARACTER, true).expression).toBe('mission-calm');
   });
 });

@@ -64,28 +64,28 @@ const STYLE_META: Record<Style, { label: string; short: string; emoji: string; b
 
 const METEOR_STYLE_META: Record<Style, { label: string; short: string; emoji: string; blurb: string; tagWord: string }> = {
   typing: {
-    label: 'KEYS Typing',
+    label: 'Typing',
     short: 'TYPE',
     emoji: '⌨',
     blurb: 'Each completed word zaps the nearest meteor. High WPM earns extra points and coins.',
     tagWord: 'WORD',
   },
   riddles: {
-    label: 'CLUE Riddle',
+    label: 'Riddle',
     short: 'CLUE',
     emoji: '🧩',
     blurb: 'Solve short riddles to launch a multi-zap burst.',
     tagWord: 'RIDDLE',
   },
   math: {
-    label: 'MATH Math',
+    label: 'Math',
     short: 'MATH',
     emoji: '➗',
     blurb: 'Solve math problems to chain-zap meteor waves.',
     tagWord: 'PROBLEM',
   },
   trivia: {
-    label: 'QUIZ Trivia',
+    label: 'Trivia',
     short: 'QUIZ',
     emoji: '🧠',
     blurb: 'Answer trivia questions to launch a planet-saving volley.',
@@ -233,8 +233,12 @@ export function MainMenu({
             </>
           )}
         </h1>
-        <p className="mt-1 hidden text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:block sm:text-sm sm:tracking-[0.35em]">
-          {familyFriendlyMode ? 'TYPE THE SKY. SAVE YOUR PLANET.' : 'TYPE OR BE DEVOURED'}
+        <p
+          className={`mt-1 text-center text-[10px] tracking-[0.22em] text-neon-cyan sm:mt-2 sm:text-sm sm:tracking-[0.35em] ${
+            familyFriendlyMode ? 'block' : 'hidden sm:block'
+          }`}
+        >
+          {familyFriendlyMode ? 'SAVE YOUR PLANET' : 'TYPE OR BE DEVOURED'}
         </p>
       </div>
 

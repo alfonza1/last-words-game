@@ -100,7 +100,10 @@ describe('Meteor Mania cosmetics', () => {
   });
 
   it('adds family-friendly expressions', () => {
-    expect(EXPRESSIONS.find((expression) => expression.key === 'star-ready')?.familyFriendly).toBe(true);
+    const familyExpressions = EXPRESSIONS.filter((expression) => expression.familyFriendly);
+
+    expect(familyExpressions.map((expression) => expression.key)).toEqual(['mission-calm', 'zero-g-grin', 'star-ready']);
+    expect(EXPRESSIONS.find((expression) => expression.key === 'star-ready')?.outfitReactive).toBe(true);
     expect(EXPRESSIONS.find((expression) => expression.key === 'zero-g-grin')?.label).toBe('Zero-G Grin');
   });
 });
