@@ -1,4 +1,4 @@
-import type { CharacterLoadout, Difficulty, GameMode, Settings } from '../types';
+import type { CharacterLoadout, Difficulty, GameMode, Settings, UpgradeKey } from '../types';
 import { MAPS, isMapOwned, type MapTheme } from '../data/maps';
 import {
   DEFAULT_CHARACTER,
@@ -12,6 +12,8 @@ import {
   type ExpressionDef,
   type SkinToneDef,
 } from '../data/cosmetics';
+import { POWERUP_DEFS, type PowerupDef } from '../data/powerups';
+import { UPGRADE_DEFS, type UpgradeDef } from '../data/upgrades';
 
 export const DEAD_KEYS_DEFAULT_MAP = 'graveyard';
 export const METEOR_MANIA_DEFAULT_MAP = 'planet-aurora';
@@ -108,6 +110,44 @@ export function skinToneForFamilyMode(skinTone: string, familyFriendlyMode: bool
   if (skinTone === 'undead' && familyFriendlyMode) return 'alien';
   if (skinTone === 'alien' && !familyFriendlyMode) return 'undead';
   return DEFAULT_CHARACTER.skinTone;
+}
+
+// Meteor Mania re-skins each Last Words consumable: same key/cost/effect, but a
+// space-themed name, icon, and activation word (the engine maps the word back —
+// see GameEngine's consumable word handling).
+const METEOR_POWERUP_COPY: Record<string, Partial<PowerupDef>> = {
+  grenade: { name: 'Comet Burst', word: 'burst', icon: '*', description: 'Clears a nearby cluster of meteors.' },
+  freeze: { name: 'Stasis Beam', word: 'stasis', icon: '||', description: 'Stops every meteor for 3 seconds.' },
+  medkit: { name: 'Repair Burst', word: 'repair', icon: '+', description: 'Restores a chunk of planet defense health.' },
+};
+
+export function powerupForFamilyMode(def: PowerupDef, familyFriendlyMode: boolean): PowerupDef {
+  if (!familyFriendlyMode) return def;
+  const override = METEOR_POWERUP_COPY[def.key];
+  return override ? { ...def, ...override } : def;
+}
+
+export function powerupsForFamilyMode(familyFriendlyMode: boolean): PowerupDef[] {
+  return POWERUP_DEFS.map((def) => powerupForFamilyMode(def, familyFriendlyMode));
+}
+
+// Only the upgrades whose Last Words name isn't already family-friendly get a
+// Meteor Mania alias (the shotgun/"slayer" wording). Neutral names — Starting
+// Shield, Slow Start, Time Dilation, Scavenger, Lucky Charm, Reinforced Base —
+// are kept as-is.
+const METEOR_UPGRADE_COPY: Partial<Record<UpgradeKey, Pick<UpgradeDef, 'name' | 'description'>>> = {
+  shotgunRadius: { name: 'Wide Zap', description: 'Wider Power Zap burst radius.' },
+  bossDamage: { name: 'Mega Meteor Buster', description: 'Deal bonus progress vs mega meteors.' },
+};
+
+export function upgradeForFamilyMode(def: UpgradeDef, familyFriendlyMode: boolean): UpgradeDef {
+  if (!familyFriendlyMode) return def;
+  const override = METEOR_UPGRADE_COPY[def.key];
+  return override ? { ...def, ...override } : def;
+}
+
+export function upgradesForFamilyMode(familyFriendlyMode: boolean): UpgradeDef[] {
+  return UPGRADE_DEFS.map((def) => upgradeForFamilyMode(def, familyFriendlyMode));
 }
 
 export function ownedCosmeticKeysForFamilyMode(ownedCosmetics: string[], familyFriendlyMode: boolean): string[] {

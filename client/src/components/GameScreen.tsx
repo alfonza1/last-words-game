@@ -11,7 +11,7 @@ import type { CharacterLoadout, Difficulty, GameMode, GameState, PuzzleStyle, Se
 import { GameEngine } from '../game/engine';
 import { drawGame } from '../game/render';
 import { getMap } from '../data/maps';
-import { POWERUP_DEFS } from '../data/powerups';
+import { powerupsForFamilyMode } from '../theme/meteorMania';
 import { audio } from '../lib/audio';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useSpeechAnswer, type SpeechAnswerState } from '../mobile/speech';
@@ -746,17 +746,16 @@ function PowerupBar({
   if (pressable) {
     return (
       <div className="pointer-events-auto flex max-w-full items-center justify-center gap-1.5">
-        {POWERUP_DEFS.map((def) => {
-          const copy = powerupCopy(def, familyFriendlyMode);
-          const count = (consumables as unknown as Record<string, number>)[def.key] ?? 0;
+        {powerupsForFamilyMode(familyFriendlyMode).map((copy) => {
+          const count = (consumables as unknown as Record<string, number>)[copy.key] ?? 0;
           const owned = count > 0;
           return (
             <button
-              key={def.key}
+              key={copy.key}
               type="button"
               disabled={!owned}
               onPointerDown={(e) => e.preventDefault()}
-              onClick={() => owned && onActivate?.(def.key)}
+              onClick={() => owned && onActivate?.(copy.key)}
               title={copy.description}
               aria-label={`Use ${copy.name}, ${count} left`}
               className={`flex select-none items-center gap-1 rounded-full border px-2.5 py-1.5 text-xs font-bold transition active:scale-95 ${
@@ -778,13 +777,12 @@ function PowerupBar({
   return (
     <div className="flex max-w-full flex-wrap items-center justify-center gap-2 text-xs">
       <span className="uppercase tracking-widest text-white/35">Powerups</span>
-      {POWERUP_DEFS.map((def) => {
-        const copy = powerupCopy(def, familyFriendlyMode);
-        const count = (consumables as unknown as Record<string, number>)[def.key] ?? 0;
+      {powerupsForFamilyMode(familyFriendlyMode).map((copy) => {
+        const count = (consumables as unknown as Record<string, number>)[copy.key] ?? 0;
         const owned = count > 0;
         return (
           <span
-            key={def.key}
+            key={copy.key}
             title={copy.description}
             className={`rounded-full border px-2.5 py-1 font-mono ${
               owned
@@ -799,35 +797,6 @@ function PowerupBar({
       <span className="hidden text-white/30 sm:inline">- buy more in the Store</span>
     </div>
   );
-}
-
-function powerupCopy(def: (typeof POWERUP_DEFS)[number], familyFriendlyMode: boolean) {
-  if (!familyFriendlyMode) return def;
-  if (def.key === 'grenade') {
-    return {
-      ...def,
-      name: 'Comet Burst',
-      word: 'burst',
-      icon: '*',
-      description: 'Clears a nearby cluster of meteors.',
-    };
-  }
-  if (def.key === 'freeze') {
-    return {
-      ...def,
-      name: 'Stasis Beam',
-      word: 'stasis',
-      icon: '||',
-      description: 'Stops every meteor for 3 seconds.',
-    };
-  }
-  return {
-    ...def,
-    name: 'Repair Burst',
-    word: 'repair',
-    icon: '+',
-    description: 'Restores a chunk of planet defense health.',
-  };
 }
 
 function toResult(s: GameState): RunResult {
