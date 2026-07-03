@@ -3,12 +3,14 @@ import { MAPS, isMapOwned, type MapTheme } from '../data/maps';
 import {
   DEFAULT_CHARACTER,
   EXPRESSIONS,
+  SKIN_TONES,
   cosmeticByKey,
   cosmeticsFor,
   normalizeCharacter,
   type CosmeticDef,
   type CosmeticSlot,
   type ExpressionDef,
+  type SkinToneDef,
 } from '../data/cosmetics';
 
 export const DEAD_KEYS_DEFAULT_MAP = 'graveyard';
@@ -86,6 +88,28 @@ export function expressionsForFamilyMode(familyFriendlyMode: boolean): Expressio
   return EXPRESSIONS.filter((expression) => expressionMatchesFamilyMode(expression, familyFriendlyMode));
 }
 
+export function skinToneMatchesFamilyMode(tone: SkinToneDef, familyFriendlyMode: boolean): boolean {
+  return !tone.mode || tone.mode === (familyFriendlyMode ? 'family' : 'horror');
+}
+
+export function skinTonesForFamilyMode(familyFriendlyMode: boolean): SkinToneDef[] {
+  return SKIN_TONES.filter((tone) => skinToneMatchesFamilyMode(tone, familyFriendlyMode));
+}
+
+/**
+ * Keep a survivor's skin tone valid for the active mode. The "inhuman" tone maps
+ * across modes — undead (Last Words) <-> alien green (Meteor Mania) — so a
+ * character keeps their look when toggling. Any other out-of-mode tone (there are
+ * none today) falls back to the neutral default.
+ */
+export function skinToneForFamilyMode(skinTone: string, familyFriendlyMode: boolean): string {
+  const tone = SKIN_TONES.find((candidate) => candidate.key === skinTone);
+  if (tone && skinToneMatchesFamilyMode(tone, familyFriendlyMode)) return skinTone;
+  if (skinTone === 'undead' && familyFriendlyMode) return 'alien';
+  if (skinTone === 'alien' && !familyFriendlyMode) return 'undead';
+  return DEFAULT_CHARACTER.skinTone;
+}
+
 export function ownedCosmeticKeysForFamilyMode(ownedCosmetics: string[], familyFriendlyMode: boolean): string[] {
   const owned = new Set(ownedCosmetics);
   owned.add(METEOR_MANIA_DEFAULT_ACCESSORY);
@@ -104,6 +128,7 @@ export function normalizeCharacterForFamilyMode(
 
   return {
     ...normalized,
+    skinTone: skinToneForFamilyMode(normalized.skinTone, familyFriendlyMode),
     outfit:
       outfit && cosmeticMatchesFamilyMode(outfit, familyFriendlyMode)
         ? normalized.outfit
