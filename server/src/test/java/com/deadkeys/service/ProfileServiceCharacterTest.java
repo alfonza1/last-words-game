@@ -50,6 +50,19 @@ class ProfileServiceCharacterTest {
   }
 
   @Test
+  void meteorManiaDefaultFaceAndAlienSkinCanBeEquipped() {
+    // Regression: the Meteor Mania default face ("first-light") and the family
+    // "alien" skin were missing from the server catalog, so equipping any outfit
+    // in Meteor Mania failed with "unknown expression".
+    service.equipCharacter(profile, "alien", "buzz", "charcoal", "first-light", "outfit-orbit-cadet", "accessory-none");
+
+    assertEquals("alien", profile.character.skinTone);
+    assertEquals("first-light", profile.character.expression);
+    assertEquals("outfit-orbit-cadet", profile.character.outfit);
+    verify(store).save(profile);
+  }
+
+  @Test
   void signalHoodieMustBePurchased() {
     service.buyCosmetic(profile, "outfit-hoodie");
 
