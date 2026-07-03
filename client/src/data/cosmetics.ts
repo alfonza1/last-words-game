@@ -42,14 +42,25 @@ export const DEFAULT_CHARACTER: CharacterLoadout = {
 
 export const DEFAULT_COSMETICS = ['outfit-field', 'outfit-orbit-cadet', 'accessory-none'];
 
-export const SKIN_TONES = [
+export interface SkinToneDef {
+  key: string;
+  label: string;
+  color: string;
+  /** Restrict a tone to one game mode; undefined means it shows in both. */
+  mode?: 'horror' | 'family';
+}
+
+export const SKIN_TONES: readonly SkinToneDef[] = [
   { key: 'porcelain', label: 'Porcelain', color: '#f3c8ad' },
   { key: 'warm', label: 'Warm', color: '#c9855a' },
   { key: 'tan', label: 'Tan', color: '#a96745' },
   { key: 'brown', label: 'Brown', color: '#75452f' },
   { key: 'deep', label: 'Deep', color: '#48291f' },
-  { key: 'undead', label: 'Alien Green', color: '#67e87f' },
-] as const;
+  // The "inhuman" tone differs by mode: undead greys for Last Words, alien green
+  // for Meteor Mania. normalizeCharacterForFamilyMode swaps between the two.
+  { key: 'undead', label: 'Undead', color: '#8aa17a', mode: 'horror' },
+  { key: 'alien', label: 'Alien Green', color: '#67e87f', mode: 'family' },
+];
 
 export const HAIR_STYLES = [
   { key: 'buzz', label: 'Buzz' },

@@ -92,13 +92,15 @@ function Toggle({
   return (
     <button
       onClick={onToggle}
-      className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-ink-800/70 px-4 py-3 text-left hover:border-neon-green/40"
+      className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-ink-800/70 px-4 py-3 text-left hover:border-neon-green/40"
     >
-      <div>
+      <div className="min-w-0">
         <div className="font-bold text-white/90">{label}</div>
         <div className="text-xs text-white/50">{desc}</div>
       </div>
-      <span className={`relative h-6 w-11 rounded-full transition-colors ${value ? 'bg-neon-green' : 'bg-white/15'}`}>
+      <span
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${value ? 'bg-neon-green' : 'bg-white/15'}`}
+      >
         <span
           className={`absolute top-0.5 h-5 w-5 rounded-full bg-black transition-all ${value ? 'left-[22px]' : 'left-0.5'}`}
         />
