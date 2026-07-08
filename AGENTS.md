@@ -1,3 +1,52 @@
+# Last Words (zombie-text-rush)
+
+An arcade defense game, live at www.playlastwords.com. Desktop modes (Typing,
+Riddle, Math, Trivia Defense) plus hold-to-speak voice controls on mobile;
+Dead Keys is the flagship zombie mode, Meteor Mania the family-friendly one.
+
+## Layout and stack
+
+- `client/` — React 18 + TypeScript 5 + Vite 5 + Tailwind 3, tests in Vitest.
+- `server/` — Java 17 Spring Boot 3 modular monolith, Maven (`mvnw.cmd` on
+  Windows). Deployed to Cloud Run (scale-to-zero); Neon Postgres hosted, H2
+  locally; Firebase Auth for identity; Cloudflare Pages serves the client.
+- `docs/` — the source of truth for architecture, cost, monetization, mobile,
+  and cosmetics decisions. Read the relevant doc before changing an area it
+  covers, and update it in the same change when behavior diverges from it.
+
+Key docs: `SYSTEM_ARCHITECTURE_ROADMAP.md` (low-cost modular monolith — new
+services/network hops need a proven requirement), `COST_EFFICIENCY_AUDIT.md`
+(cost invariants), `COSMETIC_CREATION_GUIDE.md` (how cosmetics are built),
+`FUTURE_FEATURES.md` (backlog + guiding principles), `AUTH_AND_MONETIZATION.md`,
+`MOBILE_IMPLEMENTATION_GUIDE.md`.
+
+## Verify commands
+
+- Client (run in `client/`): `npm run typecheck`, `npm test`, `npm run build`.
+- Server (run in `server/`): `.\mvnw.cmd test` (PowerShell on Windows).
+
+Run the checks relevant to what changed before reporting done or committing.
+
+## Game invariants (do not break these)
+
+1. **Server-authoritative value.** Scores, coins, items, purchases, and
+   progress are recomputed and authorized on the backend against the verified
+   Firebase user. The client never grants itself currency, items, or
+   completion — never add an endpoint that trusts a client-claimed total.
+2. **Cosmetics stay cosmetic.** Cosmetic work must not touch score, damage,
+   speed, WPM, coins, lives, powerups, zombie/boss behavior, difficulty,
+   timing, or leaderboard logic. Cosmetics are code-drawn in two renderers —
+   `client/src/components/CharacterAvatar.tsx` (SVG preview) and
+   `client/src/game/character.ts` (canvas gameplay) — and must be implemented
+   in both.
+3. **UTC for time-based logic.** Daily/streak/seasonal resets compare UTC
+   dates, and reward claims are idempotent per user per UTC day.
+4. **Cost discipline.** Preserve scale-to-zero (`min-instances=0`,
+   `max-instances=1`): no idle-client polling, no in-process schedulers or
+   keep-alive pings, guest play stays in local storage, leaderboards stay
+   capped at 20 rows, profile stays one compact aggregate row, and no new
+   deployable/gateway/queue without a requirement the docs acknowledge.
+
 # Repository Working Agreement
 
 ## Report the active branch
