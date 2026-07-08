@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { CharacterLoadout } from '../types';
-import { HAIR_COLORS, HAIR_STYLES, SKIN_TONES, type CosmeticDef } from '../data/cosmetics';
+import { HAIR_COLORS, HAIR_STYLES, type CosmeticDef } from '../data/cosmetics';
 import {
   cosmeticsForFamilyMode,
   expressionsForFamilyMode,
   normalizeCharacterForFamilyMode,
   ownedCosmeticKeysForFamilyMode,
+  skinTonesForFamilyMode,
 } from '../theme/meteorMania';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -52,6 +53,7 @@ export function Closet({
     () => new Set(ownedCosmeticKeysForFamilyMode(ownedCosmetics, familyFriendlyMode)),
     [ownedCosmetics, familyFriendlyMode],
   );
+  const skinTones = useMemo(() => skinTonesForFamilyMode(familyFriendlyMode), [familyFriendlyMode]);
   const ownedOutfits = useMemo(
     () => cosmeticsForFamilyMode('outfit', familyFriendlyMode).filter((item) => owned.has(item.key)),
     [owned, familyFriendlyMode],
@@ -198,7 +200,7 @@ export function Closet({
         <div className={groupClass('body')}>
         <Picker title="Skin tone">
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-            {SKIN_TONES.map((tone) => (
+            {skinTones.map((tone) => (
               <button
                 key={tone.key}
                 onClick={() => updateDraft({ skinTone: tone.key })}

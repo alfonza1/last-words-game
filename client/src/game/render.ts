@@ -177,8 +177,9 @@ function drawEnvironment(ctx: CanvasRenderingContext2D, s: GameState, theme: Map
     }
   }
 
-  // Moon. Dead City has its own occluded moon inside the storm layer.
-  if (theme.id !== 'city' && theme.id !== 'inferno' && theme.id !== 'forest') {
+  // Moon. Dead City has its own occluded moon inside the storm layer, and each
+  // Meteor Mania planet draws its own signature sky body in drawThemeScenery.
+  if (theme.id !== 'city' && theme.id !== 'inferno' && theme.id !== 'forest' && !theme.familyFriendly) {
     const mx = w * 0.82;
     const my = hy * 0.45;
     const mr = Math.min(60, h * 0.09);
@@ -2823,81 +2824,616 @@ function drawGrave(ctx: CanvasRenderingContext2D, x: number, y: number, sc: numb
   ctx.fill();
 }
 
+// --- Meteor Mania (family-friendly planet) scenery ------------------------
+// Each planet is its own bespoke place, on par with the horror maps: a signature
+// celestial body, a layered horizon, colony/defense structures kept to the sides
+// so the meteor lane stays readable, and gentle, non-threatening ambient motion.
+
+/** Shared responsive scale so structures read well at any canvas width. */
+function planetScale(w: number): number {
+  return Math.max(0.78, Math.min(1.5, w / 960));
+}
+
+/** A habitat dome with a glowing interior, meridian struts, and a lit door. */
+function drawColonyDome(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  baseY: number,
+  r: number,
+  glass: string,
+  accent: string,
+) {
+  const glow = ctx.createRadialGradient(x, baseY - r * 0.3, 2, x, baseY - r * 0.3, r * 1.5);
+  glow.addColorStop(0, `${accent}33`);
+  glow.addColorStop(1, `${accent}00`);
+  ctx.fillStyle = glow;
+  ctx.fillRect(x - r * 1.6, baseY - r * 1.7, r * 3.2, r * 1.9);
+
+  const shell = ctx.createLinearGradient(x - r, baseY - r, x + r, baseY);
+  shell.addColorStop(0, glass);
+  shell.addColorStop(1, '#0a1822');
+  ctx.fillStyle = shell;
+  ctx.beginPath();
+  ctx.arc(x, baseY, r, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = `${accent}aa`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.strokeStyle = `${accent}55`;
+  ctx.lineWidth = 1;
+  for (let m = -2; m <= 2; m++) {
+    ctx.beginPath();
+    ctx.moveTo(x + (m / 2.4) * r, baseY);
+    ctx.lineTo(x + (m / 6) * r, baseY - r);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.ellipse(x, baseY - r * 0.5, r * 0.86, r * 0.42, 0, Math.PI, 0);
+  ctx.stroke();
+
+  ctx.fillStyle = '#0c1a20';
+  ctx.fillRect(x - r * 0.9, baseY - 2, r * 1.8, 6);
+  ctx.fillStyle = `${accent}cc`;
+  ctx.fillRect(x - r * 0.14, baseY - r * 0.34, r * 0.28, r * 0.34);
+}
+
+/** A lattice defense pylon crowned by a slowly sweeping (never flashing) dish. */
+function drawDefenseTower(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  baseY: number,
+  size: number,
+  accent: string,
+  time: number,
+  phase: number,
+) {
+  const hgt = size * 3.4;
+  ctx.strokeStyle = '#33454f';
+  ctx.lineWidth = Math.max(2, size * 0.34);
+  ctx.beginPath();
+  ctx.moveTo(x, baseY);
+  ctx.lineTo(x, baseY - hgt);
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  for (let y = baseY - 6; y > baseY - hgt; y -= size * 0.7) {
+    ctx.beginPath();
+    ctx.moveTo(x - size * 0.32, y);
+    ctx.lineTo(x + size * 0.32, y - size * 0.35);
+    ctx.stroke();
+  }
+
+  ctx.save();
+  ctx.translate(x, baseY - hgt);
+  ctx.rotate(Math.sin(time * 0.0004 + phase) * 0.5);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = Math.max(1.5, size * 0.28);
+  ctx.beginPath();
+  ctx.arc(0, 0, size * 1.1, -0.2, Math.PI + 0.2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(size * 0.7, -size * 0.7);
+  ctx.stroke();
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accent;
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.arc(size * 0.7, -size * 0.7, size * 0.28, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
 function drawPlanetScenery(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, time: number, horizon: number) {
+  switch (theme.id) {
+    case 'planet-crystal':
+      drawCrystalValeScenery(ctx, s, time, horizon);
+      return;
+    case 'planet-volcanic':
+      drawEmberMoonScenery(ctx, s, time, horizon);
+      return;
+    case 'planet-nebula':
+      drawNebulaReefScenery(ctx, s, time, horizon);
+      return;
+    default:
+      drawAuroraPrimeScenery(ctx, s, theme, time, horizon);
+  }
+}
+
+function drawAuroraPrimeScenery(ctx: CanvasRenderingContext2D, s: GameState, theme: MapTheme, time: number, horizon: number) {
   const { width: w, height: h } = s;
   const accent = theme.palette.accent;
+  const scale = planetScale(w);
 
-  const ringY = horizon * 0.82;
-  ctx.save();
-  ctx.strokeStyle = `${accent}55`;
-  ctx.lineWidth = 2;
-  ctx.setLineDash([18, 12]);
-  ctx.lineDashOffset = -(time * 0.02) % 120;
+  // A ringed sister-world resting low on the horizon.
+  const px = w * 0.17;
+  const py = horizon * 0.5;
+  const pr = Math.min(56, h * 0.085);
+  const halo = ctx.createRadialGradient(px, py, pr * 0.6, px, py, pr * 2.6);
+  halo.addColorStop(0, 'rgba(120,244,208,0.26)');
+  halo.addColorStop(1, 'rgba(120,244,208,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(px - pr * 3, py - pr * 3, pr * 6, pr * 6);
+  const globe = ctx.createLinearGradient(px - pr, py - pr, px + pr, py + pr);
+  globe.addColorStop(0, '#7ff0d0');
+  globe.addColorStop(0.55, '#2f9f88');
+  globe.addColorStop(1, '#124b46');
+  ctx.fillStyle = globe;
   ctx.beginPath();
-  ctx.ellipse(w * 0.18, ringY, w * 0.16, h * 0.025, -0.12, 0, Math.PI * 2);
+  ctx.arc(px, py, pr, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(18,64,58,0.45)';
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.ellipse(
+      px + (rand(i + 500) - 0.5) * pr * 1.3,
+      py + (rand(i + 510) - 0.5) * pr * 1.2,
+      pr * (0.18 + rand(i + 520) * 0.22),
+      pr * (0.1 + rand(i + 530) * 0.12),
+      rand(i) * 3, 0, Math.PI * 2,
+    );
+    ctx.fill();
+  }
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(-0.38);
+  ctx.strokeStyle = 'rgba(206,255,240,0.5)';
+  ctx.lineWidth = 3 * scale;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, pr * 1.95, pr * 0.52, 0, 0, Math.PI * 2);
   ctx.stroke();
-  ctx.setLineDash([]);
   ctx.restore();
 
-  if (theme.id === 'planet-crystal') {
-    for (let i = 0; i < 12; i++) {
-      const x = (i / 12) * w + rand(i + 3000) * 34;
-      const y = horizon + h * (0.08 + rand(i + 3010) * 0.22);
-      const height = h * (0.06 + rand(i + 3020) * 0.12);
-      ctx.fillStyle = i % 2 ? 'rgba(156,246,255,0.28)' : 'rgba(255,122,217,0.24)';
-      ctx.strokeStyle = `${accent}88`;
+  // Aurora curtains breathing across the upper sky.
+  for (let b = 0; b < 4; b++) {
+    const band = ctx.createLinearGradient(0, horizon * 0.14, 0, horizon * 0.86);
+    band.addColorStop(0, 'rgba(90,255,190,0)');
+    band.addColorStop(0.5, `rgba(${80 + b * 26},255,${196 - b * 26},0.1)`);
+    band.addColorStop(1, 'rgba(90,255,190,0)');
+    ctx.fillStyle = band;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 28) {
+      const y = horizon * 0.4 + Math.sin(x * 0.008 + time * 0.0004 + b * 1.3) * 22 + b * 10;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(w, horizon);
+    ctx.lineTo(0, horizon);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Two layers of gentle rolling hills.
+  const hills = (yBase: number, amp: number, color: string, seed: number) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, yBase);
+    for (let x = 0; x <= w; x += 40) {
+      ctx.lineTo(x, yBase - amp - Math.sin(x * 0.006 + seed) * amp - rand(x + seed) * amp * 0.5);
+    }
+    ctx.lineTo(w, horizon + 44);
+    ctx.lineTo(0, horizon + 44);
+    ctx.closePath();
+    ctx.fill();
+  };
+  hills(horizon + 8, h * 0.05, '#14453a', 2.1);
+  hills(horizon + 22, h * 0.03, '#0e3329', 5.7);
+
+  // Colony domes clustered on the left rise, linked by a causeway.
+  drawColonyDome(ctx, w * 0.1, horizon + h * 0.12, 26 * scale, '#8ff0d6', accent);
+  drawColonyDome(ctx, w * 0.19, horizon + h * 0.15, 18 * scale, '#8ff0d6', accent);
+  ctx.strokeStyle = 'rgba(120,240,210,0.4)';
+  ctx.lineWidth = 3 * scale;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.1, horizon + h * 0.12);
+  ctx.lineTo(w * 0.19, horizon + h * 0.15);
+  ctx.stroke();
+
+  // Defense towers on both flanks (slow radar sweep).
+  drawDefenseTower(ctx, w * 0.06, horizon + h * 0.2, 9 * scale, accent, time, 0);
+  drawDefenseTower(ctx, w * 0.93, horizon + h * 0.18, 10 * scale, accent, time, 2.1);
+
+  // Wind-swept grass tufts along the margins.
+  ctx.strokeStyle = 'rgba(90,220,170,0.4)';
+  ctx.lineWidth = 1.4;
+  for (let i = 0; i < 26; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const gx = w / 2 + side * w * (0.26 + rand(i + 540) * 0.22);
+    const gy = horizon + 40 + rand(i + 550) * (h - horizon - 80);
+    const sway = Math.sin(time * 0.001 + i) * 3;
+    for (let blade = -1; blade <= 1; blade++) {
       ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + 14, y - height);
-      ctx.lineTo(x + 28, y);
+      ctx.moveTo(gx + blade * 3, gy);
+      ctx.quadraticCurveTo(gx + blade * 3 + sway, gy - 9, gx + blade * 3 + sway * 1.6, gy - 16);
+      ctx.stroke();
+    }
+  }
+
+  // Drifting pollen motes catching the light.
+  for (let i = 0; i < 30; i++) {
+    const dx = (rand(i + 560) * w + time * 0.01 * (0.4 + rand(i))) % w;
+    const dy = horizon + 20 + rand(i + 570) * (h - horizon - 40) + Math.sin(time * 0.001 + i) * 8;
+    ctx.fillStyle = `rgba(180,255,220,${0.1 + rand(i + 580) * 0.25})`;
+    ctx.beginPath();
+    ctx.arc(dx, dy, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawCrystalValeScenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const scale = planetScale(w);
+
+  // Twin sister-moons in a violet sky.
+  const moons = [
+    { x: w * 0.2, y: horizon * 0.4, r: 30, c: '#c9b3ff', g: 'rgba(170,120,255,0.4)' },
+    { x: w * 0.34, y: horizon * 0.62, r: 18, c: '#9cf6ff', g: 'rgba(120,220,255,0.4)' },
+  ];
+  for (const m of moons) {
+    const r = Math.min(m.r, h * 0.06) * scale;
+    const glow = ctx.createRadialGradient(m.x, m.y, r * 0.4, m.x, m.y, r * 2.8);
+    glow.addColorStop(0, m.g);
+    glow.addColorStop(1, m.g.replace(/[\d.]+\)$/, '0)'));
+    ctx.fillStyle = glow;
+    ctx.fillRect(m.x - r * 3, m.y - r * 3, r * 6, r * 6);
+    ctx.fillStyle = m.c;
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Distant prism ridges — translucent shard walls along the horizon.
+  const ridge = (yb: number, hgtF: number, alpha: number, seed: number, hue: string) => {
+    for (let i = 0; i < 14; i++) {
+      const x = (i / 14) * w + rand(i + seed) * 30;
+      const top = yb - h * hgtF * (0.5 + rand(i + seed + 1) * 0.9);
+      const halfW = (10 + rand(i + seed + 2) * 20) * scale;
+      const grad = ctx.createLinearGradient(x, top, x, yb);
+      grad.addColorStop(0, `rgba(${hue},${alpha + 0.15})`);
+      grad.addColorStop(1, `rgba(${hue},${alpha * 0.4})`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(x - halfW, yb);
+      ctx.lineTo(x, top);
+      ctx.lineTo(x + halfW, yb);
       ctx.closePath();
       ctx.fill();
-      ctx.stroke();
-    }
-    return;
-  }
-
-  if (theme.id === 'planet-volcanic') {
-    ctx.fillStyle = 'rgba(255,107,42,0.18)';
-    for (let i = 0; i < 8; i++) {
-      const x = (i / 8) * w + rand(i + 3100) * 70;
-      const y = horizon + h * (0.18 + rand(i + 3110) * 0.22);
+      ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.5})`;
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(x - 30, y + 28);
-      ctx.lineTo(x, y - 40 - rand(i) * 30);
-      ctx.lineTo(x + 34, y + 28);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,207,90,0.45)';
+      ctx.moveTo(x, top);
+      ctx.lineTo(x - halfW * 0.3, yb);
       ctx.stroke();
     }
-    return;
-  }
+  };
+  ridge(horizon + 12, 0.16, 0.16, 3400, '150,120,255');
+  ridge(horizon + 26, 0.12, 0.22, 3450, '120,220,255');
 
-  if (theme.id === 'planet-nebula') {
-    for (let i = 0; i < 7; i++) {
-      const x = (i / 7) * w + rand(i + 3200) * 90;
-      const y = horizon + h * (0.09 + rand(i + 3210) * 0.18);
-      ctx.strokeStyle = i % 2 ? 'rgba(255,122,217,0.42)' : 'rgba(80,220,255,0.42)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(x, y, 24 + rand(i + 3220) * 36, Math.PI * 1.08, Math.PI * 1.92);
-      ctx.stroke();
-    }
-    return;
-  }
-
-  for (let i = 0; i < 10; i++) {
-    const x = (i / 10) * w + rand(i + 3300) * 54;
-    const y = horizon + h * (0.1 + rand(i + 3310) * 0.22);
-    ctx.fillStyle = 'rgba(77,244,208,0.2)';
-    ctx.strokeStyle = `${accent}80`;
-    roundRect(ctx, x - 8, y - 46, 16, 46, 4);
+  // Giant foreground crystals flanking the lane (kept to the sides).
+  const bigCrystal = (x: number, baseY: number, hgt: number, wid: number, hue: string) => {
+    const grad = ctx.createLinearGradient(x - wid, baseY - hgt, x + wid, baseY);
+    grad.addColorStop(0, 'rgba(255,255,255,0.5)');
+    grad.addColorStop(0.35, `rgba(${hue},0.55)`);
+    grad.addColorStop(1, `rgba(${hue},0.2)`);
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x - wid, baseY);
+    ctx.lineTo(x - wid * 0.5, baseY - hgt * 0.85);
+    ctx.lineTo(x, baseY - hgt);
+    ctx.lineTo(x + wid * 0.55, baseY - hgt * 0.8);
+    ctx.lineTo(x + wid, baseY);
+    ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.beginPath();
-    ctx.arc(x, y - 52, 8, 0, Math.PI * 2);
+    ctx.moveTo(x, baseY - hgt);
+    ctx.lineTo(x - wid * 0.2, baseY);
+    ctx.moveTo(x, baseY - hgt);
+    ctx.lineTo(x + wid * 0.25, baseY);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(x, baseY - hgt, 2.5, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
+  };
+  bigCrystal(w * 0.11, horizon + h * 0.34, h * 0.26, 34 * scale, '156,246,255');
+  bigCrystal(w * 0.2, horizon + h * 0.42, h * 0.18, 22 * scale, '255,122,217');
+  bigCrystal(w * 0.9, horizon + h * 0.36, h * 0.28, 36 * scale, '170,140,255');
+  bigCrystal(w * 0.82, horizon + h * 0.44, h * 0.16, 20 * scale, '156,246,255');
+
+  // Refracted rainbow light sweeping over the prism fields.
+  const sweep = (Math.sin(time * 0.0006) + 1) / 2;
+  const hues = ['255,90,120', '255,210,90', '120,255,150', '90,190,255', '200,120,255'];
+  for (let i = 0; i < 5; i++) {
+    const gx = w * (0.1 + i * 0.2) + sweep * 40;
+    const grad = ctx.createLinearGradient(gx - 30, horizon, gx + 30, h);
+    grad.addColorStop(0, `rgba(${hues[i]},0)`);
+    grad.addColorStop(0.5, `rgba(${hues[i]},0.06)`);
+    grad.addColorStop(1, `rgba(${hues[i]},0)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(gx - 30, horizon, 60, h - horizon);
+  }
+
+  // Floating crystal shards drifting and twinkling.
+  for (let i = 0; i < 18; i++) {
+    const fx = (rand(i + 3500) * w + time * 0.006 * (0.5 + rand(i))) % w;
+    const fy = horizon + 10 + rand(i + 3510) * (h - horizon - 30) + Math.sin(time * 0.0012 + i) * 6;
+    const sz = (2 + rand(i + 3520) * 3) * scale;
+    const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * 0.002 + i));
+    ctx.fillStyle = i % 2 ? `rgba(156,246,255,${tw})` : `rgba(255,122,217,${tw})`;
+    ctx.save();
+    ctx.translate(fx, fy);
+    ctx.rotate(time * 0.0008 + i);
+    ctx.beginPath();
+    ctx.moveTo(0, -sz);
+    ctx.lineTo(sz * 0.6, 0);
+    ctx.lineTo(0, sz);
+    ctx.lineTo(-sz * 0.6, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawEmberMoonScenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const scale = planetScale(w);
+
+  // A cracked parent gas-giant hangs huge in the sky.
+  const gx = w * 0.8;
+  const gy = horizon * 0.36;
+  const gr = Math.min(96, h * 0.15);
+  const halo = ctx.createRadialGradient(gx, gy, gr * 0.7, gx, gy, gr * 2.2);
+  halo.addColorStop(0, 'rgba(255,120,60,0.3)');
+  halo.addColorStop(1, 'rgba(255,120,60,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(gx - gr * 2.4, gy - gr * 2.4, gr * 4.8, gr * 4.8);
+  const globe = ctx.createLinearGradient(gx - gr, gy - gr, gx + gr, gy + gr);
+  globe.addColorStop(0, '#ffb26a');
+  globe.addColorStop(0.5, '#c9502a');
+  globe.addColorStop(1, '#5e1810');
+  ctx.fillStyle = globe;
+  ctx.beginPath();
+  ctx.arc(gx, gy, gr, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(gx, gy, gr, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.strokeStyle = 'rgba(90,20,12,0.35)';
+  ctx.lineWidth = 4 * scale;
+  for (let b = -3; b <= 3; b++) {
+    const by = gy + b * gr * 0.28 + Math.sin(time * 0.0003 + b) * 4;
+    ctx.beginPath();
+    ctx.moveTo(gx - gr, by);
+    ctx.bezierCurveTo(gx - gr * 0.3, by - 6, gx + gr * 0.3, by + 6, gx + gr, by);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,220,120,0.5)';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(gx + (rand(i + 600) - 0.5) * gr, gy + (rand(i + 610) - 0.5) * gr);
+    ctx.lineTo(gx + (rand(i + 620) - 0.5) * gr, gy + (rand(i + 630) - 0.5) * gr);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Distant caldera ridge with lava glow bleeding up behind it.
+  const glowBand = ctx.createLinearGradient(0, horizon - h * 0.06, 0, horizon + 20);
+  glowBand.addColorStop(0, 'rgba(255,120,50,0)');
+  glowBand.addColorStop(1, 'rgba(255,90,30,0.35)');
+  ctx.fillStyle = glowBand;
+  ctx.fillRect(0, horizon - h * 0.06, w, h * 0.06 + 20);
+  ctx.fillStyle = '#1a0a08';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon + 10);
+  for (let x = 0; x <= w; x += Math.max(40, w / 18)) {
+    ctx.lineTo(x, horizon - h * (0.02 + rand(x + 640) * 0.08));
+  }
+  ctx.lineTo(w, horizon + 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,150,60,0.5)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 6; i++) {
+    const x = (i / 6) * w + rand(i + 650) * 60;
+    ctx.beginPath();
+    ctx.moveTo(x, horizon + 2);
+    ctx.lineTo(x + 20, horizon + 12 + rand(i) * 8);
+    ctx.stroke();
+  }
+
+  // Containment pylons holding the lava back, linked by a shimmering force-wall.
+  const pylonY = horizon + h * 0.1;
+  const wallPulse = 0.12 + Math.abs(Math.sin(time * 0.002)) * 0.1;
+  const wall = ctx.createLinearGradient(0, pylonY - 40, 0, pylonY + 6);
+  wall.addColorStop(0, 'rgba(255,190,90,0)');
+  wall.addColorStop(1, `rgba(255,170,70,${wallPulse})`);
+  ctx.fillStyle = wall;
+  ctx.fillRect(0, pylonY - 40, w, 46);
+  for (let i = 0; i <= 6; i++) {
+    const pxp = w * (0.06 + i * 0.147);
+    ctx.fillStyle = '#2a1512';
+    ctx.strokeStyle = 'rgba(255,180,90,0.7)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, pxp - 4 * scale, pylonY - 44, 8 * scale, 48, 3);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#ffcf5a';
+    ctx.shadowColor = '#ff9d2b';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(pxp, pylonY - 44, 3.5 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // Basalt boulders with molten veins near the margins.
+  for (let i = 0; i < 12; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const bx = w / 2 + side * w * (0.24 + rand(i + 660) * 0.24);
+    const by = horizon + 50 + rand(i + 670) * (h - horizon - 90);
+    const bs = (8 + rand(i + 680) * 12) * scale;
+    ctx.fillStyle = '#160a08';
+    ctx.beginPath();
+    ctx.moveTo(bx - bs, by);
+    ctx.lineTo(bx - bs * 0.5, by - bs * 0.8);
+    ctx.lineTo(bx + bs * 0.6, by - bs * 0.7);
+    ctx.lineTo(bx + bs, by);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = `rgba(255,120,50,${0.4 + rand(i) * 0.3})`;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(bx - bs * 0.4, by);
+    ctx.lineTo(bx, by - bs * 0.5);
+    ctx.lineTo(bx + bs * 0.3, by - bs * 0.2);
+    ctx.stroke();
+  }
+
+  // Faint heat shimmer rising near the ground.
+  ctx.fillStyle = 'rgba(255,150,80,0.05)';
+  for (let i = 0; i < 20; i++) {
+    const hx = (rand(i + 690) * w + time * 0.015) % w;
+    const hy = horizon + 30 + rand(i + 700) * (h - horizon - 50) + Math.sin(time * 0.002 + i) * 6;
+    ctx.fillRect(hx, hy, 3, 6);
+  }
+}
+
+function drawNebulaReefScenery(ctx: CanvasRenderingContext2D, s: GameState, time: number, horizon: number) {
+  const { width: w, height: h } = s;
+  const scale = planetScale(w);
+
+  // A dominant ringed gas giant casting ringlight across the reef.
+  const gx = w * 0.68;
+  const gy = horizon * 0.34;
+  const gr = Math.min(90, h * 0.14);
+  const halo = ctx.createRadialGradient(gx, gy, gr * 0.6, gx, gy, gr * 2.6);
+  halo.addColorStop(0, 'rgba(90,150,255,0.32)');
+  halo.addColorStop(0.6, 'rgba(150,90,255,0.12)');
+  halo.addColorStop(1, 'rgba(90,150,255,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(gx - gr * 3, gy - gr * 3, gr * 6, gr * 6);
+  const drawRings = (front: boolean) => {
+    ctx.save();
+    ctx.translate(gx, gy);
+    ctx.rotate(-0.32);
+    for (let ring = 0; ring < 3; ring++) {
+      const rr = gr * (1.5 + ring * 0.26);
+      ctx.strokeStyle = `rgba(${180 - ring * 30},${190 - ring * 20},255,${(front ? 0.5 : 0.28) - ring * 0.06})`;
+      ctx.lineWidth = (5 - ring) * scale;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rr, rr * 0.28, 0, front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+  drawRings(false);
+  const globe = ctx.createLinearGradient(gx - gr, gy - gr, gx + gr, gy + gr);
+  globe.addColorStop(0, '#a9c7ff');
+  globe.addColorStop(0.5, '#5566cc');
+  globe.addColorStop(1, '#241a52');
+  ctx.fillStyle = globe;
+  ctx.beginPath();
+  ctx.arc(gx, gy, gr, 0, Math.PI * 2);
+  ctx.fill();
+  drawRings(true);
+
+  // Nebula veils drifting behind the reef.
+  for (let n = 0; n < 3; n++) {
+    const nx = ((time * 0.006 * (n + 1)) % (w + 320)) - 120;
+    const ny = horizon * (0.2 + n * 0.16);
+    const grad = ctx.createRadialGradient(nx, ny, 8, nx, ny, 160 * scale);
+    grad.addColorStop(0, n % 2 ? 'rgba(255,122,217,0.08)' : 'rgba(80,180,255,0.08)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(nx, ny, 160 * scale, 70 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Bioluminescent coral towers along the horizon.
+  const coralTower = (x: number, baseY: number, hgt: number, hue: string) => {
+    ctx.strokeStyle = `rgba(${hue},0.6)`;
+    ctx.lineWidth = Math.max(3, hgt * 0.06);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.lineTo(x, baseY - hgt);
+    ctx.stroke();
+    ctx.lineWidth = Math.max(1.5, hgt * 0.03);
+    for (let bch = 0; bch < 4; bch++) {
+      const by = baseY - hgt * (0.4 + bch * 0.16);
+      const dir = bch % 2 ? 1 : -1;
+      ctx.beginPath();
+      ctx.moveTo(x, by);
+      ctx.quadraticCurveTo(x + dir * hgt * 0.16, by - 4, x + dir * hgt * 0.22, by - hgt * 0.16);
+      ctx.stroke();
+    }
+    ctx.fillStyle = `rgba(${hue},0.9)`;
+    ctx.shadowColor = `rgba(${hue},1)`;
+    ctx.shadowBlur = 8;
+    const bob = Math.sin(time * 0.0015 + x) * 1.5;
+    ctx.beginPath();
+    ctx.arc(x, baseY - hgt + bob, Math.max(2, hgt * 0.05), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  };
+  for (let i = 0; i < 9; i++) {
+    const x = (i / 9) * w + rand(i + 3600) * 40;
+    const hgt = h * (0.1 + rand(i + 3610) * 0.14);
+    coralTower(x, horizon + 18, hgt, i % 2 ? '255,122,217' : '90,200,255');
+  }
+  ctx.lineCap = 'butt';
+
+  // Foreground reef fronds framing the lane.
+  for (const side of [-1, 1] as const) {
+    const fx = w / 2 + side * w * 0.42;
+    for (let frond = 0; frond < 5; frond++) {
+      const baseX = fx + side * frond * 12 * scale;
+      const hgt = h * 0.14 * (1 - frond * 0.12);
+      const hue = frond % 2 ? '120,255,220' : '255,140,220';
+      ctx.strokeStyle = `rgba(${hue},0.5)`;
+      ctx.lineWidth = 3 * scale;
+      ctx.lineCap = 'round';
+      const sway = Math.sin(time * 0.001 + frond + side) * 8;
+      ctx.beginPath();
+      ctx.moveTo(baseX, h);
+      ctx.quadraticCurveTo(baseX + sway, h - hgt * 0.6, baseX + sway * 1.4 - side * 10, h - hgt);
+      ctx.stroke();
+    }
+  }
+  ctx.lineCap = 'butt';
+
+  // Ringlight reflection glimmering on the ground.
+  const refl = ctx.createLinearGradient(gx - 60, horizon, gx - 60, h);
+  refl.addColorStop(0, 'rgba(150,180,255,0.12)');
+  refl.addColorStop(1, 'rgba(150,180,255,0)');
+  ctx.fillStyle = refl;
+  ctx.fillRect(gx - 70, horizon, 140, h - horizon);
+
+  // Drifting bioluminescent spores.
+  for (let i = 0; i < 26; i++) {
+    const dx = (rand(i + 3620) * w + Math.sin(time * 0.0006 + i) * 20) % w;
+    const dy = horizon + 20 + rand(i + 3630) * (h - horizon - 40) + Math.sin(time * 0.0018 + i) * 10;
+    const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * 0.0018 + i));
+    const col = i % 2 ? `rgba(255,122,217,${tw * 0.6})` : `rgba(120,220,255,${tw * 0.6})`;
+    ctx.fillStyle = col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(dx, dy, 1.8 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
   }
 }
 
@@ -3317,7 +3853,7 @@ function drawMeteor(ctx: CanvasRenderingContext2D, z: Zombie, s: GameState, them
             : z.type === 'tank'
               ? '#ff7a45'
               : z.isBoss
-                ? '#f8d66d'
+                ? z.bossColor ?? '#f8d66d'
                 : '#9cf6ff';
   const shell = z.type === 'armored' || z.isBoss ? '#283247' : '#172033';
 

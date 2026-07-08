@@ -35,10 +35,16 @@ describe('default character', () => {
     expect(lipColorForSkinTone('warm')).not.toBe(skinColor('warm'));
   });
 
-  it('renames the former undead skin tone as an alien option', () => {
+  it('keeps a horror undead tone and a separate family alien-green tone', () => {
     expect(SKIN_TONES.find((tone) => tone.key === 'undead')).toMatchObject({
+      label: 'Undead',
+      color: '#8aa17a',
+      mode: 'horror',
+    });
+    expect(SKIN_TONES.find((tone) => tone.key === 'alien')).toMatchObject({
       label: 'Alien Green',
       color: '#67e87f',
+      mode: 'family',
     });
   });
 });

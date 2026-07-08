@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import type { CharacterLoadout, GameStats, UpgradeKey, Upgrades as UpgradesType } from '../types';
 import { UPGRADE_DEFS, UPGRADE_LIFESPAN, upgradeCost } from '../data/upgrades';
-import { POWERUP_DEFS } from '../data/powerups';
 import { COIN_PACKS } from '../data/coinPacks';
 import { DEFAULT_CHARACTER, type CosmeticDef, type CosmeticSlot } from '../data/cosmetics';
-import { cosmeticsForFamilyMode } from '../theme/meteorMania';
+import { cosmeticsForFamilyMode, powerupsForFamilyMode, upgradesForFamilyMode } from '../theme/meteorMania';
 import { AdBanner } from './AdBanner';
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -257,7 +256,7 @@ export function Upgrades({
         Bought charges are permanent until used. Spend them during a run — tap on mobile, or type the word on desktop.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
-        {POWERUP_DEFS.map((def) => {
+        {powerupsForFamilyMode(familyFriendlyMode).map((def) => {
           const owned = powerups[def.key] ?? 0;
           const affordable = coins >= def.cost;
           return (
@@ -304,7 +303,7 @@ export function Upgrades({
         </span>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        {UPGRADE_DEFS.map((def) => {
+        {upgradesForFamilyMode(familyFriendlyMode).map((def) => {
           const level = upgrades[def.key];
           const cost = upgradeCost(def, Math.min(level, def.maxLevel - 1));
           const affordable = coins >= cost;

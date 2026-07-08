@@ -1,15 +1,19 @@
-import type { CharacterLoadout, Difficulty, GameMode, Settings } from '../types';
+import type { CharacterLoadout, Difficulty, GameMode, Settings, UpgradeKey } from '../types';
 import { MAPS, isMapOwned, type MapTheme } from '../data/maps';
 import {
   DEFAULT_CHARACTER,
   EXPRESSIONS,
+  SKIN_TONES,
   cosmeticByKey,
   cosmeticsFor,
   normalizeCharacter,
   type CosmeticDef,
   type CosmeticSlot,
   type ExpressionDef,
+  type SkinToneDef,
 } from '../data/cosmetics';
+import { POWERUP_DEFS, type PowerupDef } from '../data/powerups';
+import { UPGRADE_DEFS, type UpgradeDef } from '../data/upgrades';
 
 export const DEAD_KEYS_DEFAULT_MAP = 'graveyard';
 export const METEOR_MANIA_DEFAULT_MAP = 'planet-aurora';
@@ -86,6 +90,66 @@ export function expressionsForFamilyMode(familyFriendlyMode: boolean): Expressio
   return EXPRESSIONS.filter((expression) => expressionMatchesFamilyMode(expression, familyFriendlyMode));
 }
 
+export function skinToneMatchesFamilyMode(tone: SkinToneDef, familyFriendlyMode: boolean): boolean {
+  return !tone.mode || tone.mode === (familyFriendlyMode ? 'family' : 'horror');
+}
+
+export function skinTonesForFamilyMode(familyFriendlyMode: boolean): SkinToneDef[] {
+  return SKIN_TONES.filter((tone) => skinToneMatchesFamilyMode(tone, familyFriendlyMode));
+}
+
+/**
+ * Keep a survivor's skin tone valid for the active mode. The "inhuman" tone maps
+ * across modes — undead (Last Words) <-> alien green (Meteor Mania) — so a
+ * character keeps their look when toggling. Any other out-of-mode tone (there are
+ * none today) falls back to the neutral default.
+ */
+export function skinToneForFamilyMode(skinTone: string, familyFriendlyMode: boolean): string {
+  const tone = SKIN_TONES.find((candidate) => candidate.key === skinTone);
+  if (tone && skinToneMatchesFamilyMode(tone, familyFriendlyMode)) return skinTone;
+  if (skinTone === 'undead' && familyFriendlyMode) return 'alien';
+  if (skinTone === 'alien' && !familyFriendlyMode) return 'undead';
+  return DEFAULT_CHARACTER.skinTone;
+}
+
+// Meteor Mania re-skins each Last Words consumable: same key/cost/effect, but a
+// space-themed name, icon, and activation word (the engine maps the word back —
+// see GameEngine's consumable word handling).
+const METEOR_POWERUP_COPY: Record<string, Partial<PowerupDef>> = {
+  grenade: { name: 'Comet Burst', word: 'burst', icon: '*', description: 'Clears a nearby cluster of meteors.' },
+  freeze: { name: 'Stasis Beam', word: 'stasis', icon: '||', description: 'Stops every meteor for 3 seconds.' },
+  medkit: { name: 'Repair Burst', word: 'repair', icon: '+', description: 'Restores a chunk of planet defense health.' },
+};
+
+export function powerupForFamilyMode(def: PowerupDef, familyFriendlyMode: boolean): PowerupDef {
+  if (!familyFriendlyMode) return def;
+  const override = METEOR_POWERUP_COPY[def.key];
+  return override ? { ...def, ...override } : def;
+}
+
+export function powerupsForFamilyMode(familyFriendlyMode: boolean): PowerupDef[] {
+  return POWERUP_DEFS.map((def) => powerupForFamilyMode(def, familyFriendlyMode));
+}
+
+// Only the upgrades whose Last Words name isn't already family-friendly get a
+// Meteor Mania alias (the shotgun/"slayer" wording). Neutral names — Starting
+// Shield, Slow Start, Time Dilation, Scavenger, Lucky Charm, Reinforced Base —
+// are kept as-is.
+const METEOR_UPGRADE_COPY: Partial<Record<UpgradeKey, Pick<UpgradeDef, 'name' | 'description'>>> = {
+  shotgunRadius: { name: 'Wide Zap', description: 'Wider Power Zap burst radius.' },
+  bossDamage: { name: 'Mega Meteor Buster', description: 'Deal bonus progress vs mega meteors.' },
+};
+
+export function upgradeForFamilyMode(def: UpgradeDef, familyFriendlyMode: boolean): UpgradeDef {
+  if (!familyFriendlyMode) return def;
+  const override = METEOR_UPGRADE_COPY[def.key];
+  return override ? { ...def, ...override } : def;
+}
+
+export function upgradesForFamilyMode(familyFriendlyMode: boolean): UpgradeDef[] {
+  return UPGRADE_DEFS.map((def) => upgradeForFamilyMode(def, familyFriendlyMode));
+}
+
 export function ownedCosmeticKeysForFamilyMode(ownedCosmetics: string[], familyFriendlyMode: boolean): string[] {
   const owned = new Set(ownedCosmetics);
   owned.add(METEOR_MANIA_DEFAULT_ACCESSORY);
@@ -104,6 +168,7 @@ export function normalizeCharacterForFamilyMode(
 
   return {
     ...normalized,
+    skinTone: skinToneForFamilyMode(normalized.skinTone, familyFriendlyMode),
     outfit:
       outfit && cosmeticMatchesFamilyMode(outfit, familyFriendlyMode)
         ? normalized.outfit

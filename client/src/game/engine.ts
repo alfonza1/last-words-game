@@ -504,7 +504,8 @@ export class GameEngine {
     if (bossWave) {
       s.waveZombiesToSpawn = s.mode === 'bossrush' ? 1 : 1;
       s.bossWarning = 3.2;
-      this.addEvent(s.settings.familyFriendlyMode ? 'MEGA METEOR INBOUND' : 'BOSS INCOMING', 'companion');
+      // The prominent HUD "INCOMING" banner (driven by bossWarning) is the single
+      // warning — no redundant ticker line that overlaps it.
     } else {
       const cfg = getDifficultyConfig(s.difficulty);
       s.waveZombiesToSpawn = waveZombieCount(cfg, wave);
