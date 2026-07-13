@@ -4,6 +4,7 @@ import {
   waveSpeed,
   waveSpawnInterval,
   waveZombieCount,
+  typingDefenseWaveZombieCount,
   wordTierForWave,
   isBossWave,
 } from './difficulty';
@@ -23,6 +24,13 @@ describe('difficulty scaling', () => {
   });
   it('more zombies each wave', () => {
     expect(waveZombieCount(cfg, 3)).toBeGreaterThan(waveZombieCount(cfg, 1));
+  });
+  it('doubles Easy Typing Defense waves only', () => {
+    const easy = getDifficultyConfig('easy');
+    const normal = getDifficultyConfig('normal');
+
+    expect(typingDefenseWaveZombieCount(easy, 1)).toBe(waveZombieCount(easy, 1) * 2);
+    expect(typingDefenseWaveZombieCount(normal, 1)).toBe(waveZombieCount(normal, 1));
   });
   it('harder difficulties are faster', () => {
     expect(getDifficultyConfig('nightmare').baseSpeed).toBeGreaterThan(

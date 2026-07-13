@@ -161,6 +161,43 @@ describe('word queue is independent of zombies', () => {
   });
 });
 
+describe('wave size by play style', () => {
+  const startWave = (difficulty: 'easy' | 'normal', riddleMode = false) => {
+    const engine = new GameEngine({
+      mode: 'survival',
+      difficulty,
+      upgrades: DEFAULT_UPGRADES,
+      settings: { ...DEFAULT_SETTINGS, difficulty },
+      width: 960,
+      height: 600,
+      seed: 1,
+      riddleMode,
+    });
+    engine.state.betweenWaves = 0.01;
+    engine.update(0.02);
+    return engine;
+  };
+
+  it('gives Easy Typing Defense twice the normal Easy wave quota', () => {
+    expect(startWave('easy').state.waveZombiesToSpawn).toBe(10);
+  });
+
+  it('keeps Easy puzzle waves and Normal Typing Defense at their existing quotas', () => {
+    expect(startWave('easy', true).state.waveZombiesToSpawn).toBe(5);
+    expect(startWave('normal').state.waveZombiesToSpawn).toBe(6);
+  });
+
+  it('keeps boss waves at one boss', () => {
+    const engine = startWave('easy');
+    engine.state.wave = 4;
+    engine.state.betweenWaves = 0.01;
+    engine.update(0.02);
+
+    expect(engine.state.wave).toBe(5);
+    expect(engine.state.waveZombiesToSpawn).toBe(1);
+  });
+});
+
 describe('riddle mode', () => {
   function riddleEngine() {
     const engine = new GameEngine({

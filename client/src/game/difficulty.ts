@@ -14,6 +14,7 @@ export interface DifficultyConfig {
   spawnAccel: number; // seconds shaved per wave
   baseZombies: number; // zombies in wave 1
   zombiesPerWave: number;
+  typingDefenseWaveMultiplier: number; // scales non-boss Typing Defense wave size
   startHealth: number;
   powerupChance: number; // 0..1 chance a kill yields a bonus opportunity
   strict: boolean;
@@ -51,6 +52,7 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     spawnAccel: 0.12,
     baseZombies: 5,
     zombiesPerWave: 2,
+    typingDefenseWaveMultiplier: 2,
     startHealth: 120,
     powerupChance: 0.35,
     strict: false,
@@ -69,6 +71,7 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     spawnAccel: 0.14,
     baseZombies: 6,
     zombiesPerWave: 2,
+    typingDefenseWaveMultiplier: 1,
     startHealth: 100,
     powerupChance: 0.25,
     strict: false,
@@ -87,6 +90,7 @@ export const DIFFICULTY_CONFIGS: Record<Difficulty, DifficultyConfig> = {
     spawnAccel: 0.18,
     baseZombies: 8,
     zombiesPerWave: 3,
+    typingDefenseWaveMultiplier: 1,
     startHealth: 80,
     powerupChance: 0.1,
     strict: true,
@@ -111,6 +115,10 @@ export function waveSpawnInterval(cfg: DifficultyConfig, wave: number): number {
 
 export function waveZombieCount(cfg: DifficultyConfig, wave: number): number {
   return cfg.baseZombies + cfg.zombiesPerWave * (wave - 1);
+}
+
+export function typingDefenseWaveZombieCount(cfg: DifficultyConfig, wave: number): number {
+  return waveZombieCount(cfg, wave) * cfg.typingDefenseWaveMultiplier;
 }
 
 /** Determine the dominant word tier for a given wave + difficulty. */
