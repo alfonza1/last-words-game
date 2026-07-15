@@ -24,6 +24,7 @@ import {
   getDifficultyConfig,
   isBossWave,
   MOBILE_SPEED_MULT,
+  typingDefenseWaveZombieCount,
   waveSpawnInterval,
   waveSpeed,
   waveZombieCount,
@@ -508,7 +509,9 @@ export class GameEngine {
       // warning — no redundant ticker line that overlaps it.
     } else {
       const cfg = getDifficultyConfig(s.difficulty);
-      s.waveZombiesToSpawn = waveZombieCount(cfg, wave);
+      s.waveZombiesToSpawn = s.riddleMode
+        ? waveZombieCount(cfg, wave)
+        : typingDefenseWaveZombieCount(cfg, wave);
     }
     s.spawnCooldown = 0.4;
   }
